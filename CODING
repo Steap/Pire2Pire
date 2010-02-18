@@ -1,0 +1,25 @@
+* Coding style
+--------------
+Indentations : 4-8 espaces
+
+Accolade ouvrante sur une nouvelle ligne
+Accolade fermante sur une nouvelle ligne
+    if (foo)
+    {
+        // code
+    }
+
+
+type de retour des fonctions sur une ligne à part 
+    static int
+    foo ()
+    {
+        // code
+    }
+
+Espace entre les noms de fonctions et les parenthèses :
+    foo ();
+    et pas :
+    foo();
+
+
