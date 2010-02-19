@@ -1,0 +1,37 @@
+* What the fuck is this ?
+-------------------------
+A server and a client interacting using sockets. This seems kind of related to
+the project. Amazing, isn't it ?
+
+
+* What is different from the trunk version ?
+--------------------------------------------
+- there is a client ! No need to use Telnet no more (the double negative still
+  has a long TTL, though).
+- read () is only used to ask the user to write text. This might eat up your
+  CPU, should be tested.
+- instead of using read () and write () directly on sockets, these two wonderful
+  programs use the send () and recv () functions. Is that better ? Hell, I have
+  no idea. It is definitely something that we gotta talk to our teachers about.
+- some useful shit is now in util.{c,h}, which makes the actual code (yep, the
+  one that matters) easier to read.
+
+* kay, what is just the same ?
+------------------------------
+- the incredible idea of forking after starting to listen, and to handle every
+  client using a different process. Definitely cool, even though not as cool as
+  using threads.
+- the behaviour of the whole program : a client sends some text to the server,
+  that prints it and sends it back to the client, etc.
+
+* Wow, that shit seems cool dude, how do I use it ?
+----------------------------------------------------
+Compiling :
+$ make all
+
+First term :
+./myserver
+
+Other terms (note that you cannot run the client too many times) :
+./client 127.0.0.1 1338
+
