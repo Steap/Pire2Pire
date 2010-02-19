@@ -5,27 +5,23 @@ traduirai un autre jour).
 
 * Coding style
 --------------
-Indentations : 4-8 espaces
+Indentations : 4 espaces
 
 Accolade ouvrante sur une nouvelle ligne
 Accolade fermante sur une nouvelle ligne
-    if (foo)
-    {
+    if (foo) {
         // code
     }
-    else if (bar)
-    {
+    else if (bar) {
         // code
     }
-    else
-    {
+    else {
         // code
     }
 
 Les accolades peuvent être omises s'il n'y a qu'une instruction dans le code...
 
-    switch (foo)
-    {
+    switch (foo) {
         case brol:
             // code
             break;
@@ -37,15 +33,13 @@ Les accolades peuvent être omises s'il n'y a qu'une instruction dans le code...
             break // Useless, but eh.
     }
 
-    do 
-    {
+    do {
         // code
     } while (foo);
 
 type de retour des fonctions sur une ligne à part 
     static int
-    foo ()
-    {
+    foo () {
         // code
     }
 
