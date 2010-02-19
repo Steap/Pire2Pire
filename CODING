@@ -1,3 +1,8 @@
+* Général
+---------
+Langue utilisée (code, commentaires) : anglais (sauf ici, OLOL, la flemme, je
+traduirai un autre jour).
+
 * Coding style
 --------------
 Indentations : 4-8 espaces
@@ -8,7 +13,34 @@ Accolade fermante sur une nouvelle ligne
     {
         // code
     }
+    else if (bar)
+    {
+        // code
+    }
+    else
+    {
+        // code
+    }
 
+Les accolades peuvent être omises s'il n'y a qu'une instruction dans le code...
+
+    switch (foo)
+    {
+        case brol:
+            // code
+            break;
+        case trol:
+            // code
+            break;
+        default:
+            // code
+            break // Useless, but eh.
+    }
+
+    do 
+    {
+        // code
+    } while (foo);
 
 type de retour des fonctions sur une ligne à part 
     static int
@@ -22,4 +54,10 @@ Espace entre les noms de fonctions et les parenthèses :
     et pas :
     foo();
 
+Noms des constantes, modules, etc. : foo_bar et pas fooBar comme chez les gens
+qui font du Java.
 
+Une fonction trol d'un module brol s'appellera brol_trol ();
+
+Pour le nommage des constantes, soit le nom est suffisamment explicite, soit on
+préfixera (style SO_REUSEADDR).
