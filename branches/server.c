@@ -9,7 +9,7 @@
 
 #include "util.h"
 
-#define BUFFSIZE     32 
+#define BUFFSIZE      2
 #define MAX_CONN      2
 #define PORT       1338
 
@@ -38,14 +38,22 @@ kill_server (int signum)
 static void
 handle_client (int sock)
 {
-    char buffer[BUFFSIZE];
-    int n_received = -1;
+    /* The message sent by the client might be longer than BUFFSIZE */
+    char     *message;
+    /* Number of chars written in message */ 
+    int      ptr = 0;          
+    char     buffer[BUFFSIZE];
+    int      n_received = -1;
 
-    if ((n_received = recv (sock, buffer, BUFFSIZE, 0)) < 0)
-        ERROR_HANDLER ("recv");
     
-    while (n_received > 0)
+    /* BUFFSIZE + 1, so the terminating null byte ('\0') can be stored */
+    if ((message = calloc (BUFFSIZE + 1, sizeof (char))) == NULL)
+        ERROR_HANDLER ("Allocating memory for message");
+    
+    while ((n_received = recv (sock, buffer, BUFFSIZE, 0)) != 0)
     {
+        if (n_received < 0)
+            ERROR_HANDLER ("recv");
         /*
          * Seems necessary, unless we can guarantee that we will only receive
          * well-formed strings... 
@@ -56,12 +64,20 @@ handle_client (int sock)
         if (send (sock, buffer, n_received, 0) != n_received)
             ERROR_HANDLER ("send");
 
-        fprintf (stdout, "Server has just received : %s\n", buffer);
 
-        /* We might receive new data */
-        if ((n_received = recv (sock, buffer, BUFFSIZE, 0)) < 0)
-            ERROR_HANDLER ("recv");
-
+        strcpy (message+ptr, buffer);       
+        message = realloc (message, ptr+2*BUFFSIZE+1);
+        ptr+=BUFFSIZE;
+        message[ptr] = '\0';
+        
+        /* 
+         * Upon receiving end of transmission, treating data
+         */  
+        if (strstr (buffer, "\n") != NULL)
+        {
+            fprintf (stdout, "Server has just received : %s\n", message);
+            free (message);
+        }
     }
 
     socket_close (sock);

@@ -11,7 +11,7 @@
 
 #include "util.h"
 
-#define BUFFSIZE 32
+#define BUFFSIZE 2
 
 static void
 usage ()
