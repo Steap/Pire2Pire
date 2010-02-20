@@ -43,7 +43,7 @@ handle_client (int sock)
     /* Number of chars written in message */ 
     int      ptr = 0;          
     char     buffer[BUFFSIZE];
-    int      n_received = -1;
+    int      n_received;
 
     
     /* BUFFSIZE + 1, so the terminating null byte ('\0') can be stored */
@@ -76,9 +76,12 @@ handle_client (int sock)
         if (strstr (buffer, "\n") != NULL)
         {
             fprintf (stdout, "Server has just received : %s\n", message);
-            free (message);
+            if ((message = realloc (message, BUFFSIZE+1)) == NULL)
+                ERROR_HANDLER ("Allocating memory for message");
+            ptr = 0;
         }
     }
+    free (message);
 
     socket_close (sock);
 
