@@ -7,7 +7,7 @@ traduirai un autre jour).
 --------------
 Indentations : 4 espaces
 
-Accolade ouvrante sur une nouvelle ligne
+Accolade ouvrante en fin de ligne
 Accolade fermante sur une nouvelle ligne
     if (foo) {
         // code
