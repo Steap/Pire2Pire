@@ -1,0 +1,50 @@
+===============
+Session command
+===============
+After launching the program, a user can type in different commands. They are
+described here.
+
+
+set [option=value]
+-------------------
+If no option is specified, displays the list of all possible options.
+If a valid option and a valid value are specified, sets the given option to the
+given value.
+
+help
+----
+Displays help.
+
+list [options]
+--------------
+Displays the list of all files available on the network.
+One file per line, with the following syntax :
+key name size
+
+Options may be specified (none are supported yet).
+
+get key
+-------
+Gets the resource whose key is "key".
+
+info
+----
+Displays info about and statistics on the program's current state.
+
+download
+--------
+Displays info about the files currently being downloaded.
+
+upload
+------
+Displays info about the files currently being uploaded.
+
+connect IP:PORT
+---------------
+Tries to connect to another program, using the given IP adress and port. 
+
+raw IP:PORT cmd
+---------------
+Send the protocol command "cmd" to another program, using the given IP adress
+and port.
+

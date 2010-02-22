@@ -1,0 +1,55 @@
+============
+General Idea
+============
+Our program is made of :
+- a "client" : a prompt asking the user what to do
+- a "server", accepting connection from peers and sending them data
+
+==========
+First Idea
+==========
+The client is the father of the server (or the other way around). 
+
+                /--------\
+                |        |
+                | Server |
+                |        |
+                \--------/
+                    ||
+                    || fork
+                    \/
+                /---------\
+                |         |
+                | Client  |
+                | $ > ... |
+                |         |
+                \---------/
+
+===========
+Second idea
+===========
+There is no reason why the server should be the father of the client : why would
+the server wait for the exit code of the client ? 
+One process should keep managing the others.
+
+
+    /-----------------------------\
+    |                             |
+    |            Manager          |
+    |                             |
+    \-----------------------------/
+        ||                  ||
+        ||                  ||
+        \/                  \/
+    /--------\           /--------\
+    |        |           |        |
+    | Server |           | Client |
+    |        |           |        |
+    \--------/           \--------/
+
+
+Basically, the manager waits for messages from the server and the client. Using
+waitid (how ?) we could wait for their exit status and maybe relaunch them in
+case they crash.
+
+
