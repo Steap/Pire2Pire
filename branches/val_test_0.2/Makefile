@@ -7,7 +7,7 @@ all: clear p2p
 clear:
 	clear
 
-p2p: p2p.o user_interface.o client_interface.o
+p2p: p2p.o user_interface.o client_interface.o util.o
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 p2p.o: p2p.c

@@ -24,12 +24,18 @@
  */
 #define IS_CMD(msg,cmd) (                                   \
 (strlen (msg) > strlen (cmd))                               \
-&& (msg[strlen(cmd)] == ' '                                 \
-    || msg[strlen(cmd)] == '\n'                             \
-    || msg[strlen(cmd)] == '\r')                            \
+&& (msg[strlen (cmd)] == ' '                                \
+    || msg[strlen (cmd)] == '\n'                            \
+    || msg[strlen (cmd)] == '\r')                           \
 && (strncmp ((msg), (cmd), strlen (cmd)) == 0)              \
 )
 
+void socket_write (int socket, const char *msg);
 void socket_close (int fd);
+
+/*
+ * Replaces first '\r' or '\n' by a '\0'
+ */
+void string_remove_trailer (char *msg);
 
 #endif

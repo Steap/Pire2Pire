@@ -2,10 +2,14 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <arpa/inet.h>
 
 #include "util.h"
 
@@ -15,16 +19,19 @@
 
 FILE *log_file;
 pid_t father_pid;
+struct sockaddr_in my_addr;
 
 static void quit (int status);
-static void handle_client (int sock);
-static void logger (const char * msg);
+static void handle_client (int sock, struct sockaddr_in addr);
+static void logger (const char *msg);
+static void handle_get (int sock, struct sockaddr_in addr, char *msg);
 
 void
 client_interface (pid_t pid) {
     // File descriptors for manager and new connection
     int                     sock, conn_sock;
-    struct sockaddr_in      echo;
+    struct sockaddr_in      echo_client;
+    socklen_t               size_echo_client;
     int                     yes = 1;
 
     printf ("Launching client interface\n");
@@ -46,9 +53,9 @@ client_interface (pid_t pid) {
         quit (EXIT_FAILURE);
     }
 
-    echo.sin_family      = AF_INET;
-    echo.sin_addr.s_addr = INADDR_ANY;
-    echo.sin_port        = htons (PORT);
+    my_addr.sin_family      = AF_INET;
+    my_addr.sin_addr.s_addr = INADDR_ANY;
+    my_addr.sin_port        = htons (PORT);
 
     if ((sock = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
         perror ("socket");
@@ -70,8 +77,8 @@ client_interface (pid_t pid) {
     }
 
     if (bind (sock, 
-              (struct sockaddr *) &echo, 
-              sizeof (echo)) < 0) {
+              (struct sockaddr *) &my_addr, 
+              sizeof (my_addr)) < 0) {
         perror ("bind");
         quit (EXIT_FAILURE);
     }
@@ -82,10 +89,10 @@ client_interface (pid_t pid) {
     }
 
     for(;;) {
-        /*
-         * FIXME: add the others parameters
-         */
-        conn_sock = accept(sock, NULL, NULL);
+        size_echo_client = sizeof (struct sockaddr_in);
+        conn_sock = accept (sock,
+                            (struct sockaddr *)&echo_client,
+                            &size_echo_client);
         if(conn_sock == -1) {
             perror ("accept");
             quit (EXIT_FAILURE);
@@ -98,7 +105,7 @@ client_interface (pid_t pid) {
                 break;
             case 0:
                 close (sock);
-                handle_client (conn_sock);
+                handle_client (conn_sock, echo_client);
                 break;
             default:
                 close (conn_sock);
@@ -111,13 +118,14 @@ client_interface (pid_t pid) {
 }
 
 static void
-handle_client (int sock) {
+handle_client (int sock, struct sockaddr_in addr){
     /* The message typed by the user might be longer than BUFFSIZE */
     char    *message;
     /* Number of chars written in message */ 
     int     ptr = 0;
     char    buffer[BUFFSIZE];
     int     n_received;
+    char    port[6];    // 65535 + '\0'
 
     /* BUFFSIZE + 1, so the terminating null byte ('\0') can be stored */
     if ((message = calloc (BUFFSIZE + 1, sizeof (char))) == NULL) {
@@ -148,43 +156,55 @@ handle_client (int sock) {
         message[ptr] = '\0';
 
         if (strstr (buffer, "\n") != NULL) {
+            logger ("< [");
+            logger (inet_ntoa (addr.sin_addr));
+            logger (":");
+            sprintf(port, "%d", ntohs (addr.sin_port));
+            logger (port);
+            logger ("] ");
+
             if (IS_CMD (message, "list")) {
-                logger ("< list\n");
+                logger ("list\n");
             }
             else if (IS_CMD (message, "file")) {
-                logger ("< file\n");
+                logger ("file\n");
             }
             else if (IS_CMD (message, "get")) {
-                logger ("< get\n");
+                logger ("get\n");
+                handle_get (sock, addr, message);
             }
             else if (IS_CMD (message, "traffic")) {
-                logger ("< traffic\n");
+                logger ("traffic\n");
             }
             else if (IS_CMD (message, "ready")) {
-                logger ("< ready\n");
+                logger ("ready\n");
             }
             else if (IS_CMD (message, "checksum")) {
-                logger ("< checksum\n");
+                logger ("checksum\n");
             }
             else if (IS_CMD (message, "neighbourhood")) {
-                logger ("< neighbourhood\n");
+                logger ("neighbourhood\n");
             }
             else if (IS_CMD (message, "neighbour")) {
-                logger ("< neighbour\n");
+                logger ("neighbour\n");
             }
             else if (IS_CMD (message, "redirect")) {
-                logger ("< redirect\n");
+                logger ("redirect\n");
             }
             else if (IS_CMD (message, "error")) {
-                logger ("< error\n");
+                logger ("error\n");
             }
             else if (IS_CMD (message, "exit")) {
-                logger ("< exit\n");
+                logger ("exit\n");
                 break;
             }
             else {
                 logger ("Received unknown command : ");
                 logger (message);
+                socket_write (sock, "error <");
+                string_remove_trailer (message);
+                socket_write (sock, message);
+                socket_write (sock, "> Unknown command\n");
             }
 
             if ((message = realloc (message, BUFFSIZE+1)) == NULL) {
@@ -215,7 +235,7 @@ quit (int status) {
 
 
 static void
-logger (const char * msg) {
+logger (const char *msg) {
     if (fprintf(log_file, "%s", msg) < 0) {
         fprintf(stderr, "fprintf");
         quit (EXIT_FAILURE);
@@ -223,5 +243,82 @@ logger (const char * msg) {
     if (fflush (log_file) == EOF) {
         perror ("fflush");
         quit (EXIT_FAILURE);
+    }
+}
+
+
+
+/*
+ * TODO: encapsulate those multiple parameters?
+ */
+static void
+handle_get (int sock, struct sockaddr_in addr, char *msg) {
+    char port[6];   // 65535 + '\0'
+    char filename[257];
+
+    // Avoiding \r and \n to screw sprintf
+    string_remove_trailer (msg);
+
+    // Scanning the request for filename
+    if (sscanf (msg, "get %s", filename) == EOF) {
+        perror ("sscanf");
+        socket_write (sock, "error <");
+        socket_write (sock, msg);
+        socket_write (sock, "> Unable to parse filename\n");
+        return;
+    }
+
+    if (access (filename, R_OK) == -1) {
+        if (errno == ENOENT) {
+            socket_write (sock, "error <");
+            socket_write (sock, msg);
+            socket_write (sock, "> File '");
+            socket_write (sock, filename);
+            socket_write (sock, "' does not exist\n");
+        }
+        else {
+            perror ("access");
+            socket_write (sock, "error <");
+            socket_write (sock, msg);
+            socket_write (sock, "> Unable to access file '");
+            socket_write (sock, filename);
+            socket_write (sock, " for reading'\n");
+        }
+    }
+
+/*
+    file = open (filename, O_RDONLY);
+    if (file == -1) {
+        if (errno == ENOENT) {
+            socket_write (sock, "error <");
+            socket_write (sock, msg);
+            socket_write (sock, "> File '");
+            socket_write (sock, filename);
+            socket_write (sock, "' does not exist\n");
+        }
+        else {
+            perror ("open");
+            socket_write (sock, "error <");
+            socket_write (sock, msg);
+            socket_write (sock, "> Unable to open file '");
+            socket_write (sock, filename);
+            socket_write (sock, "'\n");
+        }
+        return;
+    }
+*/
+
+    else {
+        /*
+         * TODO: enhancing the message
+         */
+        socket_write (sock, "ready ");
+        socket_write (sock, filename);
+        socket_write (sock, " ");
+        socket_write (sock, inet_ntoa (my_addr.sin_addr));
+        socket_write (sock, ":");
+        sprintf(port, "%d", ntohs (my_addr.sin_port));
+        socket_write (sock, port);
+        socket_write (sock, "\n");
     }
 }
