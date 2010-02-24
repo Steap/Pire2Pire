@@ -26,33 +26,44 @@ user_interface (pid_t pid) {
     char     buffer[BUFFSIZE];
     int      n_received;
 
+    printf ("Launching user interface\n");
+
     father_pid = pid;
 
-    if (signal (SIGINT, quit) == SIG_ERR)
-        ERROR_HANDLER ("signal");
+    if (signal (SIGINT, quit) == SIG_ERR) {
+        perror ("signal");
+        quit ();
+    }
     
     /* BUFFSIZE + 1, so the terminating null byte ('\0') can be stored */
-    if ((cmd = calloc (BUFFSIZE + 1, sizeof (char))) == NULL)
-        ERROR_HANDLER ("Allocating memory for user command");
+    if ((cmd = calloc (BUFFSIZE + 1, sizeof (char))) == NULL) {
+        fprintf (stderr, "Allocating memory for user command");
+        quit ();
+    }
 
     /* Displays a prompt-like thing */
     printf("\n$> ");
-    fflush(stdout);
+    if (fflush(stdout) == EOF) {
+        perror ("fflush");
+        quit ();
+    }
 
     while ((n_received = read (STDIN_FILENO, buffer, BUFFSIZE)) != 0) {
-        if (n_received < 0)
-            ERROR_HANDLER ("read");
+        if (n_received < 0) {
+            perror ("read");
+            quit ();
+        }
         /*
          * Seems necessary, unless we can guarantee that we will only receive
          * well-formed strings... 
          */
         buffer[n_received] = '\0';
 
-        strcpy (cmd + ptr, buffer);       
+        strcpy (cmd + ptr, buffer); 
         cmd = realloc (cmd, ptr + 2*BUFFSIZE + 1);
         ptr += BUFFSIZE;
         cmd[ptr] = '\0';
-        
+ 
         /* 
          * Upon receiving end of transmission, treating data
          */  
@@ -87,26 +98,29 @@ user_interface (pid_t pid) {
             }
             else if (IS_CMD (cmd, "quit")) {
                 printf("Goodbye\n");
-                break;
+                break; // not quit () unless you free cmd
             }
             else {
                 printf("Unknown command. Type help for the command list.\n");
             }
 
-            if ((cmd = realloc (cmd, BUFFSIZE+1)) == NULL)
-                ERROR_HANDLER ("Allocating memory for user command");
+            if ((cmd = realloc (cmd, BUFFSIZE+1)) == NULL) {
+                fprintf (stderr, "Allocating memory for user command");
+                quit ();
+            }
             ptr = 0;
 
-            printf("\n$> ");
-            fflush(stdout);
+            printf ("\n$> ");
+            if (fflush (stdout) == EOF) {
+                perror ("fflush");
+                quit ();
+            }
         }
     }
 
     free (cmd);
 
-    kill(father_pid, SIGUSR1);
-
-    exit(EXIT_SUCCESS);
+    quit ();
 }
 
 
@@ -132,7 +146,10 @@ raw IP:PORT CMD             sends a command to another program\n\
 
 static void
 quit () {
-    printf("Exiting user interface properly\n");
-    kill (father_pid, SIGUSR1);
+    printf ("Exiting user interface properly\n");
+    if (kill (father_pid, SIGUSR1) == -1) {
+        perror ("kill");
+        exit (EXIT_FAILURE);
+    }
     exit (EXIT_SUCCESS);
 }

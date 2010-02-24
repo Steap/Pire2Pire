@@ -27,10 +27,9 @@ client_interface (pid_t pid) {
     struct sockaddr_in      echo;
     int                     yes = 1;
 
-    father_pid = pid;
+    printf ("Launching client interface\n");
 
-    if (signal (SIGINT, quit) == SIG_ERR)
-        ERROR_HANDLER ("signal");
+    father_pid = pid;
 
     /*
      * FIXME: "a" rather than "w" ?
@@ -41,14 +40,20 @@ client_interface (pid_t pid) {
         perror ("fopen");
         exit (EXIT_FAILURE);
     }
-    logger ("Client interface loaded successfully\n");
+
+    if (signal (SIGINT, quit) == SIG_ERR) {
+        perror ("signal");
+        quit (EXIT_FAILURE);
+    }
 
     echo.sin_family      = AF_INET;
     echo.sin_addr.s_addr = INADDR_ANY;
     echo.sin_port        = htons (PORT);
 
-    if ((sock = socket (AF_INET, SOCK_STREAM, 0)) < 0)
-        ERROR_HANDLER ("socket");
+    if ((sock = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror ("socket");
+        quit (EXIT_FAILURE);
+    }
 
     /* 
      * FIXME: is that the truly beautiful way to avoid getting "Address already
@@ -59,16 +64,22 @@ client_interface (pid_t pid) {
                     SOL_SOCKET, 
                     SO_REUSEADDR, 
                     &yes, 
-                    sizeof (int)) < 0)
-        ERROR_HANDLER ("setsockopt");
+                    sizeof (int)) < 0) {
+        perror ("setsockopt");
+        quit (EXIT_FAILURE);
+    }
 
     if (bind (sock, 
               (struct sockaddr *) &echo, 
-              sizeof (echo)) < 0)
-        ERROR_HANDLER ("bind");
+              sizeof (echo)) < 0) {
+        perror ("bind");
+        quit (EXIT_FAILURE);
+    }
 
-    if (listen (sock, MAX_CONN) < 0)
-        ERROR_HANDLER ("listen");
+    if (listen (sock, MAX_CONN) < 0) {
+        perror ("listen");
+        quit (EXIT_FAILURE);
+    }
 
     for(;;) {
         /*
@@ -118,8 +129,10 @@ handle_client (int sock) {
 
     while ((n_received = recv (sock, buffer, BUFFSIZE, 0)) != 0)
     {
-        if (n_received < 0)
-            ERROR_HANDLER ("recv");
+        if (n_received < 0) {
+            perror ("recv");
+            quit (EXIT_FAILURE);
+        }
         /*
          * Seems necessary, unless we can guarantee that we will only receive
          * well-formed strings... 
@@ -127,7 +140,10 @@ handle_client (int sock) {
         buffer[n_received] = '\0';
 
         strcpy (message + ptr, buffer);
-        message = realloc (message, ptr + 2*BUFFSIZE + 1);
+        if((message = realloc (message, ptr + 2*BUFFSIZE + 1)) == NULL) {
+            fprintf (stderr, "Error reallocating memory for message\n");
+            quit (EXIT_FAILURE);
+        }
         ptr += BUFFSIZE;
         message[ptr] = '\0';
 
@@ -171,8 +187,10 @@ handle_client (int sock) {
                 logger (message);
             }
 
-            if ((message = realloc (message, BUFFSIZE+1)) == NULL)
-                ERROR_HANDLER ("Allocating memory for message");
+            if ((message = realloc (message, BUFFSIZE+1)) == NULL) {
+                fprintf (stderr, "Error reallocating memory for message");
+                quit (EXIT_FAILURE);
+            }
             ptr = 0;
         }
     }

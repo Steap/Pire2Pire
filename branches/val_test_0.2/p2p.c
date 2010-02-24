@@ -75,7 +75,6 @@ main () {
             perror ("fork");
             exit (EXIT_FAILURE);
         case 0:
-            printf ("I'm the client side\n");
  /*
             close (client_server_pipe_fd[1]);
             close (server_client_pipe_fd[0]);
@@ -100,7 +99,6 @@ main () {
             perror ("fork");
             exit (EXIT_FAILURE);
         case 0:
-            printf ("I'm the server side\n");
 /*
             close (client_server_pipe_fd[0]);
             close (server_client_pipe_fd[1]);
@@ -123,10 +121,8 @@ main () {
     signal (SIGINT, kill_from_sigint);
     signal (SIGUSR1, kill_from_user);
     signal (SIGUSR2, kill_from_client);
-    printf("Signals masked\n");
     kill (user_interface_pid, SIGUSR1);
     kill (client_interface_pid, SIGUSR1);
-    printf("Children awakened\n");
 
     // The father waits until he is signaled
     for(;;) {
