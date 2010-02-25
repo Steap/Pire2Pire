@@ -1,0 +1,108 @@
+ARCHITECTURE PROPOSEE
+
+p2p
+Main et processus principal, il s'occupe seulement de gérer ses fils et leur
+transmettre des signaux en cas de problème.
+
+user_interface
+Premier processus fils de p2p, il se charge de gérer les commandes de
+l'utilisateur. Chaque fois qu'un transfert est nécessaire, il forke pour
+continuer à assurer l'interface pendant que son fils gère la tâche à
+effectuer.
+
+client_interface
+Seconde processus fils de p2p, il se charge de gérer les commandes d'autres
+clients. Il forke à chaque nouveau client, et les processus créés gèrent
+alors toute la transaction avec le client donné.
+
+util
+Quelques fonctions utiles ou pas.
+
+
+
+FONCTIONNEMENT PROPOSE
+
+On lance le programme avec la commande "./p2p".
+Le processus p2p forke et endort le processus fils 1, puis forke et endort le
+processus fils 2. Après une bonne bidouille de masquage de signaux qui
+permettra de gérer les comportements face aux SIGINT, p2p réveille ses deux
+fils et se place en sommeil (attente d'un signal de ses fils ou de
+l'utilisateur).
+
+Le processus fils 1 s'occupe de l'interface utilisateur : il lit sur l'entrée
+standard une commande, et effectue les actions nécessaires.
+
+Le processus fils 2 s'occupe de l'interface client : il crée une socket pour
+écouter les requêtes, et forke dès qu'un client se pointe. Le client est
+géré dès lors par le processus fils, qui lit les requêtes du client une à
+une et forke si besoin de traitements parallélisables (comme l'envoi d'un
+fichier).
+
+Si l'interface utilisateur reçoit une demande de quitter (commande exit), il
+en informe son processus père avec un signal SIG_USR1. Ce dernier transmet
+l'ordre de quitter au processus fils 2, et attend que celui-ci termine
+avant de terminer lui-même.
+
+De même, si le processus fils 2 venait à devoir quitter (pour l'instant la
+seule raison imaginable est une erreur irrécupérable...), il en informerait
+le processus père qui transmettrait au processus fils 1.
+
+Chacun des 2 processus fils de p2p gèrera lui-même ses fils.
+
+
+
+AUTRE
+
+* Taille d'une commande
+A priori, une commande peut être d'une longueur arbitrairement longue. Pour
+traiter tous ces cas, on crée un buffer d'une taille de base, puis on realloc
+si le besoin s'en fait sentir. Problème, realloc c'est coûteux. Il faut donc
+faire des compromis sur la taille de base du buffer et le facteur
+d'accroissement pour la réallocation. Une taille de base de 128 semble assez
+grande pour ne pas realloc systématiquement sans bouffer trop de mémoire.
+Problème éventuel : et si un client diabolique nous envoie une commande
+infinie, on explose ! Il faudrait rajouter une limite maximale, puis réfléchir
+à savoir si on a vraiment besoin de realloc () ou pas...
+
+* Inter-process Communication
+S'il s'avérait que le processus fils 1 ait à communiquer avec le processus
+fils 2, une solution envisagée serait d'avoir recours à un pipe de
+communication. Celui-ci est actuellement présent dans p2p.c en commentaires
+(car inutilisé). On en ouvre en fait deux (un dans chaque sens de
+communication) avant de forker (ce qui duplique les file descriptors), puis
+chacun des fils ferme respectivement l'entrée d'un pipe et la sortie de
+l'autre, afin d'obtenir le résultat escompté.
+
+* Signaux
+C'est un peu le bordel avec les signaux. Le problème c'est que je ne sais pas
+trop quel processus choppe une interruption causée par l'utilisateur... Du
+coup, toutes les SIGINT sont chopées par chaque processus et transmises aux
+autres afin que tout le monde termine.
+SIGUSR1 est utilisé par user_interface pour indiquer à p2p qu'il quitte.
+SIGUSR2 est utilisé par client_interface de la même façon.
+
+* Gestion des strings
+Un truc bien chiant c'est la gestion des commandes émises et reçues. Surtout
+pour les commandes client, en effet, telnet termine ses messages par \r\n\0,
+alors qu'un autre programme pourra ne mettre que \n\0. C'est pour ça qu'on
+verra dans le code des string_remove_trailer () qui foutent un '\0' sur le
+premier '\r' ou '\n' rencontré afin de traiter le message plus facilement.
+Ceci sera peut-être à revoir...
+
+* WhatIsMyIp.com
+Les adresses IP sont stockées dans une structure sockaddr_in. Malheureusement
+elles sont stockées sous la forme d'un gros uint32_t bien illisible pour nous
+autres humains. Heureusement, il existe une fonction qui nous transforme ça
+en une string à la "127.0.0.1", j'ai nommé inet_ntoa (). A noter qu'elle
+renvoie un char * alloué statiquement et modifié à chaque appel de ladite
+fonction; ainsi, à moins d'utiliser la valeur immédiatement, on fera une copie
+de la valeur renvoyée. Mais a prori ce cas n'aura pas lieu. D'ailleurs la
+fonction n'est apparemment pas thread-safe, il faudra peut-être voir du côté
+de inet_ntop ()...
+
+* Arriver à bon port
+Vu que personne a coupé la poire en deux pour ces histoires d'endianness, on
+se tape des vieilles transformations dès qu'on fait du réseau. Du coup le port
+est stocké dans la structure sockaddr_in sous sa forme htons-isée. Il convient
+si on veut l'afficher de lui repasser un coup de ntohs () afin de retrouver
+le port attendu.
