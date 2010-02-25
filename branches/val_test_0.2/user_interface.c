@@ -11,7 +11,8 @@
 // 128 seems a good compromise
 #define BUFFSIZE 128
 
-pid_t father_pid;
+char    *cmd;
+pid_t   father_pid;
 
 // Pre-declarations
 static void help ();
@@ -19,8 +20,6 @@ static void quit ();
 
 void
 user_interface (pid_t pid) {
-    /* The user command might be longer than BUFFSIZE */
-    char     *cmd;
     /* Number of chars written in cmd */ 
     int      ptr = 0;          
     char     buffer[BUFFSIZE];
@@ -118,8 +117,6 @@ user_interface (pid_t pid) {
         }
     }
 
-    free (cmd);
-
     quit ();
 }
 
@@ -148,6 +145,7 @@ quit                        exits the program\n\
 static void
 quit () {
     printf ("Exiting user interface properly\n");
+    free (cmd);
     if (kill (father_pid, SIGUSR1) == -1) {
         perror ("kill");
         exit (EXIT_FAILURE);
