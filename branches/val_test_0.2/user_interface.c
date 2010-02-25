@@ -139,6 +139,7 @@ download                    information about current downloads\n\
 upload                      information about current uploads\n\
 connect IP:PORT             connects to another program\n\
 raw IP:PORT CMD             sends a command to another program\n\
+quit                        exits the program\n\
 ");
 }
 
