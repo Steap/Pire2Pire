@@ -17,9 +17,9 @@
 #define MAX_CONN 10
 #define PORT 1338
 
-FILE *log_file;
-pid_t father_pid;
-struct sockaddr_in my_addr;
+FILE                *log_file;
+pid_t               father_pid;
+struct sockaddr_in  my_addr;
 
 static void quit (int status);
 static void handle_client (int sock, struct sockaddr_in addr);
@@ -38,13 +38,15 @@ client_interface (pid_t pid) {
 
     father_pid = pid;
 
-    /*
-     * FIXME: "a" rather than "w" ?
-     * For test purposes, "w" is quite mkay
-     */
+    // FIXME: Shouldn't we create another log_file for this new session?
+    // Truncates the log file
     log_file = fopen ("client_interface.log", "w");
     if (log_file == NULL) {
         perror ("fopen");
+        exit (EXIT_FAILURE);
+    }
+    if (fclose (log_file) == EOF) {
+        perror ("fclose");
         exit (EXIT_FAILURE);
     }
 
@@ -133,7 +135,19 @@ handle_client (int sock, struct sockaddr_in addr){
         quit (EXIT_FAILURE);
     }
 
-    logger ("Handling a client\n");
+    log_file = fopen ("client_interface.log", "a");
+    if (log_file == NULL) {
+        perror ("fopen");
+        exit (EXIT_FAILURE);
+    }
+
+    sprintf(port, "%d", ntohs (addr.sin_port));
+
+    logger ("Handling a new client: ");
+    logger (inet_ntoa (addr.sin_addr));
+    logger (":");
+    logger (port);
+    logger ("\n");
 
     while ((n_received = recv (sock, buffer, BUFFSIZE, 0)) != 0)
     {
@@ -159,14 +173,15 @@ handle_client (int sock, struct sockaddr_in addr){
             logger ("< [");
             logger (inet_ntoa (addr.sin_addr));
             logger (":");
-            sprintf(port, "%d", ntohs (addr.sin_port));
             logger (port);
             logger ("] ");
 
             if (IS_CMD (message, "list")) {
+                // TODO
                 logger ("list\n");
             }
             else if (IS_CMD (message, "file")) {
+                // TODO
                 logger ("file\n");
             }
             else if (IS_CMD (message, "get")) {
@@ -174,24 +189,31 @@ handle_client (int sock, struct sockaddr_in addr){
                 handle_get (sock, addr, message);
             }
             else if (IS_CMD (message, "traffic")) {
+                // TODO
                 logger ("traffic\n");
             }
             else if (IS_CMD (message, "ready")) {
+                // TODO
                 logger ("ready\n");
             }
             else if (IS_CMD (message, "checksum")) {
+                // TODO
                 logger ("checksum\n");
             }
             else if (IS_CMD (message, "neighbourhood")) {
+                // TODO
                 logger ("neighbourhood\n");
             }
             else if (IS_CMD (message, "neighbour")) {
+                // TODO
                 logger ("neighbour\n");
             }
             else if (IS_CMD (message, "redirect")) {
+                // TODO
                 logger ("redirect\n");
             }
             else if (IS_CMD (message, "error")) {
+                // TODO
                 logger ("error\n");
             }
             else if (IS_CMD (message, "exit")) {
@@ -199,7 +221,7 @@ handle_client (int sock, struct sockaddr_in addr){
                 break;
             }
             else {
-                logger ("Received unknown command : ");
+                logger ("Received unknown command: ");
                 logger (message);
                 socket_write (sock, "error <");
                 string_remove_trailer (message);
@@ -215,7 +237,10 @@ handle_client (int sock, struct sockaddr_in addr){
         }
     }
 
-    logger ("Client handled successfully\n");
+    free (message);
+    if (fclose (log_file) == EOF) {
+        perror ("fclose");
+    }
 
     exit (EXIT_SUCCESS);
 }
@@ -225,9 +250,6 @@ handle_client (int sock, struct sockaddr_in addr){
 static void
 quit (int status) {
     printf("Exiting client interface properly\n");
-    if (fclose (log_file) == EOF) {
-        perror ("fclose");
-    }
     kill (father_pid, SIGUSR2);
     exit (status);
 }
@@ -248,12 +270,11 @@ logger (const char *msg) {
 
 
 
-/*
- * TODO: encapsulate those multiple parameters?
- */
+// TODO: encapsulate those multiple parameters?
 static void
 handle_get (int sock, struct sockaddr_in addr, char *msg) {
     char port[6];   // 65535 + '\0'
+    // TODO: do we need to limit the size of a filename? to what length?
     char filename[257];
 
     // Avoiding \r and \n to screw sprintf
@@ -309,9 +330,7 @@ handle_get (int sock, struct sockaddr_in addr, char *msg) {
 */
 
     else {
-        /*
-         * TODO: enhancing the message
-         */
+        // TODO: enhancing the message
         socket_write (sock, "ready ");
         socket_write (sock, filename);
         socket_write (sock, " ");
