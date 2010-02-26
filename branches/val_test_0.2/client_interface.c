@@ -15,7 +15,6 @@
 
 #define BUFFSIZE 2
 #define MAX_CONN 10
-#define PORT 1338
 
 FILE                *log_file;
 pid_t               father_pid;
@@ -27,7 +26,7 @@ static void logger (const char *msg);
 static void handle_get (int sock, struct sockaddr_in addr, char *msg);
 
 void
-client_interface (pid_t pid) {
+client_interface (pid_t pid, int port) {
     // File descriptors for manager and new connection
     int                     sock, conn_sock;
     struct sockaddr_in      echo_client;
@@ -57,7 +56,7 @@ client_interface (pid_t pid) {
 
     my_addr.sin_family      = AF_INET;
     my_addr.sin_addr.s_addr = INADDR_ANY;
-    my_addr.sin_port        = htons (PORT);
+    my_addr.sin_port        = htons (port);
 
     if ((sock = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
         perror ("socket");

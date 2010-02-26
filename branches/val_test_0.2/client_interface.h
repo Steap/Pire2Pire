@@ -3,6 +3,6 @@
 
 #include <netinet/in.h>
 
-void client_interface (pid_t father_pid);
+void client_interface (pid_t father_pid, int port);
 
 #endif

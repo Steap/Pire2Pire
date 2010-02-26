@@ -137,7 +137,9 @@ do_get () {
         return;
     }
 
-    // TODO: Handle get stuff...
+    // FIXME: for now, filekey is filename, must use a key instead
+    // FIXME: for now, beginning and end are unused, must be implemented
+    // FIXME: for now, server is statically located at 127.0.0.1:1338
 }
 
 

@@ -46,13 +46,28 @@ wake_up (int signum) {
 }
 
 int
-main () {
+main (int argc, char **argv) {
 /*
     int client_server_pipe_fd[2];
     int server_client_pipe_fd[2];
 */
     pid_t father_pid;
     pid_t pid;
+    int port;
+
+    if (argc != 2) {
+        printf ("Usage : ./p2p PORT\n");
+        exit (EXIT_FAILURE);
+    }
+    if (sscanf (argv[1], "%d", &port) == EOF) {
+        perror ("sscanf");
+        printf ("Error reading your port. See stderr for more details.\n");
+        exit (EXIT_FAILURE);
+    }
+    if (port < 1024 || port > 49151) {
+        printf ("Please use a port between 1024 and 49151.\n");
+        exit (EXIT_FAILURE);
+    }
 
     // Creating the pipes for IPC
 /*
@@ -105,7 +120,7 @@ main () {
 */
             signal (SIGUSR1, wake_up);
             pause ();
-            client_interface (father_pid);
+            client_interface (father_pid, port);
             printf ("Server-side ended unexpectedly\n");
             kill(father_pid, SIGUSR2);
             exit (EXIT_FAILURE);
