@@ -9,7 +9,8 @@
 #include "util.h"
 
 // 128 seems a good compromise
-#define BUFFSIZE 128
+#define BUFFSIZE    128
+#define KEYSIZE     16
 
 char    *cmd;
 pid_t   father_pid;
@@ -124,7 +125,25 @@ user_interface (pid_t pid) {
 
 
 static void
-help () {
+do_get () {
+    char filekey[KEYSIZE + 1]; // + 1 for '\0'
+    long beginning;
+    long end;
+
+    string_remove_trailer (cmd);
+    if (sscanf (cmd, "get %s %ld %ld", filekey, &beginning, &end) == EOF) {
+        perror ("sscanf");
+        printf ("Error scanning your request. See stderr for details.\n");
+        return;
+    }
+
+    // TODO: Handle get stuff...
+}
+
+
+
+static void
+do_help () {
     printf("\
 -= HELP =-\n\
 set                         lists the options available\n\
