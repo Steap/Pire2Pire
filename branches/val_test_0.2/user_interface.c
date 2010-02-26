@@ -15,7 +15,8 @@ char    *cmd;
 pid_t   father_pid;
 
 // Pre-declarations
-static void help ();
+static void do_get ();
+static void do_help ();
 static void quit ();
 
 void
@@ -69,34 +70,34 @@ user_interface (pid_t pid) {
         if (strstr (buffer, "\n") != NULL)
         {
             if (IS_CMD(cmd, "set")) {
-                printf("> set\n");
+                printf ("> set\n");
             }
             else if (IS_CMD (cmd, "help")) {
-                help ();
+                do_help ();
             }
             else if (IS_CMD (cmd, "list")) {
-                printf("> list\n");
+                printf ("> list\n");
             }
             else if (IS_CMD (cmd, "get")) {
-                printf("> get\n");
+                do_get (cmd);
             }
             else if (IS_CMD (cmd, "info")) {
-                printf("> info\n");
+                printf ("> info\n");
             }
             else if (IS_CMD (cmd, "download")) {
-                printf("> download\n");
+                printf ("> download\n");
             }
             else if (IS_CMD (cmd, "upload")) {
-                printf("> upload\n");
+                printf ("> upload\n");
             }
             else if (IS_CMD (cmd, "connect")) {
-                printf("> connect\n");
+                printf ("> connect\n");
             }
             else if (IS_CMD (cmd, "raw")) {
-                printf("> raw\n");
+                printf ("> raw\n");
             }
             else if (IS_CMD (cmd, "quit")) {
-                printf("Goodbye\n");
+                printf ("Goodbye\n");
                 break; // not quit () unless you free cmd
             }
             else {

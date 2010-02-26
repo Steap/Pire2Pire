@@ -106,3 +106,29 @@ se tape des vieilles transformations dès qu'on fait du réseau. Du coup le port
 est stocké dans la structure sockaddr_in sous sa forme htons-isée. Il convient
 si on veut l'afficher de lui repasser un coup de ntohs () afin de retrouver
 le port attendu.
+
+* Protocole d'envoi/réception
+
+Voilà mon idée du protocole, soit C le client (celui qui veut le fragment) et
+S le serveur (celui qui possède ce fragment). Soit k la clé du fichier et
+mettons que le fragment soit de l'octet 0 à l'octet 1023.
+C > get k 0 1024 > S:1338
+Là, S reçoit une requête, il forke pour gérer cette requête et rester en
+écoute d'autres requêtes. Dans le processus qui gère, on vérifie que le fichier
+existe et est lisible, puis on crée une nouvelle socket pour le transfert, et
+on envoie le message ready sur la socket initiale (celle où on a reçu le get) :
+S:1338 > ready k 0 S 4242 TCP 0 1024 > C
+Le client alors informé de l'envoi d'un paquet, forke et crée une socket de
+réception sur le port indiqué par le serveur (ici 4242). Il se connecte alors
+au serveur et peut lire le fichier envoyé :
+S:4242 > [fichier k 0 -> 1023] > C
+Une fois le transfert terminé, la socket de transfert est fermée, mais on peut
+continuer à discuter sur la socket de commande. Par exemple pour indiquer une
+erreur, ou bien plus usuellement pour le contrôle du paquet :
+C > checksum k 512 0 1024 > S:1338
+S:1338 > 0x0123456789ABCDEF > C
+S:1338 > 0xFEDCBA9876543210 > C
+Là il reste encore un flou sur la manière dont on renvoie les checksums, le
+protocole fourni n'explicitant pas ça. Soit on crée une nouvelle connexion de
+données de manière analogue à l'envoi du fichier, soit on inclut ça dans le
+protocole de commande d'une manière ou d'une autre.
