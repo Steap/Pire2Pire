@@ -71,11 +71,11 @@ main (int argc, char **argv) {
 
     // Creating the pipes for IPC
 /*
-    if (pipe (client_server_pipe_fd) == -1) {
+    if (pipe (client_server_pipe_fd) < 0) {
         perror ("pipe 1");
         exit (EXIT_FAILURE);
     }
-    if (pipe (client_server_pipe_fd) == -1) {
+    if (pipe (client_server_pipe_fd) < 0) {
         perror ("pipe 2");
         exit (EXIT_FAILURE);
     }

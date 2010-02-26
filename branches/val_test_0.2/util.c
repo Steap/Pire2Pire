@@ -7,7 +7,7 @@
 
 void
 socket_write (int socket, const char *msg) {
-    if(write (socket, msg, strlen (msg)) == -1)
+    if(send (socket, msg, strlen (msg), 0) < 0)
         perror ("write");
 }
 
