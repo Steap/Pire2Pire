@@ -317,7 +317,7 @@ handle_get (int sock, struct sockaddr_in addr, char *msg) {
             socket_write (sock, msg);
             socket_write (sock, "> Unable to access file '");
             socket_write (sock, filename);
-            socket_write (sock, " for reading.'\n");
+            socket_write (sock, "' for reading.\n");
         }
         return;
     }
