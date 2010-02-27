@@ -162,6 +162,8 @@ do_get () {
     }
     // Code written below is only executed by the child process
 
+    free (cmd);
+
     // FIXME: for now, filekey is filename, must use a key instead
     // FIXME: for now, beginning and end are unused, must be implemented
     // FIXME: for now, server is statically located at 127.0.0.1:1338
@@ -290,7 +292,7 @@ do_get () {
         close (file);
     }
     else if (IS_CMD (message, "error")) {
-        printf (message);
+        printf ("%s", message);
         // TODO
     }
     else {
