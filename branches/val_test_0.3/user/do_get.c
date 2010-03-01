@@ -27,28 +27,13 @@ do_get (char *cmd) {
     int                 sock;
     struct sockaddr_in  addr;
 
-    string_remove_trailer (cmd);
     if (sscanf (cmd, "get %s %ld %ld", filekey, &beginning, &end) == EOF) {
         perror ("sscanf");
         printf ("Error scanning your request. See stderr for details.\n");
         return;
     }
 
-    // FIXME: the calling process should fork!
-    switch (fork ()) {
-        case -1:
-            perror ("fork");
-            exit (EXIT_FAILURE);
-            break;
-        case 0:
-            break;
-        default:
-            return;
-            break;
-    }
-    // Code written below is only executed by the child process
 
-    free (cmd);
 
     // FIXME: for now, filekey is filename, must use a key instead
     // FIXME: for now, beginning and end are unused, must be implemented
@@ -73,6 +58,7 @@ do_get (char *cmd) {
     socket_write (sock, "get ");
     socket_write (sock, filekey);
     socket_write (sock, "\n\0");
+#if 1
 
     if ((message = calloc (BUFFSIZE + 1, sizeof (char))) == NULL) {
         perror ("Allocating memory for message");
@@ -189,6 +175,7 @@ do_get (char *cmd) {
     }
 
     free (message);
+    free (cmd);
 
-    exit (EXIT_SUCCESS);
+#endif
 }

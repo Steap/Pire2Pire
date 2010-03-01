@@ -2,7 +2,8 @@
 #include <stdio.h>
 
 void
-do_help () {
+do_help (char *msg) {
+    free (msg);
     printf("\
 -= HELP =-\n\
 set                         lists the options available\n\

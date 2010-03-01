@@ -11,7 +11,8 @@
 
 #define BUFFSIZE    128
 
-char    *cmd;
+char    *cmd                 = NULL;
+void    (*callback) (char *) = NULL;
 pid_t   father_pid;
 
 // Pre-declarations
@@ -71,13 +72,13 @@ user_interface (pid_t pid) {
                 printf ("> set\n");
             }
             else if (IS_CMD (cmd, "help")) {
-                do_help ();
+                callback = &do_help;
             }
             else if (IS_CMD (cmd, "list")) {
                 printf ("> list\n");
             }
             else if (IS_CMD (cmd, "get")) {
-                do_get (cmd);
+                callback = &do_get;
             }
             else if (IS_CMD (cmd, "info")) {
                 printf ("> info\n");
@@ -100,8 +101,24 @@ user_interface (pid_t pid) {
             }
             else {
                 printf("Unknown command. Type help for the command list.\n");
+                callback = NULL;
             }
 
+            string_remove_trailer (cmd); 
+
+            if (callback) {
+                switch (fork ()) {
+                case -1:
+                    //
+                    break;
+                case 0:
+                    (*callback) (cmd);
+                    exit (EXIT_SUCCESS);
+                    break;
+                default:
+                    break;
+                }
+            }
             if ((cmd = realloc (cmd, BUFFSIZE+1)) == NULL) {
                 fprintf (stderr, "Allocating memory for user command");
                 quit ();
@@ -122,7 +139,11 @@ user_interface (pid_t pid) {
 static void
 quit () {
     printf ("Exiting user interface properly\n");
-    free (cmd);
+    
+    if (cmd)
+        free (cmd);
+
+    
     if (kill (father_pid, SIGUSR1) < 0) {
         perror ("kill");
         exit (EXIT_FAILURE);
