@@ -7,6 +7,7 @@
 
 #include "do_get.h"
 #include "do_help.h"
+#include "do_set.h"
 #include "../util/string_util.h"
 
 #define BUFFSIZE    128
@@ -70,6 +71,7 @@ user_interface (pid_t pid) {
         {
             if (IS_CMD(cmd, "set")) {
                 printf ("> set\n");
+                callback = &do_set;
             }
             else if (IS_CMD (cmd, "help")) {
                 callback = &do_help;

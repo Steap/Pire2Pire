@@ -1,11 +1,12 @@
 CC=gcc
-CFLAGS=-Wextra -Wall -g -std=c99 -D_POSIX_SOURCE
+CFLAGS=-Wextra -Wall -g -std=c99 -D_POSIX_SOURCE -D_BSD_SOURCE
 LDFLAGS=
 EXECUTABLE=p2p
 
 USER_SOURCES=   user/interface.c        \
                 user/do_get.c           \
-                user/do_help.c
+                user/do_help.c          \
+		user/do_set.c
 
 CLIENT_SOURCES= client/interface.c      \
                 client/handle_client.c  \
@@ -13,7 +14,8 @@ CLIENT_SOURCES= client/interface.c      \
 
 UTIL_SOURCES=   util/logger_util.c      \
                 util/socket_util.c      \
-                util/string_util.c
+                util/string_util.c      \
+		util/cmd.c
 
 SOURCES=        p2p.c                   \
                 $(USER_SOURCES)         \
