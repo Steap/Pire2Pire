@@ -5,10 +5,18 @@
 #include <signal.h>     // signal, kill
 #include <string.h>     // strcpy, strstr
 
+#include "../util/string_util.h"
+
+/* Please keep these in alphabetical order */
+#include "do_connect.h"
+#include "do_download.h"
 #include "do_get.h"
 #include "do_help.h"
+#include "do_info.h"
+#include "do_list.h"
+#include "do_raw.h"
 #include "do_set.h"
-#include "../util/string_util.h"
+#include "do_upload.h"
 
 #define BUFFSIZE    128
 
@@ -70,32 +78,31 @@ user_interface (pid_t pid) {
         if (strstr (buffer, "\n") != NULL)
         {
             if (IS_CMD(cmd, "set")) {
-                printf ("> set\n");
                 callback = &do_set;
             }
             else if (IS_CMD (cmd, "help")) {
                 callback = &do_help;
             }
             else if (IS_CMD (cmd, "list")) {
-                printf ("> list\n");
+                callback = &do_list;
             }
             else if (IS_CMD (cmd, "get")) {
                 callback = &do_get;
             }
             else if (IS_CMD (cmd, "info")) {
-                printf ("> info\n");
+                callback = &do_info;
             }
             else if (IS_CMD (cmd, "download")) {
-                printf ("> download\n");
+                callback = &do_download;
             }
             else if (IS_CMD (cmd, "upload")) {
-                printf ("> upload\n");
+                callback = &do_upload;
             }
             else if (IS_CMD (cmd, "connect")) {
-                printf ("> connect\n");
+                callback = &do_connect;
             }
             else if (IS_CMD (cmd, "raw")) {
-                printf ("> raw\n");
+                callback = &do_raw;
             }
             else if (IS_CMD (cmd, "quit")) {
                 printf ("Goodbye\n");
