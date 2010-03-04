@@ -1,0 +1,125 @@
+ARCHITECTURE
+
+La solution se décompose en fait en deux programmes :
+- une interface client (dossier client/) qui se charge de récupérer les
+  requêtes de l'utilisateur (invite de commande) et d'envoyer le cas échéantles
+messages correspondants au démon serveur.
+- un démon serveur (dossier daemon/) qui se charge d'effectuer les requêtes
+  client et des transferts et communications avec d'autres démons serveur.
+
+Pour discuter avec le démon serveur, l'interface client se connecte à lui comme
+n'importe quel autre démon serveur, c'est-à-dire via une socket. Lorsque le
+démon serveur reçoit une requête, il peut analyser si c'est une requête client
+ou une requête serveur (grâce au protocole suivi par la commande) ainsi que la
+provenance de la commande (via la structure sockaddr_in liée à la socket).
+
+Ainsi, il pourra en fonction de la provenance accepter ou non d'effectuer la
+requête (par exemple une requête client get ne devrait pouvoir être envoyée que
+par une adresse autorisée à télécharger des fichiers sur la machine, par
+défaut, uniquement localhost).
+
+
+
+FONCTIONNEMENT COTE CLIENT
+
+A l'ouverture, le client essaie de se connecter au démon spécifié (IP+port, on
+pourra mettre une valeur par défaut ou en arguments). Une fois connecté, il
+propose alors à son utilisateur un invite de commande. On distingue deux types
+de commande utilisateur :
+- les commandes locales : ces commandes ne nécessitent pas de requête, elles
+  peuvent être traitées immédiatement (sous réserve qu'elles ne nécessitent pas
+de calculs d'une longueur abusive, ce qui devrait être le cas) avant de rentre
+l'invite ;
+- les commandes distantes : ces commandes nécessitent de communiquer avec le
+  démon, et peuvent également nécessiter que lui-même communique avec d'autres
+démons. Ainsi, on a aucune assurance quant au temps d'exécution de la commande,
+or on souhaite pouvoir envoyer d'autres commandes. Il doit donc y avoir un
+mécanisme traitant la requête de manière asynchrone.
+
+
+
+FONCTIONNEMENT COTE DEMON
+
+Pour connecter le démon à un réseau, on pense pour l'instant obliger le démon à
+connaître l'adresse d'entrée (IP+port) d'au moins un élément d'un réseau
+existant. Ainsi, un premier démon pourra être lancé et sera isolé, alors qu'en
+en lançant un second, et en précisant dans la ligne de commande l'IP et le port
+du premier, ces deux démons deviennent voisins.
+
+Un démon serveur devra d'une manière ou d'une autre gérer plusieurs flots
+d'exécution, et des données partagées de ces flots :
+- un flot d'exécution servira d'accueil des requêtes (point d'entrée client)
+  mais ne se chargera pas de leur exécution, qui sera reléguée à d'autres
+flots. Celui-ci sera une boucle infinie acceptant tout au long de son exécution
+des connexions, et déléguant le traitement à un autre flot (en lui passant la
+socket connectée et la structure sockaddr_in).
+- un flot d'exécution devrait pouvoir servir de gestion des pairs connus. Il
+  devrait disposer d'une structure conteneur de clients, partagée avec les
+autres flots.
+
+
+
+POINTS DE REFLEXION
+- Centralise-t-on les envois de données dans un espèce de manager avec une file
+  d'attente d'envoi ? (Quels problèmes cela pose-t-il ? Est-ce que ça justifie
+le champ 'delay' de la commande ready ?)
+
+
+
+DETAILS D'IMPLEMENTATION
+* Fonctionnement des sockets
+Il faut distinguer plusieurs sockets dans la programmation d'un serveur :
+- la première socket est le point d'entrée (socket d'écoute). Notre serveur a
+  un port d'entrée, sur lequel des clients (que ce soit une interface
+utilisateur ou un autre démon serveur) peuvent initialiser une communication.
+Lorsque quelqu'un vient se connecter sur ce port, la connexion est acceptée et
+l'OS attribue une nouvelle socket (connectée) et un nouveau port à cette
+communication. Ainsi, la socket d'écoute est libérée pour attendre de nouveaux
+clients sur le port d'entrée, alors que le client précédent peut continuer à
+dialoguer avec le serveur sur le port qui lui a été attribué.
+- la deuxième socket est donc cette socket connectée, dans laquelle le client
+  et le serveur peuvent discuter tant que la connexion n'est pas rompue
+(fermeture de la socket d'un côté ou de l'autre). Dans ce cas, il faudra
+repasser par le point d'entrée.
+- une troisième socket à envisager est, dans le cas d'un envoi de données, la
+  socket de transfert des données. On utilisera en effet une (voire plusieurs
+simultanément) socket différente de celle de l'envoi de requêtes.
+
+
+
+* Détails à propos de certaines commandes de protocole démon
+Certaines commandes sont peu claires dans l'énoncé, notons ici quelques
+éclaircissements quant à leur utilité et leur fonctionnement :
+- ready
+    A priori, la commande ready va servir à indiquer l'imminence de la
+possibilité d'un transfert de fichier, et à préciser sur quel port notre
+serveur a choisi de le faire. En effet, on crée une nouvelle socket sur un port
+libre alétoire pour effectuer le transfert des données, il faut donc pouvoir
+indiquer au client quel port il devra attaquer pour pouvoir récupérer les
+données.
+- checksum
+    Un doute subsiste quand à cette commande vis-à-vis du protocole d'envoi,
+c'est le moment auquel ce message est envoyé. A priori on pourrait
+désynchroniser ce message de l'envoi des fichiers réels, reste à savoir comment
+on les envoie en pratique (après avoir envoyé ready ? avant ? de manière
+asynchrone complète ?)
+- redirect
+    Je ne sais pas encore à quel moment on pourra déterminer qu'un fichier
+qu'on a pas est disponible ailleurs et effectuer un redirect...
+
+
+
+* Détails à propos de certaines commandes du protocole client
+Deux commandes restent bizarres :
+- connect
+    A priori, une utilité de connect pourrait être de se faire effectivement
+connecter deux réseaux de voisinages distincts en faisant connecter une machine
+d'un réseau à une machine de l'autre. Ainsi, par propagation du voisinage,
+toutes les machines de ces deux réseaux devraient n'en former plus qu'un, sans
+qu'on ait à redémarrer les démons pour les rattacher à un nouveau réseau.
+- raw
+    Cette commande permet d'envoyer depuis notre interface client une commande
+du protocole serveur directement au serveur démon auquel on est connecté en vu
+que lui-même l'exécute. L'utilité pourrait être de faire du debug, en pouvant
+simuler le protocole de commande via l'interface d'utilisation... En pratique
+ça a tout de même l'air assez brainfucké.
