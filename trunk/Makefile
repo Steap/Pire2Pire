@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wextra -Wall -g -std=c99 
+CFLAGS=-Wextra -Wall -g -std=c99 -D_BSD_SOURCE
 LDFLAGS=
 EXECUTABLE=p2p
 
