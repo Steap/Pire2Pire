@@ -22,6 +22,7 @@ function server_start {
         echo '[FAIL] It seems like the daemon is already running';
         exit 1;
     fi
+    touch $LOCK_FILE
     $P2P_DAEMON
     echo ' * Daemon started'
 }
@@ -36,6 +37,7 @@ function server_stop {
         kill -TERM `cat ${LOCK_FILE}`;
         echo " * Sending SIGKILL to process ${pid}";
         kill -KILL $pid;
+        rm -f $LOCK_FILE
     fi
 }
 
