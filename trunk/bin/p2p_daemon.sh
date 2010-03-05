@@ -1,9 +1,10 @@
 #!/bin/bash
 
+DIR=$(cd $(dirname $0); pwd -P)
 SELF=$(cd $(dirname $0); pwd -P)/$(basename $0)
-P2P_DAEMON='./daemon'
-LOCK_FILE='/tmp/k'
+P2P_DAEMON=${DIR}/daemon
 
+LOCK_FILE=/tmp/k
 function usage {
     echo "Usage :"
     echo -n "$(cd $(dirname $0); pwd -P)/$(basename $0) "
@@ -44,7 +45,6 @@ function server_restart {
 }
 
 # Main
-
 case "${1:-''}" in
     'restart')
         server_restart;
