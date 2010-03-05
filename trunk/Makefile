@@ -5,7 +5,8 @@ CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 
 CLIENT_SOURCES  =
-DAEMON_SOURCES  =   daemon/main.c
+DAEMON_SOURCES  =   daemon/main.c \
+		    daemon/conf.c
 UTIL_SOURCES    =   util/logger.c
 
 CLIENT_OBJ  =   $(CLIENT_SOURCES:.c=.o)

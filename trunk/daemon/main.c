@@ -14,11 +14,15 @@
 
 #include <errno.h>
 #include "../util/logger.h"
+#include "conf.h"
 
 #define LOG_FILE        "/tmp/g"
 #define LOCK_FILE       "/tmp/k"
 
 static FILE *log;
+
+/* Preferences defined in daemon.conf. */
+struct prefs *prefs;
 
 
 /* Rename, plz... Or not, it is just  a silly test */
@@ -53,20 +57,15 @@ void daemonize(void) {
             exit (0);
             break;
     }
-    /*
-     * We should certainly do that, but there will be many bad file descriptors,
-     * which definitely sucks ass.
-     * FIXME : find a clever way to close all fds ?
-     */
-#if 0
-    for (i = 0; i < getdtablesize (); i--)
-        if (close (i) == -1)
-            perror ("close");
-#endif
     log = fopen (LOG_FILE, "w");
 
     setsid ();
     log_success (log, "setsid ok");
+
+    close (STDIN_FILENO);
+    close (STDOUT_FILENO);
+    close (STDERR_FILENO);
+    log_success (log, "Closed stdin, stdout, stderr.");
 
     umask (027);
     log_success (log, "Set file permissions to 750.");
@@ -105,8 +104,8 @@ void daemonize(void) {
 
 }
 
-#define PORT 1339
 #define NB_QUEUE 10
+
 static void
 start_server (void) {
     int yes =1;
@@ -123,7 +122,7 @@ start_server (void) {
 
     sa.sin_family        = AF_INET;
     sa.sin_addr.s_addr   = INADDR_ANY;
-    sa.sin_port          = htons (PORT);
+    sa.sin_port          = htons (prefs->port);
 
     if (setsockopt (sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (int)) < 0) {
         log_failure (log, "Setsockopt failed.");
@@ -139,7 +138,7 @@ start_server (void) {
         exit (1);
     }
     else {
-        log_success (log, "Server is ready.");
+        log_success (log, "Server is ready (port : %d).", prefs->port);
     }
 
     for (;;) {
@@ -160,8 +159,10 @@ start_server (void) {
 }
 
 int
-main ()
+main (int argc, char *argv[])
 {
+    (void )argc;
+    prefs = conf_retrieve (argv[1]);
     daemonize ();
     start_server ();
     for (;;)

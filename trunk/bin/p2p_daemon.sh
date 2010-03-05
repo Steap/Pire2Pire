@@ -1,8 +1,17 @@
 #!/bin/bash
 
+# Absolute link to the bin directory
 DIR=$(cd $(dirname $0); pwd -P)
+
+# Absolute link to this script
 SELF=$(cd $(dirname $0); pwd -P)/$(basename $0)
+
+# Absolute link to the daemon
 P2P_DAEMON=${DIR}/daemon
+
+# Absolute link to the daemon conf file.
+# TODO : irl, it would be /etc/<app>/daemon.conf
+DAEMON_CONF_FILE=${DIR}/../conf/daemon.conf
 
 LOCK_FILE=/tmp/k
 function usage {
@@ -23,7 +32,9 @@ function server_start {
         exit 1;
     fi
 #    touch $LOCK_FILE
-    $P2P_DAEMON
+    # The absolute link of the daemon's conf file is passed as an argument. It
+    # does suck ass, but eh... Marked as FIXME !
+    $P2P_DAEMON $DAEMON_CONF_FILE
     echo ' * Daemon started'
 }
 
@@ -52,6 +63,9 @@ function server_restart {
 }
 
 # Main
+#echo "DIR is ${DIR}"
+#echo "DAEMON is ${P2P_DAEMON}"
+#exit 0
 case "${1:-''}" in
     'restart')
         server_restart;
