@@ -17,7 +17,7 @@ LOCK_FILE=/tmp/k
 function usage {
     echo "Usage :"
     echo -n "$(cd $(dirname $0); pwd -P)/$(basename $0) "
-    echo "[start | stop | restart]"
+    echo "[start | stop | restart | status]"
 }
 
 function server_start {
@@ -62,6 +62,14 @@ function server_restart {
     $SELF stop && $SELF start; 
 }
 
+function server_status {
+    if [ ! -f $LOCK_FILE ]
+    then
+        echo "The daemon is down.";
+    else
+        echo "The daemon is running with PID `cat ${LOCK_FILE}`"
+    fi
+}
 # Main
 #echo "DIR is ${DIR}"
 #echo "DAEMON is ${P2P_DAEMON}"
@@ -72,6 +80,9 @@ case "${1:-''}" in
         ;;
     'start')
         server_start;
+        ;;
+    'status')
+        server_status;
         ;;
     'stop')
         server_stop; 
