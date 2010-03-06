@@ -1,11 +1,13 @@
 CC=gcc
 CFLAGS=-Wextra -Wall -g -std=c99 -D_BSD_SOURCE
-LDFLAGS=-lreadline
+LDFLAGS=
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 
-CLIENT_SOURCES  =   client/main.c
-DAEMON_SOURCES  =   daemon/main.c \
+CLIENT_SOURCES  =   client/main.c   \
+            client/send_cmd.c       \
+            client/util/prompt.c
+DAEMON_SOURCES  =   daemon/main.c   \
 		    daemon/conf.c
 UTIL_SOURCES    =   util/logger.c
 
