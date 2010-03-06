@@ -1,10 +1,10 @@
 CC=gcc
 CFLAGS=-Wextra -Wall -g -std=c99 -D_BSD_SOURCE
-LDFLAGS=
+LDFLAGS=-lreadline
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 
-CLIENT_SOURCES  =
+CLIENT_SOURCES  =   client/main.c
 DAEMON_SOURCES  =   daemon/main.c \
 		    daemon/conf.c
 UTIL_SOURCES    =   util/logger.c
@@ -16,7 +16,7 @@ UTIL_OBJ    =   $(UTIL_SOURCES:.c=.o)
 .PHONY: all clean clear
 
 # FIXME: add client when there will be sources...
-all: clear daemon
+all: clear client daemon
 
 client: $(CLIENT_SOURCES) $(CLIENT_EXEC)
 
