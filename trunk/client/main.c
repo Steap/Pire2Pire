@@ -32,7 +32,7 @@ int main (int argc, char **argv) {
                 printf ("Please use a port between 1024 and 49151.\n");
                 exit (EXIT_FAILURE);
             }
-            server_addr.sin_port = htons (daemon_port);
+            daemon_addr.sin_port = htons (daemon_port);
             break;
         default:
             printf ("Usage : %s [IP PORT]\n", argv[0]);
