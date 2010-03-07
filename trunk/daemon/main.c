@@ -15,11 +15,12 @@
 #include <errno.h>
 #include "../util/logger.h"
 #include "conf.h"
+#include "client_handler.h"
 
 #define LOG_FILE        "/tmp/g"
 #define LOCK_FILE       "/tmp/k"
 
-static FILE *log;
+FILE *log_file;
 
 /* Preferences defined in daemon.conf. */
 struct prefs *prefs;
@@ -29,10 +30,10 @@ struct prefs *prefs;
 static void
 signal_handler (int sig) {
     (void) sig;
-    if (log)
+    if (log_file)
     {    
-        fprintf (log, "Received signal !\n");
-        fflush (log);
+        fprintf (log_file, "Received signal !\n");
+        fflush (log_file);
     }
 }
 
@@ -40,8 +41,8 @@ static void
 server_stop (int sig) {
     (void) sig;
     if (unlink (LOCK_FILE) < 0)
-        log_failure (log, "Could not destroy the lock file");
-    log_success (log, "Stopping server, waiting for SIGKILL");    
+        log_failure (log_file, "Could not destroy the lock file");
+    log_success (log_file, "Stopping server, waiting for SIGKILL");    
 }
 
 void daemonize(void) {
@@ -57,50 +58,50 @@ void daemonize(void) {
             exit (0);
             break;
     }
-    log = fopen (LOG_FILE, "w");
+    log_file = fopen (LOG_FILE, "w");
 
     setsid ();
-    log_success (log, "setsid ok");
+    log_success (log_file, "setsid ok");
 
     close (STDIN_FILENO);
     close (STDOUT_FILENO);
     close (STDERR_FILENO);
-    log_success (log, "Closed stdin, stdout, stderr.");
+    log_success (log_file, "Closed stdin, stdout, stderr.");
 
     umask (027);
-    log_success (log, "Set file permissions to 750.");
+    log_success (log_file, "Set file permissions to 750.");
 
     lock = open (LOCK_FILE, O_RDWR | O_CREAT, 0640);
     if (lock < 0)
-        log_failure (log, "Failed to open lock file (%s).", LOCK_FILE);
+        log_failure (log_file, "Failed to open lock file (%s).", LOCK_FILE);
     else
-        log_success (log, "Opened lock file (%s).", LOCK_FILE);
+        log_success (log_file, "Opened lock file (%s).", LOCK_FILE);
 
     if (lockf (lock, F_TLOCK, 0) < 0) {
-        log_failure (log, "Could not lock %s", LOCK_FILE);
+        log_failure (log_file, "Could not lock %s", LOCK_FILE);
     }
 
     sprintf (str, "%d\n", getpid ());
     write (lock, str, strlen (str));
     if (close (lock) < 0)
-        log_failure (log, "Failed to close LOCK_FILE (%s).", LOCK_FILE);
+        log_failure (log_file, "Failed to close LOCK_FILE (%s).", LOCK_FILE);
     else
-        log_success (log, "Created lock file (%s)", LOCK_FILE);
+        log_success (log_file, "Created lock file (%s)", LOCK_FILE);
 
 
     signal (SIGCHLD, SIG_IGN);
-    log_success (log, "Ignoring SIGCHLD");
+    log_success (log_file, "Ignoring SIGCHLD");
     signal (SIGTSTP, SIG_IGN);
-    log_success (log, "Ignoring SIGTSTP");
+    log_success (log_file, "Ignoring SIGTSTP");
     signal (SIGTTOU, SIG_IGN);
-    log_success (log, "Ignoring SIGTTOU");
+    log_success (log_file, "Ignoring SIGTTOU");
     signal (SIGTTIN, SIG_IGN);
-    log_success (log, "Ignoring SIGTTIN");
+    log_success (log_file, "Ignoring SIGTTIN");
 
     signal (SIGHUP, signal_handler); 
     signal (SIGTERM, server_stop);
 
-    log_success (log, "Connected signal handler.");
+    log_success (log_file, "Connected signal handler.");
 
 }
 
@@ -113,11 +114,11 @@ start_server (void) {
     struct sockaddr_in sa;
 
     if ((sd = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-        log_failure (log, "Socket creation failed.");
+        log_failure (log_file, "Socket creation failed.");
         exit (1);
     }
     else {
-        log_success (log, "Created socket.");
+        log_success (log_file, "Created socket.");
     }
 
     sa.sin_family        = AF_INET;
@@ -125,36 +126,41 @@ start_server (void) {
     sa.sin_port          = htons (prefs->port);
 
     if (setsockopt (sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (int)) < 0) {
-        log_failure (log, "Setsockopt failed.");
+        log_failure (log_file, "Setsockopt failed.");
     }
 
     if (bind (sd, (struct sockaddr *) &sa, sizeof (sa)) < 0) {
-        log_failure (log, "Could not assign a local address using bind %s.", errno);
+        log_failure (log_file, "Could not assign a local address using bind %s.", errno);
         exit (1);
     }
      
     if (listen (sd, NB_QUEUE) < 0) {
-        log_failure (log, "The socket could not be marked as a passive one.");
+        log_failure (log_file, "The socket could not be marked as a passive one.");
         exit (1);
     }
     else {
-        log_success (log, "Server is ready (port : %d).", prefs->port);
+        log_success (log_file, "Server is ready (port : %d).", prefs->port);
     }
 
     for (;;) {
         if (accept (sd, NULL, NULL) < 0) {
-            log_failure (log, "Failed to accept incoming connection.");
-            exit (EXIT_FAILURE);
+            log_failure (log_file, "Failed to accept incoming connection.");
+            //exit (EXIT_FAILURE);
         } 
+#if 0
         switch (fork ()) {
             case -1:
-                log_failure (log, "Could not fork !");
+                log_failure (log_file, "Could not fork !");
                 break;
             case 0:
-                log_success (log, "Should handle client");
+                log_success (log_file, "Should handle client");
+                handle_request ("fake_cmd");
+                log_success (log_file, "xxShould handle client");
             default:
                 break;
         }
+#endif
+        handle_request ("fake");
     } 
 }
 
@@ -167,7 +173,6 @@ main (int argc, char *argv[])
     start_server ();
     for (;;)
         sleep (1);   
-    fprintf (stderr, "LOL");
     
     return EXIT_SUCCESS;
 }
