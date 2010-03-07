@@ -17,6 +17,7 @@ documentation and/or software.
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <string.h>
 #include "md5_global.h"
@@ -27,10 +28,10 @@ documentation and/or software.
 #define TEST_BLOCK_LEN 1000
 #define TEST_BLOCK_COUNT 1000
 
-static void MDString PROTO_LIST ((char *));
+static void MDString PROTO_LIST ((unsigned char[16], char *));
 static void MDTimeTrial PROTO_LIST ((void));
-static void MDTestSuite PROTO_LIST ((void));
-static void MDFile PROTO_LIST ((char *));
+static void MDFile PROTO_LIST ((unsigned char[16], char *));
+static void MDPartOfFile PROTO_LIST ((unsigned char[16], char *, int, int));
 static void MDFilter PROTO_LIST ((void));
 static void MDPrint PROTO_LIST ((unsigned char[16]));
 
@@ -39,43 +40,55 @@ static void MDPrint PROTO_LIST ((unsigned char[16]));
 Arguments (may be any combination):
   -sstring - digests string
   -t       - runs time trial
-  -x       - runs test script
   filename - digests file
   (none)   - digests standard input
  */
 int main (int argc, char *argv[]) {
     int i;
+    unsigned char digest[16];
 
     if (argc > 1)
 	    for (i = 1; i < argc; i++)
-	        if (argv[i][0] == '-' && argv[i][1] == 's')
-		        MDString (argv[i] + 2);
+	        if (argv[i][0] == '-' && argv[i][1] == 's') {
+		        MDString (&digest, argv[i] + 2);
+                /*
+                printf ("\nMD%d (\"%s\") = ", MD, argv[i] + 2);
+                MDPrint (digest);
+                printf ("\n");
+                */
+            }
 	        else if (strcmp (argv[i], "-t") == 0)
 		        MDTimeTrial ();
-	        else if (strcmp (argv[i], "-x") == 0)
-		        MDTestSuite ();
-	        else
-		        MDFile (argv[i]);
+	        else {
+		        MDFile (&digest, argv[i]);
+                //MDPartOfFile (&digest, argv[i], 1000, 1003);
+                /*
+                printf ("\nMD%d (%s) = ", MD, argv[i]);
+                MDPrint (digest);
+                printf ("\n");
+                */
+            }
     else
 	    MDFilter ();
 
     return (0);
 }
 
-/* Digests a string and prints the result.
+/* Digests a string and puts the result into digest[16].
  */
-static void MDString (char *string) {
+static void MDString (unsigned char digest[16], char *string) {
     MD5_CTX context;
-    unsigned char digest[16];
     unsigned int len = strlen (string);
 
     MD5Init (&context);
     MD5Update (&context, string, len);
     MD5Final (digest, &context);
 
+    /*
     printf ("MD%d (\"%s\") = ", MD, string);
     MDPrint (digest);
     printf ("\n");
+    */
 }
 
 /* Measures the time to digest TEST_BLOCK_COUNT TEST_BLOCK_LEN-byte
@@ -116,29 +129,13 @@ static void MDTimeTrial () {
 							    startTime));
 }
 
-/* Digests a reference suite of strings and prints the results.
+/* Digests an entire file and puts the result into digest.
  */
-static void MDTestSuite () {
-    printf ("MD%d test suite:\n", MD);
-
-    MDString ("");
-    MDString ("a");
-    MDString ("abc");
-    MDString ("message digest");
-    MDString ("abcdefghijklmnopqrstuvwxyz");
-    MDString
-	("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
-    MDString ("1234567890123456789012345678901234567890\
-1234567890123456789012345678901234567890");
-}
-
-/* Digests a file and prints the result.
- */
-static void MDFile (char *filename) {
+static void MDFile (unsigned char digest[16], char *filename) {
     FILE *file;
     MD5_CTX context;
     int len;
-    unsigned char buffer[1024], digest[16];
+    unsigned char buffer[1024];
 
     if ((file = fopen (filename, "rb")) == NULL)
 	    printf ("%s can't be opened\n", filename);
@@ -150,10 +147,71 @@ static void MDFile (char *filename) {
 	    MD5Final (digest, &context);
 
 	    fclose (file);
-
+        /*
 	    printf ("MD%d (%s) = ", MD, filename);
 	    MDPrint (digest);
 	    printf ("\n");
+        */
+    }
+}
+
+/* Digests a file between 'beginning' and 'end' octets and puts the result into digest.
+ */
+static void MDPartOfFile (unsigned char digest[16], char *filename, int beginning, int end) {
+    FILE *file;
+    MD5_CTX context;
+    int len;
+    unsigned char buffer[1024];
+    int size = end - beginning;
+
+    if ((file = fopen (filename, "rb")) == NULL) {
+	    perror ("file can't be opened\n");
+        exit (EXIT_FAILURE);
+        }
+    else if (size < 0) {
+        perror ("Negative size");
+        exit (EXIT_FAILURE);
+    }
+    else {
+	    MD5Init (&context);
+        
+        /* Puts cursor at the beginning octet */
+        while (beginning > 1024) {
+            if ((len = fread (buffer, 1, 1024, file)) == 0) {
+                perror ("End of file");
+                exit (EXIT_FAILURE);
+            }
+            beginning -= 1024;
+        }
+        if ((len = fread (buffer, 1, beginning-1, file)) == 0) {
+            perror ("End of file");
+            exit (EXIT_FAILURE);
+        }
+
+        /* Reads end-beginning octets */
+        while (size > 1024) {
+            if ((len = fread(buffer, 1, 1024, file)) == 0) {
+                perror ("End of file");
+                exit (EXIT_FAILURE);
+                }
+            MD5Update (&context, buffer, len);
+            size -= 1024;
+        }
+        if ((len = fread (buffer, 1, size, file)) == 0) {
+            perror ("End of file before end");
+            exit (EXIT_FAILURE);
+        }
+
+        MD5Update (&context, buffer, len);
+            
+	    MD5Final (digest, &context);
+
+	    fclose (file);
+        /*
+	    printf ("MD%d (%s) = ", MD, filename);
+	    MDPrint (digest);
+	    printf ("\n");
+        */
     }
 }
 
