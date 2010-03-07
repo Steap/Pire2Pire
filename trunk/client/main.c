@@ -25,8 +25,14 @@ connect IP:PORT             connects to another program\n\
 raw IP:PORT CMD             sends a command to another program\n\
 quit                        exits the program\n"
 
-/* Lazy comparison of cmd and msg (stops at the end of cmd) */
-#define IS_CMD(msg, cmd) (strncmp ((msg), (cmd), strlen (cmd)) == 0)
+/* Lazy comparison of cmd and msg */
+#define IS_CMD(msg, cmd) (                      \
+(msg[strlen (cmd)] == ' '                       \
+    || msg[strlen (cmd)] == '\n')               \
+&& (strncmp ((msg), (cmd), strlen (cmd)) == 0)  \
+)
+
+static int is_known_command (const char *input);
 
 int main (int argc, char **argv) {
     int                 daemon_port;
@@ -36,10 +42,10 @@ int main (int argc, char **argv) {
     // Configure daemon IP and port
     switch (argc) {
         case 1:     // ./client
-            // FIXME: 1338 must be replaces by a port read in daemon conf
-            printf ("No [IP PORT] specified, using default 127.0.0.1:1338.\n");
+            // FIXME: 1234 must be replaced by a port read in daemon conf
+            printf ("No [IP PORT] specified, using default 127.0.0.1:1234.\n");
             inet_aton ("127.0.0.1", &daemon_addr.sin_addr);
-            daemon_addr.sin_port = htons (1338);
+            daemon_addr.sin_port = htons (1234);
             break;
         case 3:     // ./client IP PORT
             // Retrieve daemon IP
@@ -71,7 +77,8 @@ int main (int argc, char **argv) {
             free (user_input);
             break;
         }
-        else {
+        // TODO: think about whether known commands are checked here
+        else if (is_known_command (user_input)) {
             switch (fork ()) {
                 case -1:
                     perror ("fork");
@@ -84,6 +91,9 @@ int main (int argc, char **argv) {
                     break;
             }
         }
+        else {
+            printf ("Unknown command.\n");
+        }
         free (user_input);
         user_input = NULL;
     }
@@ -93,5 +103,27 @@ int main (int argc, char **argv) {
     return EXIT_SUCCESS;
 }
 
-// Send cmd to the address and print the response
+// Returns 1 if the command is known, 0 otherwise
+static int
+is_known_command (const char *input) {
+    static char* known_commands[] = {
+        "list",
+        "file",
+        "get",
+        "traffic",
+        "ready",
+        "checksum",
+        "neighbourhood",
+        "neighbour",
+        "redirect",
+        "error",
+        NULL
+    };
 
+    for (int i = 0; known_commands[i] != NULL; i++) {
+        if (IS_CMD (input, known_commands[i])) {
+            return 1;
+        }
+    }
+    return 0;
+}

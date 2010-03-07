@@ -3,6 +3,10 @@
 #include <netinet/in.h> // sockaddr_in, socket (), ...
 #include <unistd.h>     // close ()
 #include <string.h>     // strlen ()
+#include <errno.h>      // errno
+
+#define BUFFER_SIZE 9
+#define TIMEOUT     1   // seconds
 
 void
 send_cmd (const char *cmd, struct sockaddr_in dest_addr) {
@@ -10,12 +14,15 @@ send_cmd (const char *cmd, struct sockaddr_in dest_addr) {
     int     nb_sent;
     int     nb_sent_sum;
     int     send_size;
-/* TODO: uncomment this and below if the daemon actually responds
     int     nb_received;
-    char    *response;
     char    buffer[BUFFER_SIZE];
     int     buffer_offset = 0;
-*/
+    char    *response = NULL;
+    fd_set  sock_set;
+    int     select_return;
+
+    struct timeval      timeout;
+
     dest_sock = socket (AF_INET, SOCK_STREAM, 0);
     if (dest_sock < 0) {
         perror ("socket");
@@ -28,7 +35,7 @@ send_cmd (const char *cmd, struct sockaddr_in dest_addr) {
         exit (EXIT_FAILURE);
     }
 
-    // strlen (cmd) + 1 to send the terminating null byte '\0'
+    // strlen (cmd) + 1 to send '\n'
     send_size = strlen (cmd) + 1;
 
     // Send the command
@@ -44,31 +51,50 @@ send_cmd (const char *cmd, struct sockaddr_in dest_addr) {
         }
         nb_sent_sum += nb_sent;
     }
-/* TODO: uncomment this and above if the daemon actually responds
+
+    FD_ZERO (&sock_set);
+    FD_SET (dest_sock, &sock_set);
+    timeout.tv_sec = TIMEOUT;
+    timeout.tv_usec = 0;    // seems recommended...
+
     // Get the response
-    // BUFFER_SIZE + 1 to store the terminating null byte '\0'
-    if ((response = calloc (BUFFER_SIZE + 1, sizeof (char))) == NULL) {
-        perror ("calloc");
-        exit (EXIT_FAILURE);
-    }
-    while ((nb_received = recv (dest_sock, buffer, BUFFER_SIZE, 0)) != 0) {
+    for (;;) {
+        select_return = select (dest_sock + 1, &sock_set, NULL, NULL, &timeout);
+        if (select_return < 0) {
+            perror ("select");
+            exit (EXIT_FAILURE);
+        }
+        if (select_return == 0) {
+            // '\n' is within cmd supposedly...
+            printf ("\n< Daemon timed out for request : %s", cmd);
+            exit (EXIT_FAILURE);
+        }        
+
+        nb_received = recv (dest_sock, buffer, BUFFER_SIZE - 1, 0);
         if (nb_received < 0) {
             perror ("recv");
             exit (EXIT_FAILURE);
         }
         buffer[nb_received] = '\0';
-        strcpy (response + buffer_offset, buffer);
+
         if ((response = realloc (response,
-                                 buffer_offset + BUFFER_SIZE + 1)) == NULL) {
+                                 buffer_offset + nb_received + 1)) == NULL) {
             perror ("realloc");
             exit (EXIT_FAILURE);
         }
+
+        strcpy (response + buffer_offset, buffer);
         buffer_offset += nb_received;
+
         response[buffer_offset] = '\0';
+
+        if (response[buffer_offset - 1] == '\n'
+            || response[buffer_offset - 1] == '\0'
+            || response[buffer_offset - 1] == '\r')
+            break;
     }
 
     printf("< %s\n", response);
     free (response);
-*/
     close (dest_sock);
 }

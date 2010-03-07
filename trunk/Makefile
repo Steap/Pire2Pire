@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wextra -Wall -g -std=c99 -D_BSD_SOURCE
+CFLAGS=-Wextra -Wall -g -std=c99 -D_BSD_SOURCE -D_POSIX_C_SOURCE=199506
 LDFLAGS=-lpthread
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon

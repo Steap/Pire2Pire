@@ -10,12 +10,8 @@ prompt () {
     int     nb_read;
     char    buffer[BUFFER_SIZE];
     int     buffer_offset = 0;
-    char    *line_read;
+    char    *line_read = NULL;
 
-    if ((line_read = calloc (BUFFER_SIZE + 1, sizeof (char))) == NULL) {
-        perror ("calloc");
-        exit (EXIT_FAILURE);
-    }
     printf ("> ");
     if (fflush (stdout) == EOF) {
         perror ("fflush");
@@ -29,20 +25,21 @@ prompt () {
         }
         buffer[nb_read] = '\0';
 
+        // + 1 so we can strcpy the terminating null byte too
         if ((line_read = realloc (line_read,
-                                  buffer_offset + BUFFER_SIZE + 1)) == NULL) {
+                                  buffer_offset + nb_read + 1)) == NULL) {
             perror ("realloc");
             exit (EXIT_FAILURE);
         }
+
         strcpy (line_read + buffer_offset, buffer);
         buffer_offset += nb_read;
+
         line_read[buffer_offset] = '\0';
 
         if (line_read[buffer_offset - 1] == '\n')
             break;
     }
-
-    line_read[buffer_offset - 1] = '\0';
 
     return line_read;
 }
