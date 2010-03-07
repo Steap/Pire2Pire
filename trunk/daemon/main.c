@@ -136,31 +136,25 @@ start_server (void) {
      
     if (listen (sd, NB_QUEUE) < 0) {
         log_failure (log_file, "The socket could not be marked as a passive one.");
-        exit (1);
     }
     else {
         log_success (log_file, "Server is ready (port : %d).", prefs->port);
     }
 
+    int client_socket;
+    struct sockaddr_in client_sockaddr;
+    socklen_t size = sizeof (struct sockaddr);
     for (;;) {
-        if (accept (sd, NULL, NULL) < 0) {
+        if ((client_socket = accept (sd,
+                                     (struct sockaddr *) &client_sockaddr,
+                                     &size))<0) {
             log_failure (log_file, "Failed to accept incoming connection.");
             //exit (EXIT_FAILURE);
         } 
-#if 0
-        switch (fork ()) {
-            case -1:
-                log_failure (log_file, "Could not fork !");
-                break;
-            case 0:
-                log_success (log_file, "Should handle client");
-                handle_request ("fake_cmd");
-                log_success (log_file, "xxShould handle client");
-            default:
-                break;
+        else {
+    //        handle_request (client_socket, (struct sockaddr_in *)&client_sockaddr);
+            handle_client (client_socket, (struct sockaddr_in *)&client_sockaddr);
         }
-#endif
-        handle_request ("fake");
     } 
 }
 

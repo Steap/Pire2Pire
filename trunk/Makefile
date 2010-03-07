@@ -10,7 +10,8 @@ CLIENT_SOURCES  =   client/main.c   \
 DAEMON_SOURCES  =   daemon/main.c   \
 		    daemon/conf.c   \
 		    daemon/client_handler.c
-UTIL_SOURCES    =   util/logger.c
+UTIL_SOURCES    =   util/logger.c            \
+                    util/string_util.c
 
 CLIENT_OBJ  =   $(CLIENT_SOURCES:.c=.o)
 DAEMON_OBJ  =   $(DAEMON_SOURCES:.c=.o)
