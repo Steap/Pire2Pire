@@ -13,6 +13,8 @@ DAEMON_SOURCES  =   daemon/main.c   \
 		    daemon/callback_argument.c \
                     daemon/util/cmd.c        \
 		    daemon/requests/do_set.c \
+		    daemon/requests/do_unknown_command.c
+
 
 UTIL_SOURCES    =   util/logger.c            \
                     util/string_util.c

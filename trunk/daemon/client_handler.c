@@ -212,7 +212,7 @@ handle_requests (void *arg) {
         else if (strncmp (message, "set", 3) == 0) 
             callback = &do_set;
         else 
-            callback = &start;
+            callback = &do_unknown_command;
 
         i = find_next_available_thread (); 
         if (i == MAX_THREADS_REACHED) {
