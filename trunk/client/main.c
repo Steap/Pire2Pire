@@ -43,9 +43,9 @@ int main (int argc, char **argv) {
     switch (argc) {
         case 1:     // ./client
             // FIXME: 1234 must be replaced by a port read in daemon conf
-            printf ("No [IP PORT] specified, using default 127.0.0.1:1234.\n");
+            printf ("No [IP PORT] specified, using default 127.0.0.1:1337.\n");
             inet_aton ("127.0.0.1", &daemon_addr.sin_addr);
-            daemon_addr.sin_port = htons (1234);
+            daemon_addr.sin_port = htons (1337);
             break;
         case 3:     // ./client IP PORT
             // Retrieve daemon IP
@@ -107,16 +107,14 @@ int main (int argc, char **argv) {
 static int
 is_known_command (const char *input) {
     static char* known_commands[] = {
+        "set",
         "list",
-        "file",
         "get",
-        "traffic",
-        "ready",
-        "checksum",
-        "neighbourhood",
-        "neighbour",
-        "redirect",
-        "error",
+        "info",
+        "download",
+        "upload",
+        "connect",
+        "raw",
         NULL
     };
 
