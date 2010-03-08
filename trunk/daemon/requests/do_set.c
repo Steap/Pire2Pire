@@ -22,11 +22,10 @@ static struct option options[] = {
 #include <unistd.h>
 void*
 do_set (void *arg) {
-    sleep (5);
-    int         argc;
-    char        **argv;
-    int         c;
-    int         nb_arguments;
+    int                      argc;
+    char                     **argv;
+    int                      c;
+    int                      nb_arguments;
     struct callback_argument *cba;
 
 #define MAX_ANSWER_SIZE 256

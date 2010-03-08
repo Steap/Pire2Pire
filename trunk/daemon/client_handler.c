@@ -138,8 +138,10 @@ start (void *msg) {
     log_success (log_file, 
                  " [Thread] Started new thread (%s) !", 
                 cba->cmd); 
-    sleep (100);
     pthread_detach (pthread_self ());
+
+    if (cba)
+        cba_free (cba);
     return NULL;
 }
 
@@ -317,6 +319,9 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
     client = client_new (client_socket, addr);
     if (!client)
         return; 
+
+    free (addr);
+    addr = NULL;
 
     r = pthread_create (threads+i, NULL, handle_requests, client);
     if (r < 0) {
