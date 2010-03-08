@@ -19,7 +19,12 @@
 
 #define BUFFSIZE                   128
 #define DBG                          0
-#define MAX_THREADS_REACHED        -1
+
+#define MAX_CLIENTS                  1
+#define MAX_REQUESTS_PER_CLIENT      2
+
+#define MAX_CLIENTS_REACHED         -1
+#define MAX_REQUESTS_REACHED        -1
 
 
 /****** Some shit that might end up in util/ *********/
@@ -81,17 +86,25 @@ get_request (int client_socket) {
 
 /************** The client thingy *******************/
 struct client {
+    int                   id;
     int                   socket;
-    char                  *addr;
+    char                  *addr; /* IPv4, IPv6, whatever... */
+    pthread_t             requests[MAX_REQUESTS_PER_CLIENT];
+    /* Maximum number of requests that have been running along at a given
+     * time. */
+    int                   n_init_requests;
 };
 
-static struct client *client_new (int socket, char *addr) {
+static struct client *client_new (int id, int socket, char *addr) {
     struct client *c;
     c = malloc (sizeof (struct client));
     if (c == NULL)
         return NULL;
+    c->id     = id;
     c->socket = socket;
     c->addr   = strdup (addr);
+    /* It does not seem possible to properly init requests[] */
+    c->n_init_requests = 0;
     return c;
 }
 
@@ -108,17 +121,8 @@ static void client_free (struct client *c) {
 
 /********** End of the client thingy ************/
 
-
-
-
-/* Numbers of threads that have been initialized */
-static int       n_initialized_threads = 0;
-
 /* Declared in main.c */
 extern FILE      *log_file;
-
-/* Might be a dummy implementation, we may want do something else one day */
-static pthread_t threads[MAX_THREADS];
 
 static int
 is_active_thread (pthread_t *t)
@@ -129,62 +133,65 @@ is_active_thread (pthread_t *t)
     return !pthread_kill (*t, 0);
 }
 
-/*
- * Obviously, we won't use that function in real life.
- */
-static void*
-start (void *msg) {
-    struct callback_argument *cba = (struct callback_argument *) msg;
-    log_success (log_file, 
-                 " [Thread] Started new thread (%s) !", 
-                cba->cmd); 
-    pthread_detach (pthread_self ());
-
-    if (cba)
-        cba_free (cba);
-    return NULL;
-}
+static pthread_t client_threads[MAX_CLIENTS];
+static int       n_init_clients = 0;
 
 /*
- * We cannot create a thread with an id that is already used by another thread.
- * Given that we use a table to store threads, we need to find the index
- * of the first available id.
+ * find_next_available_client () and find_next_available_request ().
  *
- * Be careful, it does return an index an not an address. That might be worth
- * changing that one day, but eh, that ain't our biggest problem at the moment,
- * right ?
+ * We've got to keep track of the maximum number of threads running along at a
+ * given time, so we never call is_active_thread () on a thread id that has
+ * never been initialized. 
+ *
+ * One way not to do that brainfucked shit is to initialize
+ * client_threads/client->requests with a particular value (an invalid one). But
+ * it seems that the only way to initialize a pthread_t is to use the
+ * pthread_create () function.
  */
 static int
-find_next_available_thread () {
+find_next_available_client () {
     int i;
-    /*
-     * We've got to keep track of the maximum number of threads running along
-     * at a given time, so we never call is_active_thread on a thread id that
-     * has never been initialized.
-     *
-     * One way not to do that brainfucked shit is to initiliaze "threads" with a
-     * particular value. But it seems that the only way to initialize a
-     * pthread_t is to use the pthread_create () function.
-     */
-    for (i = 0; i < n_initialized_threads; i++)
-        if (!is_active_thread (threads+i))
+    for (i = 0; i < n_init_clients; i++)
+        if (!is_active_thread (client_threads+i))
             return i;
 
-    if (i < MAX_THREADS) {
-        n_initialized_threads += 1;
-#if DBG
-        fprintf (stdout, "i<MAX and n_init = %d\n", n_initialized_threads);
-#endif
+    if (i < MAX_CLIENTS) {
+        n_init_clients += 1;
         return i;
     }
     
-    return MAX_THREADS_REACHED;
+    return MAX_CLIENTS_REACHED;
 }
 
+static int
+find_next_available_request (struct client *client) {
+    int i;
+    for (i = 0; i < client->n_init_requests; i++)
+        if (!is_active_thread (client->requests + i))
+            return i;
+
+    if (i < MAX_REQUESTS_PER_CLIENT) {
+        client->n_init_requests += 1;
+        return i;
+    }
+    
+    return MAX_REQUESTS_REACHED;
+}
+
+#if 0
 /*
- * Handle requests by creating a new thread for each and every one of them.
+ * used for tests.
  */
-static void*
+void*
+foo (void* a)
+{
+    (void) a;
+    sleep (50);
+    return NULL;
+}
+#endif
+
+void*
 handle_requests (void *arg) {
     struct client                   *client;
     int                             i, r;
@@ -200,6 +207,8 @@ handle_requests (void *arg) {
     if (!(client = (struct client *) arg))
         goto out;
     
+    log_success (log_file, "New client : %s", client->addr);
+
     for (;;)  {
         cba = NULL;
         message = get_request (client->socket);
@@ -213,11 +222,14 @@ handle_requests (void *arg) {
             callback = &do_set;
         else 
             callback = &do_unknown_command;
+//        callback=&foo;
 
-        i = find_next_available_thread (); 
-        if (i == MAX_THREADS_REACHED) {
-            log_failure (log_file, " [Thread] Max threads reached !\n");
-            goto out;
+        i = find_next_available_request (client); 
+        if (i == MAX_REQUESTS_REACHED) {
+            log_failure (log_file, 
+                         " [Thread] Max reached reached for %s %s\n", 
+                         client->addr, message);
+            continue;
         }
 
         /*
@@ -234,7 +246,7 @@ handle_requests (void *arg) {
          * execution of the calling thread will be suspended till the new thread
          * returns. And that might be *very* long.
          */
-        r = pthread_create (threads+i, NULL, callback, cba);
+        r = pthread_create (client->requests+i, NULL, callback, cba);
         if (r < 0) {
             log_failure (log_file, "Could not start new thread");
             goto out;
@@ -283,23 +295,22 @@ out:
     if (message) {
         free (message);
         message = NULL;
-        log_success (log_file, "Freed message");
+        //log_success (log_file, "Freed message");
     }
 
     if (client) {
         client_free (client);
-        log_success (log_file, "Freed client");
+        //log_success (log_file, "Freed client");
     }
 
     if (cba) {
         cba_free (cba);
-        log_success (log_file, "Freed cba");
+        //log_success (log_file, "Freed cba");
     }
-    return NULL;
     /* What if the same machine is connected from another client ? */
 //    pthread_detach (pthread_self ());
+    return NULL;
 }
-
 void
 handle_client (int client_socket, struct sockaddr_in *client_addr) {
     int             i, r;
@@ -309,21 +320,24 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
     addr = NULL;
     addr = inet_ntoa (client_addr->sin_addr);
 
-    log_success (log_file, "New client : %s", addr);
 
-    i = find_next_available_thread (); 
-    if (i == MAX_THREADS_REACHED) {
-        log_failure (log_file, "==> COuld not handle another client");
+    i = find_next_available_client ();
+    if (i == MAX_CLIENTS_REACHED) {
+        log_failure (log_file, 
+                     "Could not handle client %s : already too many clients.",
+                     addr);
+        char answer[]= " < Too many clients right now\n";
+        send (client_socket, answer, strlen (answer), 0);
         return;
     } 
 
-    client = client_new (client_socket, addr);
+    client = client_new (i, client_socket, addr);
     if (!client)
         return; 
 
     /* We may wanna free addr, but it might cause a crash (invalid free...). 
      * Investigation needed */
-    r = pthread_create (threads+i, NULL, handle_requests, client);
+    r = pthread_create (client_threads+i, NULL, handle_requests, client);
     if (r < 0) {
         log_failure (log_file, "==> Could not create thread");
         client_free (client);

@@ -21,14 +21,12 @@ void
 cba_free (struct callback_argument *cba) {
     if (!cba)
         return;
-    log_success (log_file, "epic win");
 
     if (cba->cmd) {
         free (cba->cmd);
         cba->cmd = NULL;
     }
 
-    log_success (log_file, "long cat");
     free (cba);
     cba = NULL;
 }

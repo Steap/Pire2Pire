@@ -2,7 +2,7 @@
 #define CLIENT_HANDLER
 
 #include <netinet/in.h>
-#define MAX_THREADS  100
+
 
 /*
  * Takes care of the client in a new thread.
