@@ -11,13 +11,25 @@
 #include <arpa/inet.h>
 
 #include "client_handler.h"
+#include "callback_argument.h"
+
 #include "../util/logger.h"
 #include "../util/string_util.h"
+#include "requests.h"
 
 #define BUFFSIZE                   128
 #define DBG                          0
 #define MAX_THREADS_REACHED        -1
 
+
+/* FIXME : this macro does not belong here */
+#if 0
+#define IS_CMD(msg, cmd) (                      \
+(msg[strlen (cmd)] == ' '                       \
+    || msg[strlen (cmd)] == '\n')               \
+&& (strncmp ((msg), (cmd), strlen (cmd)) == 0)  \
+)
+#endif
 /****** Some shit that might end up in util/ *********/
 /* Given a socket, returns the message typed in */
 static char*
@@ -104,7 +116,6 @@ static void client_free (struct client *c) {
 
 
 
-
 /* Numbers of threads that have been initialized */
 static int       n_initialized_threads = 0;
 
@@ -127,11 +138,11 @@ is_active_thread (pthread_t *t)
  * Obviously, we won't use that function in real life.
  */
 static void*
-start (void *msg)
-{
+start (void *msg) {
+    struct callback_argument *cba = (struct callback_argument *) msg;
     log_success (log_file, 
                  " [Thread] Started new thread (%s) !", 
-                (char *)msg);
+                cba->cmd); 
     sleep (100);
     pthread_detach (pthread_self ());
     return NULL;
@@ -178,11 +189,12 @@ find_next_available_thread () {
  */
 static void*
 handle_requests (void *arg) {
-//    int client_socket = *((int *) arg);
     struct client *client;
-    int i, r;
+    int    i, r;
     /* The message typed by the user */
     char    *message = NULL;
+    void*   (*callback) (void *);
+    struct callback_argument *cba;
 
     if (!(client = (struct client *) arg))
         goto out;
@@ -193,9 +205,13 @@ handle_requests (void *arg) {
         if (!message)
             goto out;
 
-        if (strcmp (message, "quit") == 0)
+        /* FIXME : use the IS_CMD macro */
+        if (strncmp (message, "quit", 4) == 0) 
             goto out;
-        /* TODO else if, ..., else */
+        else if (strncmp (message, "set", 3) == 0) 
+            callback = &do_set;
+        else 
+            callback = &start;
 
         i = find_next_available_thread (); 
         if (i == MAX_THREADS_REACHED) {
@@ -204,11 +220,20 @@ handle_requests (void *arg) {
         }
 
         /*
+         * That should never happen... But eh, you never know. Anyway, GCC could
+         * remove that test... which might get us pwnd like the Linux folks ;-)
+         */
+        if (!callback)
+            goto out;
+        cba = cba_new (message, client->socket);
+        if (!cba)
+            goto out;
+        /*
          * You should deifinitely NOT pthread_join here : if you do, the
          * execution of the calling thread will be suspended till the new thread
          * returns. And that might be *very* long.
          */
-        r = pthread_create (threads+i, NULL, start, message);
+        r = pthread_create (threads+i, NULL, callback, cba);
         if (r < 0) {
             log_failure (log_file, "Could not start new thread");
             goto out;
@@ -221,7 +246,10 @@ out:
         free (message);
     if (client)
         client_free (client);
-    pthread_detach (pthread_self ());
+    if (cba)
+        cba_free (cba);
+    /* Dont do that ! The same machine could be connected from another client */
+//    pthread_detach (pthread_self ());
     return NULL;
 }
 

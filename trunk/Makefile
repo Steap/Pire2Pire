@@ -9,7 +9,11 @@ CLIENT_SOURCES  =   client/main.c   \
                     client/util/prompt.c
 DAEMON_SOURCES  =   daemon/main.c   \
 		    daemon/conf.c   \
-		    daemon/client_handler.c
+		    daemon/client_handler.c  \
+		    daemon/callback_argument.c \
+                    daemon/util/cmd.c        \
+		    daemon/requests/do_set.c \
+
 UTIL_SOURCES    =   util/logger.c            \
                     util/string_util.c
 
