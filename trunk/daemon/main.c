@@ -12,7 +12,6 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include <errno.h>
 #include "../util/logger.h"
 #include "conf.h"
 #include "client_handler.h"
@@ -130,7 +129,7 @@ start_server (void) {
     }
 
     if (bind (sd, (struct sockaddr *) &sa, sizeof (sa)) < 0) {
-        log_failure (log_file, "Could not assign a local address using bind %s.", errno);
+        log_failure (log_file, "Could not assign a local address using bind");
         exit (1);
     }
      

@@ -33,7 +33,6 @@ do_set (void *arg) {
 
     char   answer[MAX_ANSWER_SIZE];
     cba = (struct callback_argument *) arg;
-
     argv = cmd_to_argc_argv (cba->cmd, &argc);
     while ((c = cmd_get_next_option (argc, argv, options)) > 0);
     if (c == CMD_NOT_ALLOWED_OPTION) {

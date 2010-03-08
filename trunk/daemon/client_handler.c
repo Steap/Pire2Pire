@@ -184,18 +184,22 @@ find_next_available_thread () {
  */
 static void*
 handle_requests (void *arg) {
-    struct client *client;
-    int    i, r;
+    struct client                   *client;
+    int                             i, r;
     /* The message typed by the user */
-    char    *message = NULL;
-    void*   (*callback) (void *);
-    struct callback_argument *cba;
+    char                            *message;
+    void*                           (*callback) (void *);
+    struct callback_argument        *cba;
+
+    message  = NULL;
+    callback = NULL;
+    cba      = NULL;
 
     if (!(client = (struct client *) arg))
         goto out;
     
     for (;;)  {
-
+        cba = NULL;
         message = get_request (client->socket);
         if (!message)
             goto out;
@@ -268,10 +272,12 @@ out:
      *
      * Cyril.
      *
-     *
+     * On second thoughts :
+     * Seems like, by doing cba = NULL, it could work. It *seems* to work, and
+     * valgrind shuts the fuck up. But it's way too late for me to be sure about
+     * anything.
      */
     log_success (log_file, "End of %s", client->addr);
-#if 1
     if (message) {
         free (message);
         message = NULL;
@@ -282,14 +288,14 @@ out:
         client_free (client);
         log_success (log_file, "Freed client");
     }
+
     if (cba) {
         cba_free (cba);
         log_success (log_file, "Freed cba");
     }
-#endif
+    return NULL;
     /* What if the same machine is connected from another client ? */
 //    pthread_detach (pthread_self ());
-    return NULL;
 }
 
 void
