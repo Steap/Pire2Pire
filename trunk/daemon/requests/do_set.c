@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,9 +19,10 @@ extern FILE* log_file;
 static struct option options[] = {
     {NULL, NULL, 0}    
 };
-
+#include <unistd.h>
 void*
 do_set (void *arg) {
+    sleep (5);
     int         argc;
     char        **argv;
     int         c;
@@ -59,11 +61,15 @@ do_set (void *arg) {
             sprintf (answer, " < You shall only set one option at a time...\n");
             break;
     } 
-    
-    send (cba->client_socket, answer, strlen (answer), 0);
+
+    if (send (cba->client_socket, answer, strlen (answer), 0) < 0) {
+        /* We might be willing to switch errno here, blah blah */
+        log_failure (log_file, "do_set() : failed to send data to the client");
+    }
     
     cmd_free (argv);
-    cba_free (cba);
+    if (cba)
+        cba_free (cba);
 
     return NULL;
 

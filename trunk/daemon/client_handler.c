@@ -22,14 +22,6 @@
 #define MAX_THREADS_REACHED        -1
 
 
-/* FIXME : this macro does not belong here */
-#if 0
-#define IS_CMD(msg, cmd) (                      \
-(msg[strlen (cmd)] == ' '                       \
-    || msg[strlen (cmd)] == '\n')               \
-&& (strncmp ((msg), (cmd), strlen (cmd)) == 0)  \
-)
-#endif
 /****** Some shit that might end up in util/ *********/
 /* Given a socket, returns the message typed in */
 static char*
@@ -106,9 +98,12 @@ static struct client *client_new (int socket, char *addr) {
 static void client_free (struct client *c) {
     if (!c)
         return;
-    if (c->addr)
+    if (c->addr) {
         free (c->addr);
+        c->addr = NULL;
+    }
     free (c);
+    c = NULL;
 }
 
 /********** End of the client thingy ************/
@@ -241,14 +236,58 @@ handle_requests (void *arg) {
     }
 
 out:
+    /*
+     * OK, this is major bullshit here. 
+     *
+     * We're freeing pointers, right ? So basically, memory that is in the
+     * _heap_. Guess what ? It is shared between threads. So let's say we do
+     * that :
+     *
+     * > set 
+     * > quit
+     *
+     * really quickly. Or we simulate that by doing sleep (10) in do_set ().
+     * We are going to free (cba) __before__ it is used in do_set(). Yep, that
+     * is right : this is going to motherfucking fail. Two ways to solve that :
+     *
+     * 1) Pass a copy of cba (the actual __content__ of cba) to the callback
+     * function when creating the thread. This is the dummy way, obviously. We
+     * do not have 4GB machines so we can waste memory, but so we can do more
+     * things. Like Java programming. Kr.
+     *
+     * 2) When the user types in "quit", and we /goto/ the "out" label, we
+     * should pthread_join every request thread. We do not really care about
+     * this particular thread being kept alive for a little bit more time. Plus,
+     * we can get a return value from our request threads, which is cool, cuz, u
+     * know, we can fill the logs with lots of "u failed" messages in case
+     * something went wrong. That would require this thread knowing each and
+     * every one of the threads it created, which means that every client should
+     * have its own thread table.
+     *
+     * I'm on it.
+     *
+     * Cyril.
+     *
+     *
+     */
     log_success (log_file, "End of %s", client->addr);
-    if (message)
+#if 1
+    if (message) {
         free (message);
-    if (client)
+        message = NULL;
+        log_success (log_file, "Freed message");
+    }
+
+    if (client) {
         client_free (client);
-    if (cba)
+        log_success (log_file, "Freed client");
+    }
+    if (cba) {
         cba_free (cba);
-    /* Dont do that ! The same machine could be connected from another client */
+        log_success (log_file, "Freed cba");
+    }
+#endif
+    /* What if the same machine is connected from another client ? */
 //    pthread_detach (pthread_self ());
     return NULL;
 }
