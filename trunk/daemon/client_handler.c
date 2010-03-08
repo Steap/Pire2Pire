@@ -306,6 +306,7 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
     char            *addr;
     struct client   *client;
         
+    addr = NULL;
     addr = inet_ntoa (client_addr->sin_addr);
 
     log_success (log_file, "New client : %s", addr);
@@ -320,9 +321,8 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
     if (!client)
         return; 
 
-    free (addr);
-    addr = NULL;
-
+    /* We may wanna free addr, but it might cause a crash (invalid free...). 
+     * Investigation needed */
     r = pthread_create (threads+i, NULL, handle_requests, client);
     if (r < 0) {
         log_failure (log_file, "==> Could not create thread");
