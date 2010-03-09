@@ -1,4 +1,5 @@
 #include <pthread.h>
+#include <semaphore.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,17 +16,20 @@
 
 #include "../util/logger.h"
 #include "../util/string_util.h"
+#include "client.h"
+#include "request.h"
 #include "requests.h"
 
 #define BUFFSIZE                   128
 #define DBG                          0
 
-#define MAX_CLIENTS                  1
+#define MAX_CLIENTS                  2
 #define MAX_REQUESTS_PER_CLIENT      2
 
 #define MAX_CLIENTS_REACHED         -1
 #define MAX_REQUESTS_REACHED        -1
 
+extern FILE *log_file;
 
 /****** Some shit that might end up in util/ *********/
 /* Given a socket, returns the message typed in */
@@ -82,127 +86,54 @@ get_request (int client_socket) {
 /**** End of the shit that might end up in util/ *****/
 
 
-
-
-/************** The client thingy *******************/
-struct client {
-    int                   id;
-    int                   socket;
-    char                  *addr; /* IPv4, IPv6, whatever... */
-    pthread_t             requests[MAX_REQUESTS_PER_CLIENT];
-    /* Maximum number of requests that have been running along at a given
-     * time. */
-    int                   n_init_requests;
-};
-
-static struct client *client_new (int id, int socket, char *addr) {
-    struct client *c;
-    c = malloc (sizeof (struct client));
-    if (c == NULL)
-        return NULL;
-    c->id     = id;
-    c->socket = socket;
-    c->addr   = strdup (addr);
-    /* It does not seem possible to properly init requests[] */
-    c->n_init_requests = 0;
-    return c;
-}
-
-static void client_free (struct client *c) {
-    if (!c)
-        return;
-    if (c->addr) {
-        free (c->addr);
-        c->addr = NULL;
-    }
-    free (c);
-    c = NULL;
-}
-
-/********** End of the client thingy ************/
-
-/* Declared in main.c */
-extern FILE      *log_file;
-
-static int
-is_active_thread (pthread_t *t)
-{
-    if (!t) {
-        return 0;
-    }
-    return !pthread_kill (*t, 0);
-}
-
-static pthread_t client_threads[MAX_CLIENTS];
-static int       n_init_clients = 0;
-
+struct client *clients = NULL;
 /*
- * find_next_available_client () and find_next_available_request ().
+ * This semaphore is meant to prevent multiple clients from modifying "clients"
+ * all at the same time.
  *
- * We've got to keep track of the maximum number of threads running along at a
- * given time, so we never call is_active_thread () on a thread id that has
- * never been initialized. 
- *
- * One way not to do that brainfucked shit is to initialize
- * client_threads/client->requests with a particular value (an invalid one). But
- * it seems that the only way to initialize a pthread_t is to use the
- * pthread_create () function.
+ * It should be initialized by the very first client, and sort of never be
+ * destroyed.
  */
-static int
-find_next_available_client () {
-    int i;
-    for (i = 0; i < n_init_clients; i++)
-        if (!is_active_thread (client_threads+i))
-            return i;
+static sem_t          clients_lock;
 
-    if (i < MAX_CLIENTS) {
-        n_init_clients += 1;
-        return i;
-    }
-    
-    return MAX_CLIENTS_REACHED;
-}
-
-static int
-find_next_available_request (struct client *client) {
-    int i;
-    for (i = 0; i < client->n_init_requests; i++)
-        if (!is_active_thread (client->requests + i))
-            return i;
-
-    if (i < MAX_REQUESTS_PER_CLIENT) {
-        client->n_init_requests += 1;
-        return i;
-    }
-    
-    return MAX_REQUESTS_REACHED;
-}
-
-#if 0
-/*
- * used for tests.
- */
-void*
-foo (void* a)
+static void*
+foo (void *a)
 {
-    (void) a;
-    sleep (50);
+    struct request *r = (struct request *) a;
+    struct request *tmp;
+    char ans[100];
+
+    sprintf (ans, 
+             " < Number of requests : %d\n", 
+             request_count (r->client->requests));
+    send (r->client->socket, ans, strlen (ans), 0);
+    for (tmp = r->client->requests; tmp; tmp = tmp->next) {
+        sprintf (ans, "\t . %s\n", tmp->cmd);
+        send (r->client->socket, ans, strlen (ans), 0);
+    }
+    sleep (1);
+    
+    sem_wait (&r->client->req_lock);
+    r->client->requests = request_remove (r->client->requests, r->thread_id);
+    sem_post (&r->client->req_lock);
+    request_free (r);
+
+    pthread_detach (pthread_self ());
+
     return NULL;
 }
-#endif
 
-void*
+static void*
+bar (void *a) { (void) a; sleep (100); }
+static void*
 handle_requests (void *arg) {
     struct client                   *client;
-    int                             i, r;
+    int                             r;
     /* The message typed by the user */
     char                            *message;
     void*                           (*callback) (void *);
-    struct callback_argument        *cba;
-
-    message  = NULL;
-    callback = NULL;
-    cba      = NULL;
+    struct request                  *request;
+    char                            answer[128];
 
     if (!(client = (struct client *) arg))
         goto out;
@@ -210,137 +141,134 @@ handle_requests (void *arg) {
     log_success (log_file, "New client : %s", client->addr);
 
     for (;;)  {
-        cba = NULL;
+        message  = NULL;
+        callback = NULL;
+        request  = NULL;
+
         message = get_request (client->socket);
+
         if (!message)
             goto out;
 
-        /* FIXME : use the IS_CMD macro */
+        /* Only request we're allowed to treat no matter how many requests are
+         * currently being treated */
         if (strncmp (message, "quit", 4) == 0) 
             goto out;
-        else if (strncmp (message, "set", 3) == 0) 
+
+        if (request_count (client->requests) == MAX_REQUESTS_PER_CLIENT) {
+            sprintf (answer, " < Too many requests, mister, plz calm down\n");
+            send (client->socket, answer, strlen (answer), 0);
+            continue;
+        }        
+
+        /* Treating all the common requests */
+        /* FIXME : use the IS_CMD macro */
+        if (strncmp (message, "set", 3) == 0) 
             callback = &do_set;
+        else if (strncmp (message, "info", 4) == 0)
+            callback = &do_info;
+        else if (strncmp (message, "bar", 3) == 0)
+            callback = &bar;
         else 
             callback = &do_unknown_command;
-//        callback=&foo;
 
-        i = find_next_available_request (client); 
-        if (i == MAX_REQUESTS_REACHED) {
-            log_failure (log_file, 
-                         " [Thread] Max reached reached for %s %s\n", 
-                         client->addr, message);
+        request = request_new (message, client);
+        if (!request) {
+            sprintf (answer, " < Failed to create a new request\n");
+            send (client->socket, answer, strlen (answer), 0);
             continue;
         }
-
-        /*
-         * That should never happen... But eh, you never know. Anyway, GCC could
-         * remove that test... which might get us pwnd like the Linux folks ;-)
-         */
-        if (!callback)
-            goto out;
-        cba = cba_new (message, client->socket);
-        if (!cba)
-            goto out;
-        /*
-         * You should deifinitely NOT pthread_join here : if you do, the
-         * execution of the calling thread will be suspended till the new thread
-         * returns. And that might be *very* long.
-         */
-        r = pthread_create (client->requests+i, NULL, callback, cba);
+        
+        client->requests = request_add (client->requests, request);
+        r = pthread_create (&request->thread_id, NULL, callback, request);
+        
         if (r < 0) {
+            sprintf (answer, 
+                    " < Could not treat your request for an unexpected \
+                      reason.");
             log_failure (log_file, "Could not start new thread");
-            goto out;
+            continue;
         }
     }
 
 out:
-    /*
-     * OK, this is major bullshit here. 
-     *
-     * We're freeing pointers, right ? So basically, memory that is in the
-     * _heap_. Guess what ? It is shared between threads. So let's say we do
-     * that :
-     *
-     * > set 
-     * > quit
-     *
-     * really quickly. Or we simulate that by doing sleep (10) in do_set ().
-     * We are going to free (cba) __before__ it is used in do_set(). Yep, that
-     * is right : this is going to motherfucking fail. Two ways to solve that :
-     *
-     * 1) Pass a copy of cba (the actual __content__ of cba) to the callback
-     * function when creating the thread. This is the dummy way, obviously. We
-     * do not have 4GB machines so we can waste memory, but so we can do more
-     * things. Like Java programming. Kr.
-     *
-     * 2) When the user types in "quit", and we /goto/ the "out" label, we
-     * should pthread_join every request thread. We do not really care about
-     * this particular thread being kept alive for a little bit more time. Plus,
-     * we can get a return value from our request threads, which is cool, cuz, u
-     * know, we can fill the logs with lots of "u failed" messages in case
-     * something went wrong. That would require this thread knowing each and
-     * every one of the threads it created, which means that every client should
-     * have its own thread table.
-     *
-     * I'm on it.
-     *
-     * Cyril.
-     *
-     * On second thoughts :
-     * Seems like, by doing cba = NULL, it could work. It *seems* to work, and
-     * valgrind shuts the fuck up. But it's way too late for me to be sure about
-     * anything.
-     */
     log_success (log_file, "End of %s", client->addr);
+
+
+    sem_wait (&clients_lock);
+    clients = client_remove (clients, pthread_self ());
+    sem_post (&clients_lock);
+
     if (message) {
         free (message);
         message = NULL;
         //log_success (log_file, "Freed message");
     }
 
+    if (request) {
+        log_failure (log_file, "hr : request_free ()");
+        request_free (request);
+        request = NULL;
+    }
+
     if (client) {
+        log_failure (log_file, "hr : client_free ()");
         client_free (client);
+        client = NULL;
         //log_success (log_file, "Freed client");
     }
 
-    if (cba) {
-        cba_free (cba);
-        //log_success (log_file, "Freed cba");
-    }
+
     /* What if the same machine is connected from another client ? */
-//    pthread_detach (pthread_self ());
+    pthread_detach (pthread_self ());
+    
     return NULL;
 }
+
+
 void
 handle_client (int client_socket, struct sockaddr_in *client_addr) {
-    int             i, r;
-    char            *addr;
-    struct client   *client;
-        
-    addr = NULL;
-    addr = inet_ntoa (client_addr->sin_addr);
+    int            r;
+    struct client *c;
 
 
-    i = find_next_available_client ();
-    if (i == MAX_CLIENTS_REACHED) {
-        log_failure (log_file, 
-                     "Could not handle client %s : already too many clients.",
-                     addr);
+    /*
+     * Now, that is weird, but it seems even weirder to init that semaphore
+     * outside the client_handler module (we could have done that in main.c).
+     */
+    static int xxx = 0;
+    if (xxx == 0) {
+        sem_init (&clients_lock, 0, 1); xxx = 1; }
+
+    if (client_numbers (clients) == MAX_CLIENTS) {
+        log_failure (log_file, "Too many clients");
         char answer[]= " < Too many clients right now\n";
         send (client_socket, answer, strlen (answer), 0);
         return;
-    } 
+    }
 
-    client = client_new (i, client_socket, addr);
-    if (!client)
-        return; 
+    c = client_new (client_socket, inet_ntoa (client_addr->sin_addr));
+    if (!c)
+        log_failure (log_file, "=/ :-( :'(");
 
-    /* We may wanna free addr, but it might cause a crash (invalid free...). 
-     * Investigation needed */
-    r = pthread_create (client_threads+i, NULL, handle_requests, client);
-    if (r < 0) {
-        log_failure (log_file, "==> Could not create thread");
-        client_free (client);
+    sem_wait (&clients_lock);
+    clients = client_add (clients, c);
+    sem_post (&clients_lock);
+
+    if (!clients) {
+        client_free (c);
         return;
     }
+
+    log_failure (log_file, "NUMBER %d", client_numbers (clients));
+
+
+    r = pthread_create (&c->thread_id, NULL, handle_requests, c);
+    if (r < 0) {
+        log_failure (log_file, "==> Could not create thread");
+        client_remove (clients, c->thread_id);
+        return;
+    }
+    
 }
+
