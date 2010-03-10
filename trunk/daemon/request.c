@@ -14,7 +14,8 @@ request_new (char *cmd, struct client *client) {
     if (!r)
         return NULL;
     
-    r->cmd         = strdup (cmd);
+//    r->cmd         = strdup (cmd);
+    r->cmd = cmd;
     r->client      = client;
     r->prev        = NULL;
     r->next        = NULL;

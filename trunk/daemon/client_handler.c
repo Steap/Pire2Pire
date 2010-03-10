@@ -51,8 +51,8 @@ get_request (int client_socket) {
     while ((n_received = recv (client_socket, buffer, BUFFSIZE, 0)) != 0)
     {
         if (n_received < 0) {
-            perror ("recv");
-            // TODO: warn someone
+            log_failure (log_file, 
+                         "Error while receiving data on the client socket");
             return NULL;
         }
         /*
@@ -62,13 +62,6 @@ get_request (int client_socket) {
         buffer[n_received] = '\0';
 
         strcpy (message + ptr, buffer);
-        if((message = realloc (message, ptr + 2*BUFFSIZE + 1)) == NULL) {
-            fprintf (stderr, "Error reallocating memory for message\n");
-            // TODO: warn someone
-            return NULL;
-        }
-        ptr += n_received;
-        message[ptr] = '\0';
 
         if (strstr (buffer, "\n") != NULL) {
             #if 0
@@ -81,6 +74,13 @@ get_request (int client_socket) {
             string_remove_trailer (message);
             return message;
         }
+        if((message = realloc (message, ptr + 2*BUFFSIZE + 1)) == NULL) {
+            fprintf (stderr, "Error reallocating memory for message\n");
+            // TODO: warn someone
+            return NULL;
+        }
+        ptr += n_received;
+        message[ptr] = '\0';
     }
     return NULL;
 }
@@ -172,8 +172,8 @@ handle_requests (void *arg) {
             callback = &bar;
         else 
             callback = &do_unknown_command;
-
         request = request_new (message, client);
+
         if (!request) {
             sprintf (answer, " < Failed to create a new request\n");
             send (client->socket, answer, strlen (answer), 0);
@@ -204,26 +204,21 @@ out:
     // Free : 1
     if (message) {
         free (message);
-        message = NULL;
-        log_failure (log_file, "hr : Freed message");
+//        log_failure (log_file, "hr : Freed message");
     }
 #endif
     if (request) {
         log_failure (log_file, "hr : request_free ()");
         request_free (request);
-        request = NULL;
     }
 #if 1
     // Free : 2
     if (client) {
-        log_failure (log_file, "hr : client_free ()");
+//        log_failure (log_file, "hr : client_free ()");
         client_free (client);
-        client = NULL;
-        //log_success (log_file, "Freed client");
     }
 #endif
 
-    /* What if the same machine is connected from another client ? */
     pthread_detach (pthread_self ());
     
     return NULL;

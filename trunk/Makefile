@@ -4,22 +4,22 @@ LDFLAGS=-lpthread
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 
-CLIENT_SOURCES  =   client/main.c   \
-                    client/send_cmd.c       \
+CLIENT_SOURCES  =   client/main.c                           \
+                    client/send_cmd.c                       \
                     client/util/prompt.c
-DAEMON_SOURCES  =   daemon/main.c   \
-		    daemon/conf.c   \
-		    daemon/client_handler.c  \
-		    daemon/callback_argument.c \
-		    daemon/client.c \
-		    daemon/request.c \
-                    daemon/util/cmd.c        \
-		    daemon/requests/do_info.c \
-		    daemon/requests/do_set.c \
+DAEMON_SOURCES  =   daemon/main.c                           \
+		    daemon/conf.c                           \
+		    daemon/client_handler.c                 \
+		    daemon/callback_argument.c              \
+		    daemon/client.c                         \
+		    daemon/request.c                        \
+                    daemon/util/cmd.c                       \
+		    daemon/requests/do_info.c               \
+		    daemon/requests/do_set.c                \
 		    daemon/requests/do_unknown_command.c
 
 
-UTIL_SOURCES    =   util/logger.c            \
+UTIL_SOURCES    =   util/logger.c                           \
                     util/string_util.c
 
 CLIENT_OBJ  =   $(CLIENT_SOURCES:.c=.o)
