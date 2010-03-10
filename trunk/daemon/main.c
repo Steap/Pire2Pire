@@ -40,8 +40,13 @@ static void
 server_stop (int sig) {
     (void) sig;
     if (unlink (LOCK_FILE) < 0)
-        log_failure (log_file, "Could not destroy the lock file");
-    log_success (log_file, "Stopping server, waiting for SIGKILL");    
+        if (log_file)
+            log_failure (log_file, "Could not destroy the lock file");
+    if (log_file) {
+        log_success (log_file, "Stopping server, waiting for SIGKILL");    
+        fclose (log_file);
+    }
+    exit (0);
 }
 
 void daemonize(void) {
@@ -98,6 +103,7 @@ void daemonize(void) {
     log_success (log_file, "Ignoring SIGTTIN");
 
     signal (SIGHUP, signal_handler); 
+    signal (SIGINT, server_stop);
     signal (SIGTERM, server_stop);
 
     log_success (log_file, "Connected signal handler.");
