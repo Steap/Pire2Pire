@@ -71,11 +71,12 @@ get_request (int client_socket) {
         message[ptr] = '\0';
 
         if (strstr (buffer, "\n") != NULL) {
-
+            #if 0
             if ((message = realloc (message, BUFFSIZE+1)) == NULL) {
                 // TODO: warn someone
                 return NULL;
             }
+            #endif
             ptr = 0;
             string_remove_trailer (message);
             return message;
@@ -95,7 +96,7 @@ struct client *clients = NULL;
  * destroyed.
  */
 static sem_t          clients_lock;
-
+#if 0
 static void*
 foo (void *a)
 {
@@ -122,9 +123,9 @@ foo (void *a)
 
     return NULL;
 }
-
+#endif
 static void*
-bar (void *a) { (void) a; sleep (100); }
+bar (void *a) { (void) a; sleep (100); return NULL;}
 static void*
 handle_requests (void *arg) {
     struct client                   *client;
@@ -199,25 +200,28 @@ out:
     clients = client_remove (clients, pthread_self ());
     sem_post (&clients_lock);
 
+#if 1
+    // Free : 1
     if (message) {
         free (message);
         message = NULL;
-        //log_success (log_file, "Freed message");
+        log_failure (log_file, "hr : Freed message");
     }
-
+#endif
     if (request) {
         log_failure (log_file, "hr : request_free ()");
         request_free (request);
         request = NULL;
     }
-
+#if 1
+    // Free : 2
     if (client) {
         log_failure (log_file, "hr : client_free ()");
         client_free (client);
         client = NULL;
         //log_success (log_file, "Freed client");
     }
-
+#endif
 
     /* What if the same machine is connected from another client ? */
     pthread_detach (pthread_self ());
@@ -230,8 +234,10 @@ void
 handle_client (int client_socket, struct sockaddr_in *client_addr) {
     int            r;
     struct client *c;
+    char          *addr;
 
-
+    c    = NULL;
+    addr = NULL;
     /*
      * Now, that is weird, but it seems even weirder to init that semaphore
      * outside the client_handler module (we could have done that in main.c).
@@ -247,7 +253,12 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
         return;
     }
 
-    c = client_new (client_socket, inet_ntoa (client_addr->sin_addr));
+    addr = inet_ntoa (client_addr->sin_addr);
+    if (addr) {
+        c = client_new (client_socket, addr);
+        free (addr);
+    }
+
     if (!c)
         log_failure (log_file, "=/ :-( :'(");
 
