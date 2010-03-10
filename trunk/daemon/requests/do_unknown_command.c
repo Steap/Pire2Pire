@@ -56,6 +56,7 @@ out:
     r->client->requests = request_remove (r->client->requests, r->thread_id);
     sem_post (&r->client->req_lock);
     request_free (r);
+    pthread_detach (pthread_self ());
 
     return NULL;
 }
