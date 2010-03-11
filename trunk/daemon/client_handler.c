@@ -180,7 +180,9 @@ handle_requests (void *arg) {
             continue;
         }
         
+        sem_wait (&client->req_lock);
         client->requests = request_add (client->requests, request);
+        sem_post (&client->req_lock);
         r = pthread_create (&request->thread_id, NULL, callback, request);
         
         if (r < 0) {
@@ -194,7 +196,6 @@ handle_requests (void *arg) {
 
 out:
     log_success (log_file, "End of %s", client->addr);
-
 
     sem_wait (&clients_lock);
     clients = client_remove (clients, pthread_self ());
@@ -272,7 +273,9 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
     r = pthread_create (&c->thread_id, NULL, handle_requests, c);
     if (r < 0) {
         log_failure (log_file, "==> Could not create thread");
-        client_remove (clients, c->thread_id);
+        sem_wait (&clients_lock);
+        clients = client_remove (clients, c->thread_id);
+        sem_post (&clients_lock);
         return;
     }
     
