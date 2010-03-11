@@ -5,34 +5,13 @@
 #include <arpa/inet.h>  // inet_aton ()
 #include <unistd.h>     // fork (), close ()
 #include <string.h>     // strncmp (), strlen ()
+#include <sys/types.h>  // waitpid ()
+#include <sys/wait.h>   // waitpid ()
 
 #include "send_cmd.h"
 #include "util/prompt.h"
 
 #define BUFFER_SIZE 2
-
-#define HELP_TEXT "\
--= HELP =-\n\
-set                         lists the options available\n\
-set [OPTION=VALUE] [...]    changes the value of an option\n\
-help                        displays this help\n\
-list                        lists the resources available on the network\n\
-get KEY                     gets the resource identified by KEY\n\
-info                        displays statistics\n\
-download                    information about current downloads\n\
-upload                      information about current uploads\n\
-connect IP:PORT             connects to another program\n\
-raw IP:PORT CMD             sends a command to another program\n\
-quit                        exits the program\n"
-
-/* Lazy comparison of cmd and msg */
-#define IS_CMD(msg, cmd) (                      \
-(msg[strlen (cmd)] == ' '                       \
-    || msg[strlen (cmd)] == '\n')               \
-&& (strncmp ((msg), (cmd), strlen (cmd)) == 0)  \
-)
-
-static int is_known_command (const char *input);
 
 int main (int argc, char **argv) {
     int                 daemon_port;
@@ -53,7 +32,6 @@ int main (int argc, char **argv) {
                 printf ("Invalid IP address.\n");
                 exit (EXIT_FAILURE);
             }
-
             // Retrieve then convert daemon port
             daemon_port = atoi (argv[2]);
             if (daemon_port < 1024 || daemon_port > 49151) {
@@ -70,58 +48,30 @@ int main (int argc, char **argv) {
 
     for (;;) {
         user_input = prompt ();
-        if (IS_CMD (user_input, "help")) {
-            printf(HELP_TEXT);
+        switch (fork ()) {
+            case -1:
+                perror ("fork");
+                exit (EXIT_FAILURE);
+            case 0:
+                send_cmd (user_input, daemon_addr);
+                free (user_input);
+                exit (EXIT_SUCCESS);
+            default:
+                break;
         }
-        else if (IS_CMD (user_input, "quit")) {
+        // Only the father executes this, so user_input isn't freed
+        if (strncmp(user_input, "quit", 4) == 0) {
             free (user_input);
             break;
         }
-        // TODO: think about whether known commands are checked here
-        else if (is_known_command (user_input)) {
-            switch (fork ()) {
-                case -1:
-                    perror ("fork");
-                    exit (EXIT_FAILURE);
-                case 0:
-                    send_cmd (user_input, daemon_addr);
-                    free (user_input);
-                    exit (EXIT_SUCCESS);
-                default:
-                    break;
-            }
-        }
         else {
-            printf ("Unknown command.\n");
+            free (user_input);
         }
-        free (user_input);
-        user_input = NULL;
     }
 
-    printf("\n");
+    // Should we wait for child processes to return?
+
+    printf("\nGoodbye.\n");
 
     return EXIT_SUCCESS;
-}
-
-// Returns 1 if the command is known, 0 otherwise
-static int
-is_known_command (const char *input) {
-    static char* known_commands[] = {
-        "set",
-        "list",
-        "get",
-        "info",
-        "download",
-        "upload",
-        "connect",
-        "raw",
-        NULL
-    };
-
-    for (int i = 0; known_commands[i] != NULL; i++) {
-        if (IS_CMD (input, known_commands[i])) {
-            return 1;
-        }
-    }
-    return 0;
 }
