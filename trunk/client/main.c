@@ -7,16 +7,18 @@
 #include <string.h>     // strncmp (), strlen ()
 #include <sys/types.h>  // waitpid ()
 #include <sys/wait.h>   // waitpid ()
+#include <pthread.h>    // pthread_create (), pthread_join ()
 
 #include "send_cmd.h"
-#include "util/prompt.h"
 
 #define BUFFER_SIZE 2
+#define TIMEOUT     1   // TODO: put this in config
 
 int main (int argc, char **argv) {
     int                 daemon_port;
     struct sockaddr_in  daemon_addr;
-    char *              user_input;
+    int                 daemon_sock;
+    pthread_t           send_thread;
 
     // Configure daemon IP and port
     switch (argc) {
@@ -46,32 +48,22 @@ int main (int argc, char **argv) {
     }
     daemon_addr.sin_family = AF_INET;
 
-    for (;;) {
-        user_input = prompt ();
-        switch (fork ()) {
-            case -1:
-                perror ("fork");
-                exit (EXIT_FAILURE);
-            case 0:
-                send_cmd (user_input, daemon_addr);
-                free (user_input);
-                exit (EXIT_SUCCESS);
-            default:
-                break;
-        }
-        // Only the father executes this, so user_input isn't freed
-        if (strncmp(user_input, "quit", 4) == 0) {
-            free (user_input);
-            break;
-        }
-        else {
-            free (user_input);
-        }
+    daemon_sock = socket (AF_INET, SOCK_STREAM, 0);
+    if (daemon_sock < 0) {
+        perror ("socket");
+        exit (EXIT_FAILURE);
+    }
+    if (connect (daemon_sock,
+                 (struct sockaddr *)&daemon_addr,
+                 sizeof (daemon_addr)) < 0) {
+        perror ("connect");
+        exit (EXIT_FAILURE);
     }
 
-    // Should we wait for child processes to return?
+    pthread_create (&send_thread, NULL, send_cmd, &daemon_sock);
+    pthread_join (send_thread, NULL);
 
-    printf("\nGoodbye.\n");
+    close (daemon_sock);
 
     return EXIT_SUCCESS;
 }

@@ -12,11 +12,13 @@ prompt () {
     int     buffer_offset = 0;
     char    *line_read = NULL;
 
+/* No prompt seems better actually...
     printf ("> ");
     if (fflush (stdout) == EOF) {
         perror ("fflush");
         exit (EXIT_FAILURE);
     }
+*/
     // BUFFER_SIZE - 1 so we can put the terminating null byte
     while ((nb_read = read (STDIN_FILENO, buffer, BUFFER_SIZE - 1)) != 0) {
         if (nb_read < 0) {

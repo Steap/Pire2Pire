@@ -6,6 +6,7 @@ DAEMON_EXEC=bin/daemon
 
 CLIENT_SOURCES  =   client/main.c                           \
                     client/send_cmd.c                       \
+                    client/recv_resp.c                      \
                     client/util/prompt.c
 DAEMON_SOURCES  =   daemon/main.c                           \
 		    daemon/conf.c                           \

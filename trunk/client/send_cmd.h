@@ -1,6 +1,6 @@
 #ifndef SEND_CMD_H
 #define SEND_CMD_H
 
-void send_cmd (const char *cmd, struct sockaddr_in dest_addr);
+void *send_cmd (void *arg);
 
 #endif//SEND_CMD_H
