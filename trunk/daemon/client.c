@@ -67,7 +67,7 @@ client_numbers (struct client *l) {
 
 struct client*
 client_remove (struct client *l, pthread_t pt) {
-    log_failure (log_file, "about to remvoe a client");
+    log_failure (log_file, "about to remove a client");
     log_failure (log_file, "nb of clients : %d", client_numbers (l));
     if (!l)
         return NULL;

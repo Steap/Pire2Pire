@@ -55,3 +55,24 @@ Une fonction trol d'un module brol s'appellera brol_trol ();
 
 Pour le nommage des constantes, soit le nom est suffisamment explicite, soit on
 préfixera (style SO_REUSEADDR).
+
+Style des commentaires :
+- de fonctions ou structures entières : 
+  /**
+   * J'ai des commentaires intéressants à faire.
+   * TODO : les écrire.
+   * FIXME : la structure est toujours vide pour l'instant.
+   */
+  struct bar {
+  	...
+  }
+
+- internes aux déclarations, en préfixe d'une ligne ou en fin de ligne :
+  struct foo_foo {
+  	// le commentaire du champ goo.
+  	int goo;
+  }
+  
+  struct bar_bar {	
+  	float goo_bar;// le commentaire du champ bar.
+  }
