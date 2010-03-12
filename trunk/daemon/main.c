@@ -13,11 +13,14 @@
 #include <netinet/in.h>
 
 #include "../util/logger.h"
+#include "util/socket.c"
 #include "conf.h"
 #include "client_handler.h"
 
 #define LOG_FILE        "/tmp/g"
 #define LOCK_FILE       "/tmp/k"
+// nfds must be the maximum sd + 1
+#define NFDS(a,b)   (((a)>(b))?(a+1):(b+1))
 
 FILE *log_file;
 
@@ -57,9 +60,10 @@ void daemonize(void) {
         case -1:    
             exit (1);
         case 0:
-            exit (0);
+//            exit (0);
             break;
         default:
+            exit (0);
             break;
     }
     log_file = fopen (LOG_FILE, "w");
@@ -110,55 +114,68 @@ void daemonize(void) {
 
 }
 
-#define NB_QUEUE 10
-
 static void
 start_server (void) {
-    int yes =1;
-    int sd;
-    struct sockaddr_in sa;
-
-    if ((sd = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-        log_failure (log_file, "Socket creation failed.");
-        exit (1);
-    }
-    else {
-        log_success (log_file, "Created socket.");
-    }
-
-    sa.sin_family        = AF_INET;
-    sa.sin_addr.s_addr   = INADDR_ANY;
-    sa.sin_port          = htons (prefs->port);
-
-    if (setsockopt (sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (int)) < 0) {
-        log_failure (log_file, "Setsockopt failed.");
-    }
-
-    if (bind (sd, (struct sockaddr *) &sa, sizeof (sa)) < 0) {
-        log_failure (log_file, "Could not assign a local address using bind");
-        exit (1);
-    }
-     
-    if (listen (sd, NB_QUEUE) < 0) {
-        log_failure (log_file, "The socket could not be marked as a passive one.");
-    }
-    else {
-        log_success (log_file, "Server is ready (port : %d).", prefs->port);
-    }
-
-    int client_socket;
-    struct sockaddr_in client_sockaddr;
+    int     client_sd;
+    int     daemon_sd;
+    int     connected_sd;
+    struct sockaddr_in  client_sa;
+    struct sockaddr_in  daemon_sa;
+    struct sockaddr_in  connected_sa;
     socklen_t size = sizeof (struct sockaddr);
+    fd_set  sockets;
+    int nfds;
+
+    client_sa.sin_family        = AF_INET;
+    client_sa.sin_addr.s_addr   = INADDR_ANY;
+    client_sa.sin_port          = htons (prefs->client_port);
+    client_sd = socket_init (&client_sa);
+    if (client_sd < 0) {
+        exit (EXIT_FAILURE);
+    }
+
+    daemon_sa.sin_family        = AF_INET;
+    daemon_sa.sin_addr.s_addr   = INADDR_ANY;
+    daemon_sa.sin_port          = htons (prefs->daemon_port);
+    daemon_sd = socket_init (&daemon_sa);
+    if (daemon_sd < 0) {
+        exit (EXIT_FAILURE);
+    }
+
+    // sockets contains both client_sd and daemon_sd
+    FD_ZERO (&sockets);
+    nfds = NFDS (client_sd, daemon_sd);
     for (;;) {
-        if ((client_socket = accept (sd,
-                                     (struct sockaddr *) &client_sockaddr,
-                                     &size))<0) {
-            log_failure (log_file, "Failed to accept incoming connection.");
-            //exit (EXIT_FAILURE);
-        } 
+        /*
+         * It is VERY important to FD_SET at each loop, because select
+         * will FD_UNSET the socket descriptors
+         */
+        FD_SET (client_sd, &sockets);
+        FD_SET (daemon_sd, &sockets);
+
+        // Block until a socket is ready to accept
+        if (select (nfds, &sockets, NULL, NULL, NULL) < 0) {
+            log_failure (log_file, "main () : select failed");
+        }
+
+        if (FD_ISSET (client_sd, &sockets)) {
+            if ((connected_sd = (accept (client_sd,
+                                        (struct sockaddr *) &connected_sa,
+                                        &size))) < 0)
+                log_failure (log_file, "Failed to accept incoming connection.");
+            handle_client (connected_sd, &connected_sa);
+        }
+        else if (FD_ISSET (daemon_sd, &sockets)) {
+            if ((connected_sd = (accept (daemon_sd,
+                                        (struct sockaddr *) &connected_sa,
+                                        &size))) < 0)
+                log_failure (log_file, "Failed to accept incoming connection.");
+            // FIXME: handle_daemon () ?
+            handle_client (connected_sd, &connected_sa);
+        }
         else {
-    //        handle_request (client_socket, (struct sockaddr_in *)&client_sockaddr);
-            handle_client (client_socket, (struct sockaddr_in *)&client_sockaddr);
+            // This should never happen : neither client nor daemon!?
+            log_failure (log_file, "Unknown connection");
         }
     } 
 }

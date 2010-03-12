@@ -2,7 +2,8 @@
 #define CONF_H
 
 struct prefs {
-    int        port;
+    int         client_port;
+    int         daemon_port;
 };
 
 struct prefs *conf_retrieve (const char*);
