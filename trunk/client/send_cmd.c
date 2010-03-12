@@ -10,8 +10,7 @@
 #include "recv_resp.h"
 #include "util/prompt.h"
 
-#define BUFFER_SIZE 2
-#define TIMEOUT     1   // seconds
+#define BUFFER_SIZE 128
 
 void *
 send_cmd (void *arg) {
@@ -27,8 +26,7 @@ send_cmd (void *arg) {
     for (;;) {
         user_input = prompt ();
 
-        // strlen (cmd) + 1 to send '\n'
-        send_size = strlen (user_input) + 1;
+        send_size = strlen (user_input);
 
         // Send the command
         nb_sent_sum = 0;
