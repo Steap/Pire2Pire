@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 
 #include "../client.h"
 #include "../request.h"
@@ -19,7 +17,6 @@ do_info (void *arg) {
     struct request   *r;
     struct request   *tmp;
     char             answer[256];
-    int              socket;
     int              n;
     int              n_clients;
 
@@ -28,8 +25,6 @@ do_info (void *arg) {
     r = (struct request *) arg;
     if (!r)
         return NULL; 
-
-    socket = r->client->socket;
 
     sem_wait (&r->client->req_lock);
     n_clients = client_numbers (clients);
