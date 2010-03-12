@@ -168,9 +168,11 @@ handle_requests (void *arg) {
             callback = &do_set;
         else if (strncmp (message, "info", 4) == 0)
             callback = &do_info;
+        else if (strncmp (message, "list", 4) == 0)
+            callback = &do_list;
         else if (strncmp (message, "bar", 3) == 0)
             callback = &bar;
-        else 
+        else
             callback = &do_unknown_command;
         request = request_new (message, client);
 
@@ -228,12 +230,11 @@ out:
 
 void
 handle_client (int client_socket, struct sockaddr_in *client_addr) {
-    int            r;
-    struct client *c;
-    char          *addr;
+    int             r;
+    struct client   *c;
+    char            addr[INET_ADDRSTRLEN];
 
     c    = NULL;
-    addr = NULL;
     /*
      * Now, that is weird, but it seems even weirder to init that semaphore
      * outside the client_handler module (we could have done that in main.c).
@@ -249,10 +250,11 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
         return;
     }
 
-    addr = inet_ntoa (client_addr->sin_addr);
-    if (addr) {
+    if (inet_ntop (AF_INET,
+                    &client_addr->sin_addr,
+                    addr,
+                    INET_ADDRSTRLEN)) {
         c = client_new (client_socket, addr);
-        free (addr);
     }
 
     if (!c)

@@ -3,5 +3,6 @@
 
 #include "requests/do_info.h"
 #include "requests/do_set.h"
+#include "requests/do_list.h"
 #include "requests/do_unknown_command.h"
 #endif

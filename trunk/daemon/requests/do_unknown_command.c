@@ -32,9 +32,7 @@ out:
     sem_wait (&r->client->req_lock);
     r->client->requests = request_remove (r->client->requests, r->thread_id);
     sem_post (&r->client->req_lock);
-    log_failure (log_file, "do_() : request_free");
     request_free (r);
-    log_failure (log_file, "REQUEST FREE IN UC");
     pthread_detach (pthread_self ());
 
     return NULL;
