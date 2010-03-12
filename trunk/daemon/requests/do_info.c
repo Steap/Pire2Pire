@@ -38,16 +38,16 @@ do_info (void *arg) {
              (n_clients > 1) ? "are":"is",
              n_clients,
              (n_clients > 1) ? "s":"");
-    send (socket, answer, strlen (answer), 0);
+    client_send (r->client, answer);
 
     sprintf (answer, 
              " < INFO : You have %d requests currently running.\n", 
              request_count (r->client->requests));
-    send (socket, answer, strlen (answer), 0);
+    client_send (r->client, answer);
    
     for (tmp = r->client->requests, n = 1; tmp; tmp = tmp->next, n++) {
         sprintf (answer,  " < INFO : %d - %s\n", n, tmp->cmd);
-        send (socket, answer, strlen (answer), 0);
+        client_send (r->client, answer);
     }
     sem_post (&r->client->req_lock);
 

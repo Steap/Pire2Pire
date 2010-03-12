@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 
 #include "client.h"
 
@@ -24,6 +25,7 @@ client_new (int socket, char *addr) {
     c->prev =NULL;
     c->requests = NULL;
     sem_init (&c->req_lock, 0, 1);
+    sem_init (&c->socket_lock, 0, 1);
 
     return c;
 }
@@ -38,6 +40,7 @@ client_free (struct client *c) {
         c->addr = NULL;
     }
     sem_destroy (&c->req_lock);
+    sem_destroy (&c->socket_lock);
     free (c);
 }
 
@@ -87,4 +90,53 @@ client_remove (struct client *l, pthread_t pt) {
     
     tmp->prev->next = tmp->next;
     return l;
+}
+
+int
+client_send (struct client *c, const char *msg) {
+    int     dest_sock;
+    int     nb_sent;
+    int     nb_sent_sum;
+    int     send_size;
+    char    ending_char;
+
+    dest_sock = c->socket;
+    if (sem_wait (&c->socket_lock) < 0) {
+        log_failure (log_file, "Failed to sem_wait socket_lock");
+        return -1; 
+    }
+
+    // Now the socket is locked for us, let's send!
+    send_size = strlen (msg);
+
+    // Send the command
+    nb_sent_sum = 0;
+    while (nb_sent_sum < send_size) {
+        nb_sent = send (dest_sock,
+                        msg + nb_sent_sum,
+                        send_size - nb_sent_sum,
+                        0);
+        if (nb_sent < 0) {
+            log_failure (log_file,
+                        "Couldn't send to client socket");
+            return -1;
+        }
+        nb_sent_sum += nb_sent;
+    }
+
+    // This is to assure we send a full response
+    if (msg[send_size - 1] != '\n') {
+        ending_char = '\n';
+        if (send (dest_sock, &ending_char, 1, 0) < 1) {
+            log_failure (log_file,
+                        "Failed to send a '\\n' terminated response");
+            return -1;
+        }
+    }
+
+    if (sem_post (&c->socket_lock) < 0) {
+        log_failure (log_file, "Failed to sem_post socket_lock");
+    }
+
+    return 0;
 }

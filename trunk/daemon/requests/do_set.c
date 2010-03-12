@@ -74,7 +74,7 @@ do_set (void *arg) {
         log_failure (log_file, "do_set() : failed to send data to the client");
     }
 #endif
-    if (send (r->client->socket, answer, strlen (answer), 0) < 0) {
+    if (client_send (r->client, answer) < 0) {
         log_failure (log_file, "do_set () : failed to send data to the client");
     }
     

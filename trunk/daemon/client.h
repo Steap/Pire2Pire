@@ -5,6 +5,8 @@
 struct client {
     //int                   id;
     int                   socket;
+    /* We need to lock the socket to send atomic messages */
+    sem_t                 socket_lock;
     char                  *addr; /* IPv4, IPv6, whatever... */
     pthread_t             thread_id;
     /* 
@@ -30,4 +32,5 @@ void           client_free    (struct client *c);
 struct client *client_add     (struct client *l, struct client *c);
 int            client_numbers (struct client *l);
 struct client *client_remove  (struct client *l, pthread_t pt);
+int            client_send    (struct client *c, const char *msg);
 #endif /* CLIENT_H */

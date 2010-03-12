@@ -23,7 +23,7 @@ do_unknown_command (void* arg) {
         return NULL;
 
     sprintf (answer, " < Unknown command '%s'\n", r->cmd);
-    if (send (r->client->socket, answer, strlen (answer), 0) < 0) {
+    if (client_send (r->client, answer) < 0) {
         log_failure (log_file, 
                      "do_unknown_command () : failed to send data back to the \
                      client");
