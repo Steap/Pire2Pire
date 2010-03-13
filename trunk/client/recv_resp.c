@@ -73,7 +73,14 @@ recv_resp (void *arg) {
                 break;
         }
 
-        printf ("\n< %s", response);
+        printf ("%s", response);
+
+        /*
+         * We just wrote on the tty, but the user might have begun typing
+         * his next command, so the display will screw its screen... In order
+         * for him not to be screwed, we inform the prompt thread to display
+         * him his input again
+         */
         pthread_kill (prompt_thread, SIGUSR1);
     }
 
