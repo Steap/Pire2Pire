@@ -12,6 +12,8 @@
 
 #define BUFFER_SIZE 128
 
+pthread_t       prompt_thread;
+
 void *
 send_cmd (void *arg) {
     int         dest_sock = *((int *)arg);
@@ -20,6 +22,8 @@ send_cmd (void *arg) {
     int         send_size;
     char        *user_input;
     pthread_t   recv_thread;
+
+    prompt_thread = pthread_self ();
 
     pthread_create (&recv_thread, NULL, recv_resp, &dest_sock);
 

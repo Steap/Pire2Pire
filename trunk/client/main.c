@@ -8,6 +8,7 @@
 #include <sys/types.h>  // waitpid ()
 #include <sys/wait.h>   // waitpid ()
 #include <pthread.h>    // pthread_create (), pthread_join ()
+#include <termios.h>    // termios, tcgetattr (), tcsetattr (), ...
 
 #include "send_cmd.h"
 
@@ -19,6 +20,13 @@ int main (int argc, char **argv) {
     struct sockaddr_in  daemon_addr;
     int                 daemon_sock;
     pthread_t           send_thread;
+
+/*****
+    struct termios tty;
+    tcgetattr (STDIN_FILENO, &tty);
+    tty.c_lflag &= ~ICANON;
+    tcsetattr (STDIN_FILENO, TCSANOW, &tty);
+*****/
 
     // Configure daemon IP and port
     switch (argc) {
@@ -64,6 +72,11 @@ int main (int argc, char **argv) {
     pthread_join (send_thread, NULL);
 
     close (daemon_sock);
+
+/*****
+    tty.c_lflag |= ICANON;
+    tcsetattr (STDIN_FILENO, TCSANOW, &tty);
+*****/
 
     return EXIT_SUCCESS;
 }

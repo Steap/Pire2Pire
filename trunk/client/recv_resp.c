@@ -7,15 +7,13 @@
 #include <signal.h>     // signal ()
 #include <pthread.h>    // pthread_detach (), ...
 
-#define BUFFER_SIZE 128
+#define BUFFER_SIZE         128
 
 char *response = NULL;
 
+extern pthread_t    prompt_thread;
 
-
-
-
-void
+static void
 proper_quit (int signum) {
     (void)signum;
     // We ensure the free-ing of resources
@@ -25,8 +23,6 @@ proper_quit (int signum) {
     pthread_detach (pthread_self ());
     pthread_exit (NULL);
 }
-
-
 
 
 
@@ -77,8 +73,8 @@ recv_resp (void *arg) {
                 break;
         }
 
-        // Then we print the response recvd and loop
-        printf("%s", response);
+        printf ("\n< %s", response);
+        pthread_kill (prompt_thread, SIGUSR1);
     }
 
     fprintf (stderr,
