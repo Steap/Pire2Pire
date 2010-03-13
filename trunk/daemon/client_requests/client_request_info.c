@@ -15,7 +15,7 @@ extern struct client *clients;
 extern struct daemon *daemons;
 
 void*
-do_info (void *arg) {
+client_request_info (void *arg) {
     struct client_request   *r;
     struct client_request   *tmp;
     char                    answer[256];

@@ -23,7 +23,7 @@ static struct option options[] = {
 };
 #include <unistd.h>
 void*
-do_set (void *arg) {
+client_request_set (void *arg) {
     int                     argc;
     char                    **argv;
     int                     c;

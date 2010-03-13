@@ -15,7 +15,7 @@ extern FILE *log_file;
 extern struct client *clients;
 
 void*
-do_list (void *arg) {
+client_request_list (void *arg) {
     struct client_request   *r;
     char                    answer[512];
     DIR                     *dir;

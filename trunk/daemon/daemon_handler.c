@@ -8,8 +8,8 @@
 #include "../util/logger.h"
 #include "util/socket.h"
 #include "daemon.h"
-#include "requests.h"
 #include "daemon_request.h"
+#include "daemon_requests.h"
 
 #define MAX_DAEMONS                     2
 #define MAX_REQUESTS_PER_DAEMON         2
@@ -71,7 +71,7 @@ handle_requests (void *arg) {
             callback = &handle_file;
         else
 */
-            callback = &do_unknown_command;
+            callback = &daemon_request_unknown;
         request = daemon_request_new (message, daemon);
 
         if (!request) {

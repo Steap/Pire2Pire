@@ -5,14 +5,12 @@
 
 #include "../client.h"
 #include "../client_request.h"
-//#include "../callback_argument.h"
-
 #include "../../util/logger.h"
 
 extern FILE *log_file;
 
 void*
-do_unknown_command (void* arg) {
+client_request_unknown (void* arg) {
     struct client_request   *r;
     char                    answer[256];
     

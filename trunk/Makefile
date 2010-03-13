@@ -4,28 +4,30 @@ LDFLAGS=-lpthread
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 
-CLIENT_SOURCES  =   client/main.c                   \
-            client/send_cmd.c                       \
-            client/recv_resp.c                      \
+CLIENT_SOURCES  =   client/main.c   \
+            client/send_cmd.c       \
+            client/recv_resp.c      \
             client/util/prompt.c
 
-DAEMON_SOURCES  =   daemon/main.c                   \
-		    daemon/conf.c                           \
-		    daemon/client_handler.c                 \
-            daemon/daemon_handler.c                 \
-		    daemon/callback_argument.c              \
-		    daemon/client.c                         \
-            daemon/daemon.c                         \
-		    daemon/client_request.c                        \
-            daemon/daemon_request.c                 \
-            daemon/util/cmd.c                       \
-            daemon/util/socket.c                    \
-		    daemon/requests/do_info.c               \
-		    daemon/requests/do_set.c                \
-            daemon/requests/do_list.c               \
-		    daemon/requests/do_unknown_command.c
+DAEMON_SOURCES  =   daemon/main.c                               \
+		    daemon/conf.c                                       \
+		    daemon/client_handler.c                             \
+            daemon/daemon_handler.c                             \
+		    daemon/callback_argument.c                          \
+		    daemon/client.c                                     \
+            daemon/daemon.c                                     \
+		    daemon/client_request.c                             \
+            daemon/daemon_request.c                             \
+            daemon/util/cmd.c                                   \
+            daemon/util/socket.c                                \
+            daemon/client_requests/client_request_help.c        \
+		    daemon/client_requests/client_request_info.c        \
+            daemon/client_requests/client_request_list.c        \
+		    daemon/client_requests/client_request_set.c         \
+		    daemon/client_requests/client_request_unknown.c     \
+            daemon/daemon_requests/daemon_request_unknown.c
 
-UTIL_SOURCES    =   util/logger.c                   \
+UTIL_SOURCES    =   util/logger.c   \
             util/string.c
 
 CLIENT_OBJ  =   $(CLIENT_SOURCES:.c=.o)

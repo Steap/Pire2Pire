@@ -1,11 +1,6 @@
 #include <pthread.h>
-//#include <semaphore.h>
-//#include <signal.h>
-//#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <sys/types.h>
-//#include <sys/socket.h>
 #include <unistd.h> //FIXME: remove when sleep () is removed
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -13,20 +8,13 @@
 #include "client_handler.h"
 //#include "callback_argument.h"
 #include "../util/logger.h"
-//#include "../util/string.h"
 #include "util/socket.h"
 #include "client.h"
 #include "client_request.h"
-#include "requests.h"
-
-//#define BUFFSIZE                        128
-//#define DBG                             0
+#include "client_requests.h"
 
 #define MAX_CLIENTS                     2
 #define MAX_REQUESTS_PER_CLIENT         2
-
-//#define MAX_CLIENTS_REACHED             -1
-//#define MAX_CLIENTS_REQUESTS_REACHED    -1
 
 extern FILE *log_file;
 
@@ -124,16 +112,18 @@ handle_requests (void *arg) {
 
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
-        if (strncmp (message, "set", 3) == 0) 
-            callback = &do_set;
+        if (strncmp (message, "help", 4) == 0) 
+            callback = &client_request_help;
         else if (strncmp (message, "info", 4) == 0)
-            callback = &do_info;
+            callback = &client_request_info;
         else if (strncmp (message, "list", 4) == 0)
-            callback = &do_list;
+            callback = &client_request_list;
+        else if (strncmp (message, "set", 3) == 0)
+            callback = &client_request_set;
         else if (strncmp (message, "bar", 3) == 0)
             callback = &bar;
         else
-            callback = &do_unknown_command;
+            callback = &client_request_unknown;
         request = client_request_new (message, client);
 
         if (!request) {
