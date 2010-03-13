@@ -53,11 +53,17 @@ client_request_remove (struct client_request *l, pthread_t pt) {
     
     struct client_request *tmp;
     for (tmp = l; pthread_equal (tmp->thread_id, pt) == 0; tmp = tmp->next);
-    if (!tmp->prev)
+    if (!tmp->prev) {
+        if (tmp->next)
+            tmp->next->prev = NULL;
         return tmp->next;
-    tmp->prev->next = tmp->next;
-    // FIXME: BUG WITH tmp->next->prev
-    return l;
+    }
+    else {
+        tmp->prev->next = tmp->next;
+        if (tmp->next)
+            tmp->next->prev = tmp->prev;
+        return l;
+    }
 }
 
 int
