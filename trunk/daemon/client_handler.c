@@ -1,34 +1,32 @@
 #include <pthread.h>
-#include <semaphore.h>
-#include <signal.h>
-#include <stdio.h>
+//#include <semaphore.h>
+//#include <signal.h>
+//#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
-
+//#include <sys/types.h>
+//#include <sys/socket.h>
+#include <unistd.h> //FIXME: remove when sleep () is removed
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 #include "client_handler.h"
-#include "callback_argument.h"
-
+//#include "callback_argument.h"
 #include "../util/logger.h"
-#include "../util/string.h"
+//#include "../util/string.h"
 #include "util/socket.h"
 #include "client.h"
-#include "request.h"
+#include "client_request.h"
 #include "requests.h"
 
-#define BUFFSIZE                   128
-#define DBG                          0
+//#define BUFFSIZE                        128
+//#define DBG                             0
 
-#define MAX_CLIENTS                  2
-#define MAX_REQUESTS_PER_CLIENT      2
+#define MAX_CLIENTS                     2
+#define MAX_REQUESTS_PER_CLIENT         2
 
-#define MAX_CLIENTS_REACHED         -1
-#define MAX_REQUESTS_REACHED        -1
+//#define MAX_CLIENTS_REACHED             -1
+//#define MAX_CLIENTS_REQUESTS_REACHED    -1
 
 extern FILE *log_file;
 
@@ -51,7 +49,7 @@ foo (void *a)
 
     sprintf (ans, 
              " < Number of requests : %d\n", 
-             request_count (r->client->requests));
+             client_request_count (r->client->requests));
     send (r->client->socket, ans, strlen (ans), 0);
     for (tmp = r->client->requests; tmp; tmp = tmp->next) {
         sprintf (ans, "\t . %s\n", tmp->cmd);
@@ -60,17 +58,34 @@ foo (void *a)
     sleep (1);
     
     sem_wait (&r->client->req_lock);
-    r->client->requests = request_remove (r->client->requests, r->thread_id);
+    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
     sem_post (&r->client->req_lock);
-    request_free (r);
+    client_request_free (r);
 
     pthread_detach (pthread_self ());
 
     return NULL;
 }
 #endif
+
 static void*
-bar (void *a) { (void) a; sleep (100); return NULL;}
+bar (void *a) {
+    struct client_request   *r;
+    r = (struct client_request *) a;
+    client_send (r->client, "foo\n");
+    sleep (3);
+    client_send (r->client, "bar\n");
+
+    sem_wait (&r->client->req_lock);
+    r->client->requests = client_request_remove (r->client->requests,
+                                                 r->thread_id);
+    sem_post (&r->client->req_lock);
+    client_request_free (r);
+    pthread_detach (pthread_self ());
+
+    return NULL;
+}
+
 static void*
 handle_requests (void *arg) {
     struct client                   *client;
@@ -78,7 +93,7 @@ handle_requests (void *arg) {
     /* The message typed by the user */
     char                            *message;
     void*                           (*callback) (void *);
-    struct request                  *request;
+    struct client_request           *request;
     char                            answer[128];
 
     if (!(client = (struct client *) arg))
@@ -101,7 +116,7 @@ handle_requests (void *arg) {
         if (strncmp (message, "quit", 4) == 0) 
             goto out;
 
-        if (request_count (client->requests) == MAX_REQUESTS_PER_CLIENT) {
+        if (client_request_count (client->requests) == MAX_REQUESTS_PER_CLIENT) {
             sprintf (answer, " < Too many requests, mister, plz calm down\n");
             send (client->socket, answer, strlen (answer), 0);
             continue;
@@ -119,7 +134,7 @@ handle_requests (void *arg) {
             callback = &bar;
         else
             callback = &do_unknown_command;
-        request = request_new (message, client);
+        request = client_request_new (message, client);
 
         if (!request) {
             sprintf (answer, " < Failed to create a new request\n");
@@ -128,7 +143,7 @@ handle_requests (void *arg) {
         }
         
         sem_wait (&client->req_lock);
-        client->requests = request_add (client->requests, request);
+        client->requests = client_request_add (client->requests, request);
         sem_post (&client->req_lock);
         r = pthread_create (&request->thread_id, NULL, callback, request);
         
@@ -156,8 +171,8 @@ out:
     }
 #endif
     if (request) {
-        log_failure (log_file, "hr : request_free ()");
-        request_free (request);
+        log_failure (log_file, "hr : client_request_free ()");
+        client_request_free (request);
     }
 #if 1
     // Free : 2
