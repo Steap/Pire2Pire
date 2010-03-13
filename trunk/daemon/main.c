@@ -13,7 +13,7 @@
 #include <netinet/in.h>
 
 #include "../util/logger.h"
-#include "util/socket.c"
+#include "util/socket.h"
 #include "conf.h"
 #include "client_handler.h"
 

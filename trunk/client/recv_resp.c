@@ -11,6 +11,10 @@
 
 char *response = NULL;
 
+
+
+
+
 void
 proper_quit (int signum) {
     (void)signum;
@@ -21,6 +25,10 @@ proper_quit (int signum) {
     pthread_detach (pthread_self ());
     pthread_exit (NULL);
 }
+
+
+
+
 
 void *
 recv_resp (void *arg) {
@@ -71,8 +79,6 @@ recv_resp (void *arg) {
 
         // Then we print the response recvd and loop
         printf("%s", response);
-        //free (response);
-        //response = NULL;
     }
 
     fprintf (stderr,

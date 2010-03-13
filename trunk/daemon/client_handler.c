@@ -15,7 +15,8 @@
 #include "callback_argument.h"
 
 #include "../util/logger.h"
-#include "../util/string_util.h"
+#include "../util/string.h"
+#include "util/socket.h"
 #include "client.h"
 #include "request.h"
 #include "requests.h"
@@ -30,62 +31,6 @@
 #define MAX_REQUESTS_REACHED        -1
 
 extern FILE *log_file;
-
-/****** Some shit that might end up in util/ *********/
-/* Given a socket, returns the message typed in */
-static char*
-get_request (int client_socket) {
-    /* The message typed by the user might be longer than BUFFSIZE */
-    char    *message;
-    /* Number of chars written in message */ 
-    int     ptr = 0;
-    char    buffer[BUFFSIZE];
-    int     n_received;
-
-    /* BUFFSIZE + 1, so the terminating null byte ('\0') can be stored */
-    if ((message = calloc (BUFFSIZE + 1, sizeof (char))) == NULL) {
-        perror ("Allocating memory for message");
-        return NULL;
-    }
-
-    while ((n_received = recv (client_socket, buffer, BUFFSIZE, 0)) != 0)
-    {
-        if (n_received < 0) {
-            log_failure (log_file, 
-                         "Error while receiving data on the client socket");
-            return NULL;
-        }
-        /*
-         * Seems necessary, unless we can guarantee that we will only receive
-         * well-formed strings... 
-         */
-        buffer[n_received] = '\0';
-
-        strcpy (message + ptr, buffer);
-
-        if (strstr (buffer, "\n") != NULL) {
-            #if 0
-            if ((message = realloc (message, BUFFSIZE+1)) == NULL) {
-                // TODO: warn someone
-                return NULL;
-            }
-            #endif
-            ptr = 0;
-            string_remove_trailer (message);
-            return message;
-        }
-        if((message = realloc (message, ptr + 2*BUFFSIZE + 1)) == NULL) {
-            fprintf (stderr, "Error reallocating memory for message\n");
-            // TODO: warn someone
-            return NULL;
-        }
-        ptr += n_received;
-        message[ptr] = '\0';
-    }
-    return NULL;
-}
-/**** End of the shit that might end up in util/ *****/
-
 
 struct client *clients = NULL;
 /*
@@ -146,7 +91,7 @@ handle_requests (void *arg) {
         callback = NULL;
         request  = NULL;
 
-        message = get_request (client->socket);
+        message = socket_getline (client->socket);
 
         if (!message)
             goto out;

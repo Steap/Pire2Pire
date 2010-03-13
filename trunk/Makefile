@@ -4,25 +4,26 @@ LDFLAGS=-lpthread
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 
-CLIENT_SOURCES  =   client/main.c                           \
-                    client/send_cmd.c                       \
-                    client/recv_resp.c                      \
-                    client/util/prompt.c
-DAEMON_SOURCES  =   daemon/main.c                           \
+CLIENT_SOURCES  =   client/main.c                   \
+            client/send_cmd.c                       \
+            client/recv_resp.c                      \
+            client/util/prompt.c
+
+DAEMON_SOURCES  =   daemon/main.c                   \
 		    daemon/conf.c                           \
 		    daemon/client_handler.c                 \
 		    daemon/callback_argument.c              \
 		    daemon/client.c                         \
 		    daemon/request.c                        \
             daemon/util/cmd.c                       \
+            daemon/util/socket.c                    \
 		    daemon/requests/do_info.c               \
 		    daemon/requests/do_set.c                \
             daemon/requests/do_list.c               \
 		    daemon/requests/do_unknown_command.c
 
-
-UTIL_SOURCES    =   util/logger.c                           \
-                    util/string_util.c
+UTIL_SOURCES    =   util/logger.c                   \
+            util/string.c
 
 CLIENT_OBJ  =   $(CLIENT_SOURCES:.c=.o)
 DAEMON_OBJ  =   $(DAEMON_SOURCES:.c=.o)
@@ -30,14 +31,14 @@ UTIL_OBJ    =   $(UTIL_SOURCES:.c=.o)
 
 .PHONY: all clean clear
 
-# FIXME: add client when there will be sources...
-all: clear client daemon
+# FIXME: Remove clean on release
+all: clean clear client daemon
 
-client: $(CLIENT_SOURCES) $(CLIENT_EXEC)
+client: $(CLIENT_SOURCES) $(UTIL_SOURCES) $(CLIENT_EXEC)
 
 daemon: $(DAEMON_SOURCES) $(UTIL_SOURCES) $(DAEMON_EXEC)
 
-$(CLIENT_EXEC):	$(CLIENT_OBJ)
+$(CLIENT_EXEC):	$(CLIENT_OBJ) $(UTIL_OBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 $(DAEMON_EXEC):	$(DAEMON_OBJ) $(UTIL_OBJ)
