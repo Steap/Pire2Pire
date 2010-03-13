@@ -12,9 +12,12 @@ CLIENT_SOURCES  =   client/main.c                   \
 DAEMON_SOURCES  =   daemon/main.c                   \
 		    daemon/conf.c                           \
 		    daemon/client_handler.c                 \
+            daemon/daemon_handler.c                 \
 		    daemon/callback_argument.c              \
 		    daemon/client.c                         \
-		    daemon/request.c                        \
+            daemon/daemon.c                         \
+		    daemon/client_request.c                        \
+            daemon/daemon_request.c                 \
             daemon/util/cmd.c                       \
             daemon/util/socket.c                    \
 		    daemon/requests/do_info.c               \
@@ -31,8 +34,7 @@ UTIL_OBJ    =   $(UTIL_SOURCES:.c=.o)
 
 .PHONY: all clean clear
 
-# FIXME: Remove clean on release
-all: clean clear client daemon
+all: clear client daemon
 
 client: $(CLIENT_SOURCES) $(UTIL_SOURCES) $(CLIENT_EXEC)
 

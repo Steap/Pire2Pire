@@ -16,6 +16,7 @@
 #include "util/socket.h"
 #include "conf.h"
 #include "client_handler.h"
+#include "daemon_handler.h"
 
 #define LOG_FILE        "/tmp/g"
 #define LOCK_FILE       "/tmp/k"
@@ -170,8 +171,7 @@ start_server (void) {
                                         (struct sockaddr *) &connected_sa,
                                         &size))) < 0)
                 log_failure (log_file, "Failed to accept incoming connection.");
-            // FIXME: handle_daemon () ?
-            handle_client (connected_sd, &connected_sa);
+            handle_daemon (connected_sd, &connected_sa);
         }
         else {
             // This should never happen : neither client nor daemon!?

@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "../client.h"
-#include "../request.h"
+#include "../client_request.h"
 //#include "../callback_argument.h"
 
 #include "../../util/logger.h"
@@ -13,14 +13,14 @@ extern FILE *log_file;
 
 void*
 do_unknown_command (void* arg) {
-    struct request  *r;
-    char             answer[256];
+    struct client_request   *r;
+    char                    answer[256];
     
-    r = (struct request *) arg;
+    r = (struct client_request *) arg;
     if (!r)
         return NULL;
 
-    sprintf (answer, " < Unknown command '%s'\n", r->cmd);
+    sprintf (answer, "Unknown command '%s'\n", r->cmd);
     if (client_send (r->client, answer) < 0) {
         log_failure (log_file, 
                      "do_unknown_command () : failed to send data back to the \
@@ -30,9 +30,9 @@ do_unknown_command (void* arg) {
     
 out:
     sem_wait (&r->client->req_lock);
-    r->client->requests = request_remove (r->client->requests, r->thread_id);
+    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
     sem_post (&r->client->req_lock);
-    request_free (r);
+    client_request_free (r);
     pthread_detach (pthread_self ());
 
     return NULL;

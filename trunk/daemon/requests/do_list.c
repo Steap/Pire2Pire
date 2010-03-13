@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 
 #include "../client.h"
-#include "../request.h"
+#include "../client_request.h"
 
 #include "../../util/logger.h"
 
@@ -16,16 +16,16 @@ extern struct client *clients;
 
 void*
 do_list (void *arg) {
-    struct request   *r;
-    char             answer[512];
-    DIR              *dir;
-    struct dirent    *entry;
-    char             entry_full_path[256];
-    struct stat      entry_stat;
+    struct client_request   *r;
+    char                    answer[512];
+    DIR                     *dir;
+    struct dirent           *entry;
+    char                    entry_full_path[256];
+    struct stat             entry_stat;
 
     /* OKAY, let's say all options/args are silently ignored */
 
-    r = (struct request *) arg;
+    r = (struct client_request *) arg;
     if (!r)
         return NULL;
 
@@ -47,7 +47,7 @@ do_list (void *arg) {
                             entry_full_path);
                 continue;
             }
-            sprintf (answer, "< file %s [key] %d\n",
+            sprintf (answer, "file %s [key] %d\n",
                     entry->d_name,
                     (int)entry_stat.st_size);
             if (client_send (r->client, answer) < 0) {
@@ -64,9 +64,9 @@ do_list (void *arg) {
 
 out:
     sem_wait (&r->client->req_lock);
-    r->client->requests = request_remove (r->client->requests, r->thread_id);
+    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
     sem_post (&r->client->req_lock);
-    request_free (r);
+    client_request_free (r);
     pthread_detach (pthread_self ());
 
     return NULL; 
