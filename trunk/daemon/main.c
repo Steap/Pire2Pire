@@ -61,10 +61,9 @@ void daemonize(void) {
         case -1:    
             exit (1);
         case 0:
-//            exit (0);
+            exit (0);
             break;
         default:
-            exit (0);
             break;
     }
     log_file = fopen (LOG_FILE, "w");

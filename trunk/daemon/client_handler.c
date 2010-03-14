@@ -154,10 +154,9 @@ out:
     sem_post (&clients_lock);
 
 #if 1
-    // Free : 1
     if (message) {
         free (message);
-//        log_failure (log_file, "hr : Freed message");
+        log_failure (log_file, "hr : Freed message");
     }
 #endif
     if (request) {
@@ -165,9 +164,8 @@ out:
         client_request_free (request);
     }
 #if 1
-    // Free : 2
     if (client) {
-//        log_failure (log_file, "hr : client_free ()");
+        log_failure (log_file, "hr : client_free ()");
         client_free (client);
     }
 #endif

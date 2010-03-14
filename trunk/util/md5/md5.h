@@ -1,6 +1,7 @@
 #ifndef MD5_H
 #define MD5_H
 
+#include "md5_global.h"
 /* MD5.H - header file for MD5C.C
  */
 
@@ -37,5 +38,6 @@ void MD5Init PROTO_LIST ((MD5_CTX *));
 void MD5Update PROTO_LIST
   ((MD5_CTX *, unsigned char *, unsigned int));
 void MD5Final PROTO_LIST ((unsigned char [16], MD5_CTX *));
+void MDFile PROTO_LIST ((unsigned char digest[16], char *file));
 
 #endif /* MD5_H */

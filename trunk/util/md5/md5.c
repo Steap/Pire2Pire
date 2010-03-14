@@ -30,7 +30,7 @@ documentation and/or software.
 
 static void MDString PROTO_LIST ((unsigned char[16], char *));
 static void MDTimeTrial PROTO_LIST ((void));
-static void MDFile PROTO_LIST ((unsigned char[16], char *));
+void MDFile PROTO_LIST ((unsigned char[16], char *));
 static void MDPartOfFile PROTO_LIST ((unsigned char[16], char *, int, int));
 static void MDFilter PROTO_LIST ((void));
 static void MDPrint PROTO_LIST ((unsigned char[16]));
@@ -43,37 +43,56 @@ Arguments (may be any combination):
   filename - digests file
   (none)   - digests standard input
  */
+#if 0
 int main (int argc, char *argv[]) {
     int i;
     unsigned char digest[16];
 
     if (argc > 1)
-	    for (i = 1; i < argc; i++)
-	        if (argv[i][0] == '-' && argv[i][1] == 's') {
-		        MDString (&digest, argv[i] + 2);
+    {
+	for (i = 1; i < argc; i++) 
+        {
+	    if (argv[i][0] == '-' && argv[i][1] == 's') 
+            {
+		MDString (&digest, argv[i] + 2);
                 /*
                 printf ("\nMD%d (\"%s\") = ", MD, argv[i] + 2);
                 MDPrint (digest);
                 printf ("\n");
                 */
             }
-	        else if (strcmp (argv[i], "-t") == 0)
-		        MDTimeTrial ();
-	        else {
-		        MDFile (&digest, argv[i]);
+	    else if (strcmp (argv[i], "-t") == 0)
+	        MDTimeTrial ();
+	    else 
+            {
+		MDFile (&digest, argv[i]);
                 //MDPartOfFile (&digest, argv[i], 1000, 1003);
-                /*
-                printf ("\nMD%d (%s) = ", MD, argv[i]);
+                
+                //printf ("\nMD%d (%s) = ", MD, argv[i]);
+                //fprintf (stderr, "xxxx %02x\n", digest[0]);
+                unsigned int lol;
+                char ans[32];
+                for (lol = 0; lol < 16; lol++)
+                {
+                 //   fprintf (stderr, "Wrote %02x\n", digest[lol]);
+                    sprintf (ans+2*lol, "%02x", digest[lol]);
+                }
+                #if 1
+                fprintf (stderr, "\n===================\n");
+                fprintf (stderr, "ANS : %s\n", ans);
+                fprintf (stderr, "\n====================\n");
                 MDPrint (digest);
                 printf ("\n");
-                */
+                #endif
             }
+        }
+    }
     else
-	    MDFilter ();
+        MDFilter ();
 
     return (0);
 }
-
+#endif
 /* Digests a string and puts the result into digest[16].
  */
 static void MDString (unsigned char digest[16], char *string) {
@@ -131,7 +150,7 @@ static void MDTimeTrial () {
 
 /* Digests an entire file and puts the result into digest.
  */
-static void MDFile (unsigned char digest[16], char *filename) {
+void MDFile (unsigned char digest[16], char *filename) {
     FILE *file;
     MD5_CTX context;
     int len;
@@ -142,16 +161,17 @@ static void MDFile (unsigned char digest[16], char *filename) {
 
     else {
 	    MD5Init (&context);
-	    while (len = fread (buffer, 1, 1024, file))
+	    while ((len = fread (buffer, 1, 1024, file)) != 0)
 	        MD5Update (&context, buffer, len);
 	    MD5Final (digest, &context);
 
 	    fclose (file);
-        /*
+            /*
 	    printf ("MD%d (%s) = ", MD, filename);
 	    MDPrint (digest);
 	    printf ("\n");
-        */
+            */
+        
     }
 }
 
@@ -223,7 +243,7 @@ static void MDFilter () {
     unsigned char buffer[16], digest[16];
 
     MD5Init (&context);
-    while (len = fread (buffer, 1, 16, stdin))
+    while ((len = fread (buffer, 1, 16, stdin)) != 0)
         MD5Update (&context, buffer, len);
     MD5Final (digest, &context);
 
@@ -235,7 +255,6 @@ static void MDFilter () {
  */
 static void MDPrint (unsigned char digest[16]) {
     unsigned int i;
-
     for (i = 0; i < 16; i++)
-        printf ("%02x", digest[i]);
+        fprintf (stderr, "%02x ", digest[i]);
 }

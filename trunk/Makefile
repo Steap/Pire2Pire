@@ -12,23 +12,25 @@ CLIENT_SOURCES  =   client/main.c   \
 DAEMON_SOURCES  =   daemon/main.c                               \
 		    daemon/conf.c                                       \
 		    daemon/client_handler.c                             \
-            daemon/daemon_handler.c                             \
+                    daemon/daemon_handler.c                             \
 		    daemon/callback_argument.c                          \
 		    daemon/client.c                                     \
-            daemon/daemon.c                                     \
+                    daemon/daemon.c                                     \
 		    daemon/client_request.c                             \
-            daemon/daemon_request.c                             \
-            daemon/util/cmd.c                                   \
-            daemon/util/socket.c                                \
-            daemon/client_requests/client_request_help.c        \
+                    daemon/daemon_request.c                             \
+                    daemon/util/cmd.c                                   \
+                    daemon/util/socket.c                                \
+                    daemon/client_requests/client_request_help.c        \
 		    daemon/client_requests/client_request_info.c        \
-            daemon/client_requests/client_request_list.c        \
+                    daemon/client_requests/client_request_list.c        \
 		    daemon/client_requests/client_request_set.c         \
 		    daemon/client_requests/client_request_unknown.c     \
-            daemon/daemon_requests/daemon_request_unknown.c
+                    daemon/daemon_requests/daemon_request_unknown.c
 
 UTIL_SOURCES    =   util/logger.c   \
-            util/string.c
+                    util/string.c   \
+                    util/md5/md5.c  \
+                    util/md5/md5_algorithm.c
 
 CLIENT_OBJ  =   $(CLIENT_SOURCES:.c=.o)
 DAEMON_OBJ  =   $(DAEMON_SOURCES:.c=.o)
