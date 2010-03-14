@@ -21,7 +21,7 @@ log_success (FILE *log, const char *msg, ...) {
 }
 
 void
-log_failure (FILE *log, char *msg, ...) {
+log_failure (FILE *log, const char *msg, ...) {
     va_list arg;
     va_start (arg, msg);
     logger (log, msg, " [FAIL] ", &arg);
@@ -29,7 +29,7 @@ log_failure (FILE *log, char *msg, ...) {
 }
 
 void
-log_recv (FILE *log, char *msg, ...) {
+log_recv (FILE *log, const char *msg, ...) {
 #if ALL_MESSAGES
     va_list arg;
     va_start (arg, msg);
@@ -39,7 +39,7 @@ log_recv (FILE *log, char *msg, ...) {
 }
 
 void
-log_send (FILE *log, char *msg, ...) {
+log_send (FILE *log, const char *msg, ...) {
 #if ALL_MESSAGES
     va_list arg;
     va_start (arg, msg);
