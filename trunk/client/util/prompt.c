@@ -1,14 +1,16 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>     // read()
-#include <string.h>     // strcpy ()
-#include <signal.h>     // sigaction, sigaction (), sigemptyset ()
-#include <pthread.h>
-#include <errno.h>
-#include <termios.h>
-#include <sys/ioctl.h>
+#include <sys/ioctl.h>      // TIOCSTI, not POSIX :(
+#include <sys/select.h>     // timeval
 
-#define BUFFER_SIZE 9
+#include <errno.h>
+#include <signal.h>         // sigaction
+#include <stdlib.h>         // NULL
+#include <stdio.h>          // perror ()
+#include <string.h>         // strcpy ()
+#include <stropts.h>        // ioctl ()
+#include <termios.h>        // termios
+#include <unistd.h>         // STDIN_FILENO
+
+#define BUFFER_SIZE 128
 
 /*
  * This function is called when the thread is interrupted by SIGUSR1,

@@ -1,19 +1,12 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/socket.h> // inet_aton ()
-#include <netinet/in.h> // inet_aton ()
 #include <arpa/inet.h>  // inet_aton ()
-#include <unistd.h>     // fork (), close ()
-#include <string.h>     // strncmp (), strlen ()
-#include <sys/types.h>  // waitpid ()
-#include <sys/wait.h>   // waitpid ()
+#include <netinet/in.h> // sockaddr_in
+
 #include <pthread.h>    // pthread_create (), pthread_join ()
-#include <termios.h>    // termios, tcgetattr (), tcsetattr (), ...
+#include <stdlib.h>     // exit ()
+#include <stdio.h>      // printf ()
+#include <unistd.h>     // fork (), close ()
 
-#include "send_cmd.h"
-
-#define BUFFER_SIZE 2
-#define TIMEOUT     1   // TODO: put this in config
+#include "send_cmd.h"   // send_cmd
 
 int main (int argc, char **argv) {
     int                 daemon_port;
@@ -21,17 +14,10 @@ int main (int argc, char **argv) {
     int                 daemon_sock;
     pthread_t           send_thread;
 
-/*****
-    struct termios tty;
-    tcgetattr (STDIN_FILENO, &tty);
-    tty.c_lflag &= ~ICANON;
-    tcsetattr (STDIN_FILENO, TCSANOW, &tty);
-*****/
-
     // Configure daemon IP and port
     switch (argc) {
         case 1:     // ./client
-            // FIXME: 1234 must be replaced by a port read in daemon conf
+            // FIXME: 1337 must be replaced by a port read in daemon conf
             printf ("No [IP PORT] specified, using default 127.0.0.1:1337.\n");
             inet_aton ("127.0.0.1", &daemon_addr.sin_addr);
             daemon_addr.sin_port = htons (1337);
@@ -72,11 +58,6 @@ int main (int argc, char **argv) {
     pthread_join (send_thread, NULL);
 
     close (daemon_sock);
-
-/*****
-    tty.c_lflag |= ICANON;
-    tcsetattr (STDIN_FILENO, TCSANOW, &tty);
-*****/
 
     return EXIT_SUCCESS;
 }

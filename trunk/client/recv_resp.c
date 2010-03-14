@@ -1,11 +1,10 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <netinet/in.h> // sockaddr_in, socket (), ...
-#include <unistd.h>     // close ()
-#include <string.h>     // strlen ()
-#include <errno.h>      // errno
-#include <signal.h>     // signal ()
+#include <sys/socket.h> // recv ()
+
 #include <pthread.h>    // pthread_detach (), ...
+#include <signal.h>     // sigaction (), signal ()
+#include <stdlib.h>     // NULL
+#include <stdio.h>      // perror ()
+#include <string.h>     // strcpy ()
 
 #define BUFFER_SIZE         128
 

@@ -1,16 +1,13 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <netinet/in.h> // sockaddr_in, socket (), ...
-#include <unistd.h>     // close ()
-#include <string.h>     // strlen ()
-#include <errno.h>      // errno
-#include <pthread.h>    // pthread_detach (), ...
-#include <signal.h>     // pthread_kill ()
+#include <sys/socket.h>     // send ()
 
-#include "recv_resp.h"
-#include "util/prompt.h"
+#include <pthread.h>        // pthread_t
+#include <signal.h>         // pthread_kill ()
+#include <stdlib.h>         // exit ()
+#include <stdio.h>          // perror ()
+#include <string.h>         // strlen ()
 
-#define BUFFER_SIZE 128
+#include "recv_resp.h"      // recv_resp ()
+#include "util/prompt.h"    // prompt ()
 
 pthread_t       prompt_thread;
 
