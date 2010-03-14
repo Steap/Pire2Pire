@@ -68,12 +68,6 @@ bar (void *a) {
     client_send (r->client, "bar\n");
     log_failure (log_file, "My client was : %s", r->client->addr);
 
-    sem_wait (&r->client->req_lock);
-    r->client->requests = client_request_remove (r->client->requests,
-                                                 r->thread_id);
-    sem_post (&r->client->req_lock);
-
-    client_request_free (r);
     pthread_detach (pthread_self ());
 
     return NULL;
@@ -122,11 +116,13 @@ start_request_thread (void *arg) {
     wrapper->callback (wrapper->request);
 
     // And we remove the request properly
+#if 1
     r = wrapper->request;
     sem_wait (&r->client->req_lock);
     r->client->requests = client_request_remove (r->client->requests, r->thread_id);
     sem_post (&r->client->req_lock);
     client_request_free (r);
+#endif
     pthread_detach (pthread_self ());
 
     return NULL;
