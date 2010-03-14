@@ -8,4 +8,8 @@ void log_success (FILE *log, char *msg, ...);
 
 void log_failure (FILE *log, char *msg, ...);
 
+void log_recv (FILE *log, char *msg, ...);
+
+void log_send (FILE *log, char *msg, ...);
+
 #endif//LOGGER_H

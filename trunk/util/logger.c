@@ -2,16 +2,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define FOO 0
+#define ALL_MESSAGES    1
+
+static void
+logger (FILE *log, const char *msg, const char *header, va_list *arg) {
+    fprintf (log, "%s", header);
+    vfprintf (log, msg, *arg);
+    fprintf (log, "\n");
+    fflush (log);
+}
 
 void
 log_success (FILE *log, const char *msg, ...) {
     va_list arg;
     va_start (arg, msg);
-    fprintf (log, " [+] ");
-    vfprintf (log, msg, arg);
-    fprintf (log, "\n");
-    fflush (log);
+    logger (log, msg, " [+] ", &arg);
     va_end (arg);
 }
 
@@ -19,9 +24,26 @@ void
 log_failure (FILE *log, char *msg, ...) {
     va_list arg;
     va_start (arg, msg);
-    fprintf (log, " [FAIL] ");
-    vfprintf (log, msg, arg);
-    fprintf (log, "\n");
-    fflush (log);
+    logger (log, msg, " [FAIL] ", &arg);
     va_end (arg);
+}
+
+void
+log_recv (FILE *log, char *msg, ...) {
+#if ALL_MESSAGES
+    va_list arg;
+    va_start (arg, msg);
+    logger (log, msg, " [<] ", &arg);
+    va_end (arg);
+#endif
+}
+
+void
+log_send (FILE *log, char *msg, ...) {
+#if ALL_MESSAGES
+    va_list arg;
+    va_start (arg, msg);
+    logger (log, msg, " [>] ", &arg);
+    va_end (arg);
+#endif
 }
