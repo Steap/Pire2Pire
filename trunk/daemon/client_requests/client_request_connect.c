@@ -78,7 +78,9 @@ client_request_connect (void *arg) {
     struct sockaddr_in      daemon_addr;
     struct daemon           *daemon;
 
-    r = (struct client_request *) arg;    
+    r = (struct client_request *) arg;
+    if (!r)
+        return NULL;
     argv = cmd_to_argc_argv (r->cmd, &argc);
     while ((c = cmd_get_next_option (argc, argv, options)) > 0);
 
@@ -171,13 +173,7 @@ send_msg:
         log_failure (log_file, "do_set () : failed to send data to the client");
     }
     
-//out:
     cmd_free (argv);
-    sem_wait (&r->client->req_lock);
-    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
-    sem_post (&r->client->req_lock);
-    client_request_free (r);
-    pthread_detach (pthread_self ());
-    return NULL;
 
+    return NULL;
 }

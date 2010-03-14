@@ -24,15 +24,8 @@ daemon_request_unknown (void* arg) {
         log_failure (log_file, 
                      "do_unknown_command () : failed to send data back to the \
                      daemon");
-        goto out;
+        return NULL;
     }
     
-out:
-    sem_wait (&r->daemon->req_lock);
-    r->daemon->requests = daemon_request_remove (r->daemon->requests, r->thread_id);
-    sem_post (&r->daemon->req_lock);
-    daemon_request_free (r);
-    pthread_detach (pthread_self ());
-
     return NULL;
 }

@@ -4,6 +4,7 @@
 #include <unistd.h> //FIXME: remove when sleep () is removed
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>     // pthread_kill ()
 
 #include "client_handler.h"
 //#include "callback_argument.h"
@@ -62,8 +63,10 @@ bar (void *a) {
     struct client_request   *r;
     r = (struct client_request *) a;
     client_send (r->client, "foo\n");
-    sleep (3);
+    sleep (5);
+    log_failure (log_file, "I will now send bar");
     client_send (r->client, "bar\n");
+    log_failure (log_file, "My client was : %s", r->client->addr);
 
     sem_wait (&r->client->req_lock);
     r->client->requests = client_request_remove (r->client->requests,
@@ -75,14 +78,69 @@ bar (void *a) {
     return NULL;
 }
 
+
+
+static void
+terminate_thread (int signum) {
+    (void)signum;
+    pthread_detach (pthread_self ());
+    pthread_exit (NULL);
+}
+
+
+
+/*
+ * This wrapper is needed to send both the callback function and the
+ * client_request via pthread_create ()
+ */
+struct request_thread_wrapper {
+    void *                  (*callback) (void *);
+    struct client_request   *request;
+};
+
+static void *
+start_request_thread (void *arg) {
+    struct request_thread_wrapper   *wrapper;
+    struct client_request           *r;
+    struct sigaction                on_sigterm;
+
+    /*
+     * We must mask SIGTERM so that it won't call stop_server () but
+     * terminate_thread () instead
+     */
+    on_sigterm.sa_handler = terminate_thread;
+    on_sigterm.sa_flags = 0;
+    sigaction (SIGTERM, &on_sigterm, NULL);
+
+    wrapper = (struct request_thread_wrapper *)arg;
+    if (!wrapper)
+        return NULL;
+
+    // Now we call the request handler
+    wrapper->callback (wrapper->request);
+
+    // And we remove the request properly
+    r = wrapper->request;
+    sem_wait (&r->client->req_lock);
+    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
+    sem_post (&r->client->req_lock);
+    client_request_free (r);
+    pthread_detach (pthread_self ());
+
+    return NULL;
+}
+
+
+
 static void*
 handle_requests (void *arg) {
     struct client                   *client;
     int                             r;
     /* The message typed by the user */
-    char                            *message;
+     char                            *message;
     void*                           (*callback) (void *);
     struct client_request           *request;
+    struct request_thread_wrapper   wrapper;
     char                            answer[128];
 
     if (!(client = (struct client *) arg))
@@ -140,7 +198,13 @@ handle_requests (void *arg) {
         sem_wait (&client->req_lock);
         client->requests = client_request_add (client->requests, request);
         sem_post (&client->req_lock);
-        r = pthread_create (&request->thread_id, NULL, callback, request);
+
+        wrapper.callback = callback;
+        wrapper.request = request;
+        r = pthread_create (&request->thread_id,
+                            NULL,
+                            start_request_thread,
+                            &wrapper);
         
         if (r < 0) {
             sprintf (answer, 
@@ -154,6 +218,16 @@ handle_requests (void *arg) {
 out:
     log_success (log_file, "End of %s", client->addr);
 
+    // Kill all client requests
+    sem_wait (&client->req_lock);
+    struct client_request *tmp;
+    for (tmp = client->requests; tmp; tmp = tmp->next) {
+        log_success (log_file, "Killing request %s", tmp->cmd);
+        pthread_kill (tmp->thread_id, SIGTERM);
+    }
+    sem_post (&client->req_lock);
+
+    // Then kill the client himself
     sem_wait (&clients_lock);
     clients = client_remove (clients, pthread_self ());
     sem_post (&clients_lock);

@@ -100,21 +100,23 @@ void daemonize(void) {
     else
         log_success (log_file, "Created lock file (%s)", LOCK_FILE);
 
+    sigset_t mask;
+    sigemptyset (&mask);
+    sigaddset (&mask, SIGCHLD);
+    sigaddset (&mask, SIGTSTP);
+    sigaddset (&mask, SIGTTOU);
+    sigaddset (&mask, SIGTTIN);
+    sigprocmask (SIG_BLOCK, &mask, NULL);
 
-    signal (SIGCHLD, SIG_IGN);
-    log_success (log_file, "Ignoring SIGCHLD");
-    signal (SIGTSTP, SIG_IGN);
-    log_success (log_file, "Ignoring SIGTSTP");
-    signal (SIGTTOU, SIG_IGN);
-    log_success (log_file, "Ignoring SIGTTOU");
-    signal (SIGTTIN, SIG_IGN);
-    log_success (log_file, "Ignoring SIGTTIN");
+    struct sigaction    on_signal;
+    on_signal.sa_flags = 0;
+    on_signal.sa_handler = signal_handler;
+    sigaction (SIGHUP, &on_signal, NULL);
+    on_signal.sa_handler = server_stop;
+    sigaction (SIGINT, &on_signal, NULL);
+    sigaction (SIGTERM, &on_signal, NULL);
 
-    signal (SIGHUP, signal_handler); 
-    signal (SIGINT, server_stop);
-    signal (SIGTERM, server_stop);
-
-    log_success (log_file, "Connected signal handler.");
+    log_success (log_file, "Signals deferred or handled.");
 
 }
 

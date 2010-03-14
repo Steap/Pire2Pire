@@ -53,7 +53,7 @@ client_request_list (void *arg) {
     dir = opendir (SHARED_FOLDER);
     if (dir == NULL) {
         log_failure (log_file, "do_list () : can't open shared directory");
-        goto out;
+        return NULL;
     }
 
     for (entry = readdir (dir); entry != NULL; entry = readdir (dir)) {
@@ -87,15 +87,9 @@ client_request_list (void *arg) {
 
     if (closedir (dir) < 0) {
         log_failure (log_file, "do_list () : can't close shared directory");
-        goto out;
+        return NULL;
     }
 
-out:
-    sem_wait (&r->client->req_lock);
-    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
-    sem_post (&r->client->req_lock);
-    client_request_free (r);
-    pthread_detach (pthread_self ());
     return NULL; 
 }
 

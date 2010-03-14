@@ -3,6 +3,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
 
 #include "daemon_handler.h"
 #include "../util/logger.h"
@@ -26,6 +27,61 @@ struct daemon *daemons = NULL;
  */
 sem_t          daemons_lock;
 
+
+
+static void
+terminate_thread (int signum) {
+    (void)signum;
+    pthread_detach (pthread_self ());
+    pthread_exit (NULL);
+}
+
+
+
+/*
+ * This wrapper is needed to send both the callback function and the
+ * client_request via pthread_create ()
+ */
+struct request_thread_wrapper {
+    void *                  (*callback) (void *);
+    struct daemon_request   *request;
+};
+
+static void *
+start_request_thread (void *arg) {
+    struct request_thread_wrapper   *wrapper;
+    struct daemon_request           *r;
+    struct sigaction                on_sigterm;
+
+    /*
+     * We must mask SIGTERM so that it won't call stop_server () but
+     * terminate_thread () instead
+     */
+    on_sigterm.sa_handler = terminate_thread;
+    on_sigterm.sa_flags = 0;
+    sigaction (SIGTERM, &on_sigterm, NULL);
+
+    wrapper = (struct request_thread_wrapper *)arg;
+    if (!wrapper)
+        return NULL;
+
+    // Now we call the request handler
+    wrapper->callback (wrapper->request);
+
+    // And we remove the request properly
+    r = wrapper->request;
+    sem_wait (&r->daemon->req_lock);
+    r->daemon->requests = daemon_request_remove (r->daemon->requests,
+                                                 r->thread_id);
+    sem_post (&r->daemon->req_lock);
+    daemon_request_free (r);
+    pthread_detach (pthread_self ());
+
+    return NULL;
+}
+
+
+
 static void*
 handle_requests (void *arg) {
     struct daemon                   *daemon;
@@ -34,6 +90,7 @@ handle_requests (void *arg) {
     char                            *message;
     void*                           (*callback) (void *);
     struct daemon_request           *request;
+    struct request_thread_wrapper   wrapper;
     char                            answer[128];
 
     if (!(daemon = (struct daemon *) arg))
@@ -84,6 +141,13 @@ handle_requests (void *arg) {
         daemon->requests = daemon_request_add (daemon->requests, request);
         sem_post (&daemon->req_lock);
         r = pthread_create (&request->thread_id, NULL, callback, request);
+
+        wrapper.callback = callback;
+        wrapper.request = request;
+        r = pthread_create (&request->thread_id,
+                            NULL,
+                            start_request_thread,
+                            &wrapper);
         
         if (r < 0) {
             sprintf (answer, 

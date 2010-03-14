@@ -4,12 +4,19 @@
 #include <pthread.h>
 
 #include "daemon_request.h"
+#include "../util/logger.h"
 
 struct daemon;
+
+extern FILE*    log_file;
 
 struct daemon_request *
 daemon_request_new (char *cmd, struct daemon *daemon) {
     struct daemon_request *r;
+
+    // Log the request (see ../util/logger.c to disactivate this)
+    log_recv (log_file, cmd);
+
     r = malloc (sizeof (struct daemon_request));
     if (!r)
         return NULL;

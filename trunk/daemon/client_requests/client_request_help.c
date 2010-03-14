@@ -24,15 +24,9 @@ client_request_help (void *arg) {
 
     r = (struct client_request *) arg;
     if (!r)
-        return NULL; 
+        return NULL;
 
     client_send (r->client, HELP_TEXT);
-
-    sem_wait (&r->client->req_lock);
-    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
-    sem_post (&r->client->req_lock);
-    client_request_free (r);
-    pthread_detach (pthread_self ());
 
     return NULL; 
 }

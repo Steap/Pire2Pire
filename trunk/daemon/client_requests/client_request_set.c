@@ -50,7 +50,7 @@ client_request_set (void *arg) {
          * TODO : write an RFC to change it.
          */
         cmd_print_error_message ();
-        goto out;
+        return NULL;
     }
    
     nb_arguments = argc - optind;
@@ -84,12 +84,5 @@ client_request_set (void *arg) {
         cba_free (cba);
 #endif
 
-out:
-    sem_wait (&r->client->req_lock);
-    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
-    sem_post (&r->client->req_lock);
-    client_request_free (r);
-    pthread_detach (pthread_self ());
     return NULL;
-
 }

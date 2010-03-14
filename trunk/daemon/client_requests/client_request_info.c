@@ -58,13 +58,6 @@ client_request_info (void *arg) {
     }
     sem_post (&r->client->req_lock);
 
-//out:
-    sem_wait (&r->client->req_lock);
-    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
-    sem_post (&r->client->req_lock);
-    client_request_free (r);
-    pthread_detach (pthread_self ());
-
     return NULL; 
 }
 

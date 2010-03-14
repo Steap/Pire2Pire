@@ -97,6 +97,9 @@ daemon_send (struct daemon *d, const char *msg) {
     int     send_size;
     char    ending_char;
 
+    // Log this (see ../util/logger.c to disactivate this)
+    log_send (log_file, msg);
+
     dest_sock = d->socket;
     if (sem_wait (&d->socket_lock) < 0) {
         log_failure (log_file, "Failed to sem_wait socket_lock");
