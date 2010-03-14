@@ -109,6 +109,7 @@ void daemonize(void) {
     sigprocmask (SIG_BLOCK, &mask, NULL);
 
     struct sigaction    on_signal;
+    sigemptyset (&on_signal.sa_mask);
     on_signal.sa_flags = 0;
     on_signal.sa_handler = signal_handler;
     sigaction (SIGHUP, &on_signal, NULL);

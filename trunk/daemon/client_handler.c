@@ -72,6 +72,7 @@ bar (void *a) {
     r->client->requests = client_request_remove (r->client->requests,
                                                  r->thread_id);
     sem_post (&r->client->req_lock);
+
     client_request_free (r);
     pthread_detach (pthread_self ());
 
@@ -110,6 +111,7 @@ start_request_thread (void *arg) {
      */
     on_sigterm.sa_handler = terminate_thread;
     on_sigterm.sa_flags = 0;
+    sigemptyset (&on_sigterm.sa_mask);
     sigaction (SIGTERM, &on_sigterm, NULL);
 
     wrapper = (struct request_thread_wrapper *)arg;
