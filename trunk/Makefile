@@ -4,12 +4,12 @@ LDFLAGS=-lpthread
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 
-CLIENT_SOURCES  =   client/main.c   \
-            client/send_cmd.c       \
-            client/recv_resp.c      \
-            client/util/prompt.c
+CLIENT_SOURCES  =   client/main.c           \
+                    client/send_cmd.c       \
+                    client/recv_resp.c      \
+                    client/util/prompt.c
 
-DAEMON_SOURCES  =   daemon/main.c                               \
+DAEMON_SOURCES  =   daemon/main.c                                       \
 		    daemon/conf.c                                       \
 		    daemon/client_handler.c                             \
                     daemon/daemon_handler.c                             \
@@ -20,6 +20,7 @@ DAEMON_SOURCES  =   daemon/main.c                               \
                     daemon/daemon_request.c                             \
                     daemon/util/cmd.c                                   \
                     daemon/util/socket.c                                \
+		    daemon/client_requests/client_request_get.c         \
                     daemon/client_requests/client_request_help.c        \
 		    daemon/client_requests/client_request_info.c        \
                     daemon/client_requests/client_request_list.c        \

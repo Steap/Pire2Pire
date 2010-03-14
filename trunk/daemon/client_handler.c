@@ -12,6 +12,7 @@
 #include "client.h"
 #include "client_request.h"
 #include "client_requests.h"
+#include "client_requests/client_request_set.h"
 
 #define MAX_CLIENTS                     2
 #define MAX_REQUESTS_PER_CLIENT         2
@@ -112,7 +113,9 @@ handle_requests (void *arg) {
 
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
-        if (strncmp (message, "help", 4) == 0) 
+        if (strncmp (message, "get", 3) == 0)
+            callback = &client_request_get;
+        else if (strncmp (message, "help", 4) == 0) 
             callback = &client_request_help;
         else if (strncmp (message, "info", 4) == 0)
             callback = &client_request_info;
