@@ -24,7 +24,7 @@ struct daemon *daemons = NULL;
  * It should be initialized by the very first daemon, and sort of never be
  * destroyed.
  */
-static sem_t          daemons_lock;
+sem_t          daemons_lock;
 
 static void*
 handle_requests (void *arg) {
@@ -139,7 +139,9 @@ handle_daemon (int daemon_socket, struct sockaddr_in *daemon_addr) {
      */
     static int xxx = 0;
     if (xxx == 0) {
-        sem_init (&daemons_lock, 0, 1); xxx = 1; }
+        sem_init (&daemons_lock, 0, 1); 
+        xxx = 1; 
+    }
 
     if (daemon_numbers (daemons) == MAX_DAEMONS) {
         log_failure (log_file, "Too many daemons");
@@ -175,6 +177,6 @@ handle_daemon (int daemon_socket, struct sockaddr_in *daemon_addr) {
         daemons = daemon_remove (daemons, d->thread_id);
         sem_post (&daemons_lock);
         return;
-    }    
+    }
 }
 
