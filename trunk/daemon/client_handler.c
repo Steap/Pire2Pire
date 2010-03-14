@@ -113,7 +113,9 @@ handle_requests (void *arg) {
 
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
-        if (strncmp (message, "get", 3) == 0)
+        if (strncmp (message, "connect", 7) == 0)
+            callback = &client_request_connect;
+        else if (strncmp (message, "get", 3) == 0)
             callback = &client_request_get;
         else if (strncmp (message, "help", 4) == 0) 
             callback = &client_request_help;

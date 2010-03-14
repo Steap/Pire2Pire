@@ -20,6 +20,7 @@ DAEMON_SOURCES  =   daemon/main.c                                       \
                     daemon/daemon_request.c                             \
                     daemon/util/cmd.c                                   \
                     daemon/util/socket.c                                \
+		    daemon/client_requests/client_request_connect.c     \
 		    daemon/client_requests/client_request_get.c         \
                     daemon/client_requests/client_request_help.c        \
 		    daemon/client_requests/client_request_info.c        \
