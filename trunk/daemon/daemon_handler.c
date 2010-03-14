@@ -133,15 +133,6 @@ handle_daemon (int daemon_socket, struct sockaddr_in *daemon_addr) {
     char            addr[INET_ADDRSTRLEN];
 
     d    = NULL;
-    /*
-     * Now, that is weird, but it seems even weirder to init that semaphore
-     * outside the client_handler module (we could have done that in main.c).
-     */
-    static int xxx = 0;
-    if (xxx == 0) {
-        sem_init (&daemons_lock, 0, 1); 
-        xxx = 1; 
-    }
 
     if (daemon_numbers (daemons) == MAX_DAEMONS) {
         log_failure (log_file, "Too many daemons");

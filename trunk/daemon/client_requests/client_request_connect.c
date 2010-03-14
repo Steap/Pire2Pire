@@ -21,10 +21,6 @@ extern FILE* log_file;
 extern struct daemon *daemons;
 extern sem_t daemons_lock;
 
-/* 
- * According to the protocol, there are no options available for the "set"
- * command.
- */
 #include <unistd.h>
 
 #define NOT_A_COUPLE           0

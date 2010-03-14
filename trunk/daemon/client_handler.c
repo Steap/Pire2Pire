@@ -27,7 +27,7 @@ struct client *clients = NULL;
  * It should be initialized by the very first client, and sort of never be
  * destroyed.
  */
-static sem_t          clients_lock;
+sem_t          clients_lock;
 #if 0
 static void*
 foo (void *a)
@@ -188,13 +188,6 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
     char            addr[INET_ADDRSTRLEN];
 
     c    = NULL;
-    /*
-     * Now, that is weird, but it seems even weirder to init that semaphore
-     * outside the client_handler module (we could have done that in main.c).
-     */
-    static int xxx = 0;
-    if (xxx == 0) {
-        sem_init (&clients_lock, 0, 1); xxx = 1; }
 
     if (client_numbers (clients) == MAX_CLIENTS) {
         log_failure (log_file, "Too many clients");

@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <semaphore.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -28,6 +29,9 @@ FILE *log_file;
 /* Preferences defined in daemon.conf. */
 struct prefs *prefs;
 
+/* The lists lock that must be init on startup */
+extern sem_t    clients_lock;
+extern sem_t    daemons_lock;
 
 /* Rename, plz... Or not, it is just  a silly test */
 static void
@@ -125,6 +129,16 @@ start_server (void) {
     socklen_t size = sizeof (struct sockaddr);
     fd_set  sockets;
     int nfds;
+
+    /* Initializing the global semaphores */
+    if (sem_init (&clients_lock, 0, 1) < 0) {
+        log_failure (log_file, "Unable to sem_init clients_lock");
+        exit (EXIT_FAILURE);
+    }
+    if (sem_init (&daemons_lock, 0, 1) < 0) {
+        log_failure (log_file, "Unable to sem_init daemons_lock");
+        exit (EXIT_FAILURE);
+    }
 
     client_sa.sin_family        = AF_INET;
     client_sa.sin_addr.s_addr   = INADDR_ANY;
