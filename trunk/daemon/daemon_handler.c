@@ -1,16 +1,17 @@
-#include <pthread.h>
-#include <stdlib.h>
-#include <string.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <signal.h>
+#include <arpa/inet.h>                              // inet_ntop ()
+#include <netinet/in.h>                             // struct sockaddr_in
 
-#include "daemon_handler.h"
-#include "../util/logger.h"
-#include "util/socket.h"
-#include "daemon.h"
-#include "daemon_request.h"
-#include "daemon_requests.h"
+#include <pthread.h>                                // pthread_detach ()
+#include <semaphore.h>                              // sem_t
+#include <signal.h>                                 // struct sigaction
+#include <stdlib.h>                                 // NULL
+#include <string.h>                                 // strncmp ()
+
+#include "../util/logger.h"                         // log_failure ()
+#include "daemon.h"                                 // daemon_send ()
+#include "daemon_request.h"                         // struct daemon_request
+#include "daemon_requests.h"                    // daemon_request_unknown ()
+#include "util/socket.h"                            // socket_getline ()
 
 #define MAX_DAEMONS                     2
 #define MAX_REQUESTS_PER_DAEMON         2

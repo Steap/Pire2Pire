@@ -1,7 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "cmd.h"
+#include <stdio.h>  // sprintf ()
+#include <stdlib.h> // NULL
+#include <string.h> // strcmp
+
+#include "cmd.h"    // struct option
 
 #define ERROR_SIZE    256
 

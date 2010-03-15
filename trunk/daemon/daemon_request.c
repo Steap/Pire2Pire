@@ -1,10 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
+#include <pthread.h>        // pthread_equal ()
+#include <stdlib.h>         // malloc ()
 
-#include "daemon_request.h"
-#include "../util/logger.h"
+#include "../util/logger.h" // log_recv ()
+#include "daemon_request.h" // struct daemon_request
 
 struct daemon;
 

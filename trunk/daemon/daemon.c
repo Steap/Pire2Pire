@@ -1,13 +1,11 @@
-#include <pthread.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
+#include <sys/socket.h>     // send ()
 
-#include "daemon.h"
+#include <pthread.h>        // pthread_equal ()
+#include <stdlib.h>         // malloc ()
+#include <string.h>         // strdup ()
 
-#include "../util/logger.h"
+#include "../util/logger.h" // log_failure ()
+#include "daemon.h"         // struct daemon
 
 extern FILE *log_file;
 

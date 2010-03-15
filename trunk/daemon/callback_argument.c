@@ -1,10 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h>             // malloc ()
+#include <string.h>             // strdup ()
 
-#include <string.h>
-#include "../util/logger.h"
-#include "callback_argument.h"
-extern FILE* log_file;
+#include "callback_argument.h"  // struct callback_argument
 
 struct callback_argument*
 cba_new (char *cmd, int client_socket) {

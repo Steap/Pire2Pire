@@ -1,11 +1,10 @@
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <string.h>
+#include <netinet/in.h>         // struct sockaddr_in
 
-#include "../../util/logger.h"
-#include "../../util/string.h"
+#include <stdio.h>              // FILE
+#include <string.h>             // strcpy ()
+
+#include "../../util/logger.h"  // log_failure ()
+#include "../../util/string.h"  // string_remove_trailer ()
 
 #define NB_QUEUE            10
 #define SOCKET_BUFFSIZE     128

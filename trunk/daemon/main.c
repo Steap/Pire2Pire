@@ -1,23 +1,19 @@
-//http://www.enderunix.org/docs/eng/exampled.c
-#include <fcntl.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <semaphore.h>
+#include <sys/stat.h>       // umask ()
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
+#include <netinet/in.h>     // struct sockaddr_in
 
-#include "../util/logger.h"
-#include "util/socket.h"
-#include "conf.h"
-#include "client_handler.h"
-#include "daemon_handler.h"
+#include <fcntl.h>          // open ()
+#include <semaphore.h>      // sem_t
+#include <signal.h>         // sigemptyset ()
+#include <stdio.h>          // FILE
+#include <string.h>         // strlen ()
+#include <unistd.h>         // unlink ()
+
+#include "../util/logger.h" // log_failure ()
+#include "client_handler.h" // handle_daemon ()
+#include "conf.h"           // struct prefs
+#include "daemon_handler.h" // handle_client ()
+#include "util/socket.h"    // socket_init ()
 
 #define LOG_FILE        "/tmp/g"
 #define LOCK_FILE       "/tmp/k"

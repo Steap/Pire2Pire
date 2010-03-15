@@ -1,19 +1,18 @@
-#include <pthread.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h> //FIXME: remove when sleep () is removed
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <signal.h>     // pthread_kill ()
+#include <arpa/inet.h>                              // inet_ntop ()
+#include <netinet/in.h>                             // struct sockaddr_in
 
-#include "client_handler.h"
-//#include "callback_argument.h"
-#include "../util/logger.h"
-#include "util/socket.h"
-#include "client.h"
-#include "client_request.h"
-#include "client_requests.h"
-#include "client_requests/client_request_set.h"
+#include <pthread.h>                                // pthread_detach ()
+#include <semaphore.h>                              // sem_t
+#include <signal.h>                                 // struct sigaction
+#include <stdlib.h>                                 // NULL
+#include <string.h>                                 // strncmp ()
+#include <unistd.h> //FIXME: remove when sleep () is removed
+
+#include "../util/logger.h"                         // log_failure ()
+#include "client.h"                                 // client_send ()
+#include "client_request.h"                         // struct client_request
+#include "client_requests.h"                    // client_request_connect ()
+#include "util/socket.h"                            // socket_getline ()
 
 #define MAX_CLIENTS                     2
 #define MAX_REQUESTS_PER_CLIENT         2

@@ -1,13 +1,11 @@
-#include <pthread.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
+#include <sys/socket.h>     // send ()
 
-#include "client.h"
+#include <pthread.h>        // pthread_equal ()
+#include <stdlib.h>         // malloc ()
+#include <string.h>         // strdup ()
 
-#include "../util/logger.h"
+#include "../util/logger.h" // log_failure ()
+#include "client.h"         // struct client
 
 extern FILE *log_file;
 

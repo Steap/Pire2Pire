@@ -1,9 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdio.h>  // FILE
+#include <stdlib.h> // atoi ()
+#include <string.h> // strcmp ()
 
-#include "conf.h"
-
+#include "conf.h"   // struct prefs
 
 #define DEFAULT_CLIENT_PORT     1337
 #define DEFAULT_DAEMON_PORT     7331

@@ -1,9 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
+#include <pthread.h>        // pthread_equal ()
+#include <stdlib.h>         // malloc ()
 
-#include "client_request.h"
+#include "client_request.h" // struct client_request
 
 struct client;
 
