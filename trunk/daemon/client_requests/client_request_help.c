@@ -1,9 +1,7 @@
-#include <pthread.h>
-#include <semaphore.h>
-#include <stdlib.h>
+#include <stdlib.h>             // NULL
 
-#include "../client.h"
-#include "../client_request.h"
+#include "../client.h"          // client_send ()
+#include "../client_request.h"  // struct client_request
 
 #define HELP_TEXT   \
 "\

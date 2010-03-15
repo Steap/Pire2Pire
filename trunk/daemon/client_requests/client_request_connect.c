@@ -1,27 +1,21 @@
-#include <ctype.h>
-#include <errno.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <arpa/inet.h>          // inet_aton ()
+#include <netinet/in.h>         // struct sockaddr_in
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
+#include <ctype.h>              // isdigit ()
+#include <errno.h>              // errno
+#include <stdio.h>              // printf ()
+#include <stdlib.h>             // NULL
+#include <string.h>             // strchr ()
 
-#include "../util/cmd.h"
-#include "../client.h"
-#include "../client_request.h"
-#include "../daemon.h"
-
-#include "../../util/logger.h"
+#include "../../util/logger.h"  // log_failure ()
+#include "../client.h"          // client_send ()
+#include "../client_request.h"  // struct client_request
+#include "../daemon.h"          // daemon_new ()
+#include "../util/cmd.h"        // struct option
 
 extern FILE* log_file;
 extern struct daemon *daemons;
 extern sem_t daemons_lock;
-
-#include <unistd.h>
 
 #define NOT_A_COUPLE           0
 #define NO_PORT_SPECIFIED     -1
@@ -34,7 +28,8 @@ struct option options[] = {
 };
 static int 
 is_valid_ip_port (char *foo, int *port)
-{   
+{
+    // FIXME: printf () !?
     printf ("FOO IS %s\n", foo);
     char *sep;
 
@@ -133,6 +128,7 @@ client_request_connect (void *arg) {
         goto send_msg;
     }
 
+    // FIXME: inet_atop () ?
     inet_aton (addr, &daemon_addr.sin_addr);
     daemon_addr.sin_port   = htons (port);
     daemon_addr.sin_family = AF_INET;

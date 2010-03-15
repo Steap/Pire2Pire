@@ -1,15 +1,10 @@
-#include <errno.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
+#include <stdio.h>              // FILE
+#include <string.h>             // strlen ()
 
-#include "../util/cmd.h"
-#include "../client.h"
-#include "../client_request.h"
-
-#include "../../util/logger.h"
+#include "../../util/logger.h"  // log_failure ()
+#include "../client.h"          // client_send ()
+#include "../client_request.h"  // struct client_request
+#include "../util/cmd.h"        // struct option
 
 #define HASH_SIZE 32
 

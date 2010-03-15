@@ -1,16 +1,13 @@
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <sys/stat.h>
+#include <sys/stat.h>           // entry_stat
 
-#include "../client.h"
-#include "../client_request.h"
+#include <stdio.h>              // NULL
+#include <stdlib.h>             // malloc ()
+#include <dirent.h>             // DIR
 
-#include "../../util/logger.h"
-#include "../../util/md5/md5.h"
+#include "../../util/md5/md5.h" // MDFile ()
+#include "../../util/logger.h"  // log_failure ()
+#include "../client.h"          // client_send ()
+#include "../client_request.h"  // struct client_request
 
 #define SHARED_FOLDER "/tmp/lol/"
 

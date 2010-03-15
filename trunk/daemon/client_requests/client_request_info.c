@@ -1,16 +1,12 @@
-#include <pthread.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <semaphore.h>          // sem_wait ()
+#include <stdio.h>              // sprintf ()
+#include <stdlib.h>             // NULL
 #include <string.h>
 
-#include "../client.h"
-#include "../daemon.h"
-#include "../client_request.h"
+#include "../client.h"          // struct client
+#include "../client_request.h"  // struct client_request
+#include "../daemon.h"          // daemon_numbers ()
 
-#include "../../util/logger.h"
-
-extern FILE *log_file;
 extern struct client *clients;
 extern struct daemon *daemons;
 

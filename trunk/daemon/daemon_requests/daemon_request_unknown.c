@@ -1,12 +1,8 @@
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <stdio.h>              // FILE
 
-#include "../daemon.h"
-#include "../daemon_request.h"
-
-#include "../../util/logger.h"
+#include "../../util/logger.h"  // log_failure ()
+#include "../daemon.h"          // daemon_send ()
+#include "../daemon_request.h"  // struct daemon_request
 
 extern FILE *log_file;
 

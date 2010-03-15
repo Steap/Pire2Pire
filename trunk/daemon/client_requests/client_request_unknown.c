@@ -1,11 +1,6 @@
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "../client.h"
-#include "../client_request.h"
-#include "../../util/logger.h"
+#include "../../util/logger.h"  // log_failure ()
+#include "../client.h"          // client_send ()
+#include "../client_request.h"  // struct client_request
 
 extern FILE *log_file;
 

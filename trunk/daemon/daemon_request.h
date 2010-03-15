@@ -1,6 +1,8 @@
 #ifndef DAEMON_REQUEST_H
 #define DAEMON_REQUEST_H
 
+#include <pthread.h>    // pthread_t
+
 struct daemon;
 
 struct daemon_request {
