@@ -122,13 +122,11 @@ handle_requests (void *arg) {
 
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
-/* TODO: Handle requests...
-        if (strncmp (message, "list", 3) == 0) 
-            callback = &handle_list;
+        if (strncmp (message, "list", 4) == 0) 
+            callback = &daemon_request_list;
         else if (strncmp (message, "file", 4) == 0)
-            callback = &handle_file;
+            callback = &daemon_request_file;
         else
-*/
             callback = &daemon_request_unknown;
         request = daemon_request_new (message, daemon);
 
@@ -141,7 +139,6 @@ handle_requests (void *arg) {
         sem_wait (&daemon->req_lock);
         daemon->requests = daemon_request_add (daemon->requests, request);
         sem_post (&daemon->req_lock);
-        r = pthread_create (&request->thread_id, NULL, callback, request);
 
         wrapper.callback = callback;
         wrapper.request = request;
