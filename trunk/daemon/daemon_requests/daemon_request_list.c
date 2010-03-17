@@ -1,5 +1,8 @@
 #include <sys/stat.h>           // entry_stat
 
+#include <arpa/inet.h>          // inet_ntop ()
+#include <netinet/in.h>         // struct sockaddr_in
+
 #include <stdio.h>              // NULL
 #include <stdlib.h>             // malloc ()
 #include <dirent.h>             // DIR
@@ -43,6 +46,11 @@ daemon_request_list (void *arg) {
     char                    entry_full_path[256];
     struct stat             entry_stat;
     char                    *key;
+    struct sockaddr_in      my_addr;
+    socklen_t               my_addr_size;
+    // FIXME: We should define an IP(v4,v6)_MAXSIZE somewhere
+    #define IP_MAXSIZE      15
+    char                    my_ip[IP_MAXSIZE + 1];
 
     /* OKAY, let's say all options/args are silently ignored */
 
@@ -52,16 +60,32 @@ daemon_request_list (void *arg) {
 
     dir = opendir (prefs->shared_folder);
     if (dir == NULL) {
-        log_failure (log_file, "do_list () : %s", prefs->shared_folder);
+        log_failure (log_file,
+                    "daemon_request_list () : Unable to opendir %s",
+                    prefs->shared_folder);
         return NULL;
     }
 
+    // We must retrieve our own address from the socket
+    // Not sure we have to lock but it seems a good idea
+    sem_wait (&r->daemon->socket_lock);
+    getsockname (r->daemon->socket,
+                    (struct sockaddr *)&my_addr,
+                    &my_addr_size);
+    sem_post (&r->daemon->socket_lock);
+    // Trying conversion to a string
+    if (!inet_ntop (AF_INET, &my_addr.sin_addr, my_ip, IP_MAXSIZE + 1))
+        return NULL;
+
     for (entry = readdir (dir); entry != NULL; entry = readdir (dir)) {
         if (entry->d_type == DT_REG) {
-            sprintf (entry_full_path, "%s%s", prefs->shared_folder, entry->d_name);
+            sprintf (entry_full_path,
+                    "%s/%s",
+                    prefs->shared_folder,
+                    entry->d_name);
             if (stat (entry_full_path, &entry_stat) < 0) {
                 log_failure (log_file,
-                            "do_list () : can't stat file %s",
+                            "daemon_request_list () : can't stat file %s",
                             entry_full_path);
                 continue;
             }
@@ -70,11 +94,14 @@ daemon_request_list (void *arg) {
             if (!key)
                 continue;
 
-            sprintf (answer, "file %s %s %d %s\n",
+
+
+            sprintf (answer, "file %s %s %d %s:%d\n",
                     entry->d_name,
                     key,
                     (int) entry_stat.st_size,
-                    "127.0.0.1:7331"); //FIXME: What is our public IP? :(
+                    my_ip,
+                    7331); //FIXME: Our port is in prefs somewhere
 
             if (daemon_send (r->daemon, answer) < 0) {
                 log_failure (log_file,
