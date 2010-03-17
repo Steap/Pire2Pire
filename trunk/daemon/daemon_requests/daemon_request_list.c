@@ -54,7 +54,7 @@ daemon_request_list (void *arg) {
     }
 
     for (entry = readdir (dir); entry != NULL; entry = readdir (dir)) {
-        if (entry->d_type == DT_REG) {
+        if (S_ISREG (entry))
             sprintf (entry_full_path, "%s/%s", SHARED_FOLDER, entry->d_name);
             if (stat (entry_full_path, &entry_stat) < 0) {
                 log_failure (log_file,
