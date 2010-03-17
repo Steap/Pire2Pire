@@ -58,6 +58,7 @@ start_request_thread (void *arg) {
      * We must mask SIGTERM so that it won't call stop_server () but
      * terminate_thread () instead
      */
+    sigemptyset (&on_sigterm.sa_mask);
     on_sigterm.sa_handler = terminate_thread;
     on_sigterm.sa_flags = 0;
     sigemptyset (&on_sigterm.sa_mask); 

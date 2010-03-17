@@ -4,34 +4,51 @@
 #include "../../util/logger.h"  // log_failure ()
 #include "../daemon.h"          // daemon_send ()
 #include "../daemon_request.h"  // struct daemon_request
+#include "../resource.h"        // struct resource_tree
 
-extern FILE *log_file;
+#define STR(x)   #x
+#define XSTR(x)  STR(x)
 
-#define MAX_KNOWN_FILES     1024
-char    **known_files = NULL;
-int     nb_known_files = 0;
+extern FILE                     *log_file;
+extern struct resource_tree     *resources;
+extern sem_t                    resources_lock;
 
 void*
 daemon_request_file (void* arg) {
     struct daemon_request   *r;
-    int                     size;
-    
+    struct resource         *res;
+    char                    *answer;
+    char                    filename[RESOURCE_FILENAME_SIZE + 1];
+    char                    key[RESOURCE_KEY_SIZE + 1];
+    unsigned long long int  size;
+    char                    ip_port[RESOURCE_IP_PORT_SIZE + 1];
+
     r = (struct daemon_request *) arg;
     if (!r)
         return NULL;
 
-    if (!known_files) {
-        known_files = (char **)malloc (MAX_KNOWN_FILES * sizeof (char *));
-        if (!known_files)
-            return NULL;
+    // FIXME: use cmd_to_argc_argv instead...
+    if (sscanf (r->cmd, "file %"
+                        XSTR (RESOURCE_FILENAME_SIZE)
+                        "s %"
+                        XSTR (RESOURCE_KEY_SIZE)
+                        "s %llu %"
+                        XSTR (RESOURCE_IP_PORT_SIZE)
+                        "s\n",
+                        filename, key, &size, ip_port) < 4) {
+        answer = (char *)malloc ((strlen (r->cmd) + 36) * sizeof (char));
+        sprintf (answer, "error %s: Unable to read the command\n", r->cmd);
+        daemon_send (r->daemon, answer);
+        return NULL;
     }
 
-    if (nb_known_files < MAX_KNOWN_FILES) {
-        size = strlen (r->cmd) + 1;
-        known_files[nb_known_files] = (char *)malloc (size * sizeof (char));
-        strcpy (known_files[nb_known_files], r->cmd);
-        nb_known_files++;
+    sem_wait (&resources_lock);
+    res = resource_tree_get_by_key (resources, key);
+    if (!res) {
+        res = resource_new (filename, key, size, ip_port);
+        resources = resource_tree_add (resources, res);
     }
- 
+    sem_post (&resources_lock);
+
     return NULL;
 }

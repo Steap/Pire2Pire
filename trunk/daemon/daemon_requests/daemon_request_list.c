@@ -70,10 +70,11 @@ daemon_request_list (void *arg) {
             if (!key)
                 continue;
 
-            sprintf (answer, "file %s %s %d\n",
+            sprintf (answer, "file %s %s %d %s\n",
                     entry->d_name,
                     key,
-                    (int) entry_stat.st_size);
+                    (int) entry_stat.st_size,
+                    "127.0.0.1:7331"); //FIXME: What is our public IP? :(
 
             if (daemon_send (r->daemon, answer) < 0) {
                 log_failure (log_file,
