@@ -4,27 +4,30 @@
 
 #include "conf.h"   // struct prefs
 
-#define DEFAULT_CLIENT_PORT     1337
-#define DEFAULT_DAEMON_PORT     7331
+/*
+ * Default values for the daemon's prefs.
+ */ 
+#define DEFAULT_CLIENT_PORT      1337
+#define DEFAULT_DAEMON_PORT      7331
+#define DEFAULT_SHARED_FOLDER   "/tmp"
 
 #define MIN_PORT                  1024
 #define MAX_PORT                 40000 // FIXME
 
-/*
- * Default values for the daemon's prefs.
- */ 
-struct prefs p = {
-    .client_port = DEFAULT_CLIENT_PORT,
-    .daemon_port = DEFAULT_DAEMON_PORT
-};
-
-struct prefs *conf_retrieve (const char *path) {
+struct prefs*
+conf_retrieve (const char *path) {
     FILE            *conf_file;
     struct prefs    *prefs;
     char            key[256], value[256];
     int             port;
 
-    prefs = &p;
+    prefs = malloc (sizeof (struct prefs));
+    if (!prefs)
+        return NULL;
+
+    prefs->client_port   = DEFAULT_CLIENT_PORT; 
+    prefs->daemon_port   = DEFAULT_DAEMON_PORT;
+    prefs->shared_folder = DEFAULT_SHARED_FOLDER;
 
     if ((conf_file = fopen (path, "r")) == NULL) {
         fprintf (stderr, "Cant open conf\n");
@@ -42,8 +45,22 @@ struct prefs *conf_retrieve (const char *path) {
             if (port > MIN_PORT)
                 prefs->daemon_port = port;
         }
+        else if (strcmp (key, "shared_folder") == 0) {
+            prefs->shared_folder = strdup (value);
+        }
     }
     
     fclose (conf_file);
     return prefs;
+}
+
+void
+conf_free (struct prefs *p) {
+    if (!p)
+        return;
+    
+    if (p->shared_folder)
+        free (p->shared_folder);
+
+    free (p);
 }

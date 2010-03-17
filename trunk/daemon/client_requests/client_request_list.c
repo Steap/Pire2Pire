@@ -8,8 +8,11 @@
 #include "../../util/logger.h"  // log_failure ()
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request
+#include "../conf.h"
 
-#define SHARED_FOLDER "/tmp/lol/"
+extern struct prefs *prefs;
+//#define SHARED_FOLDER "/tmp/lol/"
+#define SHARED_FOLDER prefs->shared_folder
 
 extern FILE             *log_file;
 extern struct client    *clients;

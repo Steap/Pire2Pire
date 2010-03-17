@@ -9,7 +9,10 @@
 #include "../daemon.h"          // daemon_send ()
 #include "../daemon_request.h"  // struct daemon_request
 
-#define SHARED_FOLDER "/tmp/lol/"
+#include "../conf.h"
+extern struct prefs *prefs;
+//#define SHARED_FOLDER "/tmp/lol/"
+#define SHARED_FOLDER prefs->shared_folder
 
 extern FILE *log_file;
 extern struct daemon *daemons;
@@ -47,15 +50,15 @@ daemon_request_list (void *arg) {
     if (!r)
         return NULL;
 
-    dir = opendir (SHARED_FOLDER);
+    dir = opendir (prefs->shared_folder);
     if (dir == NULL) {
-        log_failure (log_file, "do_list () : can't open shared directory");
+        log_failure (log_file, "do_list () : %s", prefs->shared_folder);
         return NULL;
     }
 
     for (entry = readdir (dir); entry != NULL; entry = readdir (dir)) {
-        if (S_ISREG (entry))
-            sprintf (entry_full_path, "%s/%s", SHARED_FOLDER, entry->d_name);
+        if (entry->d_type == DT_REG) {
+            sprintf (entry_full_path, "%s%s", prefs->shared_folder, entry->d_name);
             if (stat (entry_full_path, &entry_stat) < 0) {
                 log_failure (log_file,
                             "do_list () : can't stat file %s",

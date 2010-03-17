@@ -50,6 +50,8 @@ server_stop (int sig) {
         log_success (log_file, "Stopping server, waiting for SIGKILL");    
         fclose (log_file);
     }
+    if (prefs)
+        conf_free (prefs);
     exit (0);
 }
 
@@ -118,7 +120,7 @@ void daemonize(void) {
 }
 
 static void
-start_server (void) {
+start_server (const char *conf_file) {
     int     client_sd;
     int     daemon_sd;
     int     connected_sd;
@@ -128,6 +130,8 @@ start_server (void) {
     socklen_t size = sizeof (struct sockaddr);
     fd_set  sockets;
     int nfds;
+
+    prefs = conf_retrieve (conf_file);
 
     /* Initializing the global semaphores */
     if (sem_init (&clients_lock, 0, 1) < 0) {
@@ -196,11 +200,11 @@ int
 main (int argc, char *argv[])
 {
     (void )argc;
-    prefs = conf_retrieve (argv[1]);
     daemonize ();
-    start_server ();
+    start_server (argv[1]);
     for (;;)
         sleep (1);   
+    conf_free (prefs);
     
     return EXIT_SUCCESS;
 }
