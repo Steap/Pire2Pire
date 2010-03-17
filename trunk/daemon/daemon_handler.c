@@ -13,8 +13,8 @@
 #include "daemon_requests.h"                    // daemon_request_unknown ()
 #include "util/socket.h"                            // socket_getline ()
 
-#define MAX_DAEMONS                     2
-#define MAX_REQUESTS_PER_DAEMON         2
+#define MAX_DAEMONS                     10
+#define MAX_REQUESTS_PER_DAEMON         10
 
 extern FILE *log_file;
 

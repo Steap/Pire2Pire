@@ -104,4 +104,6 @@ socket_sendline (int dest_sock, const char *msg) {
         }
         nb_sent_sum += nb_sent;
     }
+
+    log_send (log_file, msg);
 }
