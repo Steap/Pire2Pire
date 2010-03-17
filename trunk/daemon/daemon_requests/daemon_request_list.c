@@ -1,6 +1,5 @@
 #include <sys/stat.h>           // entry_stat
 
-#include <arpa/inet.h>          // inet_ntop ()
 #include <netinet/in.h>         // struct sockaddr_in
 
 #include <stdio.h>              // NULL
@@ -14,7 +13,6 @@
 
 #include "../conf.h"
 extern struct prefs *prefs;
-//#define SHARED_FOLDER "/tmp/lol/"
 #define SHARED_FOLDER prefs->shared_folder
 
 extern FILE *log_file;
@@ -46,11 +44,6 @@ daemon_request_list (void *arg) {
     char                    entry_full_path[256];
     struct stat             entry_stat;
     char                    *key;
-    struct sockaddr_in      my_addr;
-    socklen_t               my_addr_size;
-    // FIXME: We should define an IP(v4,v6)_MAXSIZE somewhere
-    #define IP_MAXSIZE      15
-    char                    my_ip[IP_MAXSIZE + 1];
 
     /* OKAY, let's say all options/args are silently ignored */
 
@@ -65,17 +58,6 @@ daemon_request_list (void *arg) {
                     prefs->shared_folder);
         return NULL;
     }
-
-    // We must retrieve our own address from the socket
-    // Not sure we have to lock but it seems a good idea
-    sem_wait (&r->daemon->socket_lock);
-    getsockname (r->daemon->socket,
-                    (struct sockaddr *)&my_addr,
-                    &my_addr_size);
-    sem_post (&r->daemon->socket_lock);
-    // Trying conversion to a string
-    if (!inet_ntop (AF_INET, &my_addr.sin_addr, my_ip, IP_MAXSIZE + 1))
-        return NULL;
 
     for (entry = readdir (dir); entry != NULL; entry = readdir (dir)) {
         if (entry->d_type == DT_REG) {
@@ -94,13 +76,11 @@ daemon_request_list (void *arg) {
             if (!key)
                 continue;
 
-
-
-            sprintf (answer, "file %s %s %d %s:%d\n",
+            // 0.0.0.0 means "I own this file"
+            sprintf (answer, "file %s %s %d 0.0.0.0:%d\n",
                     entry->d_name,
                     key,
                     (int) entry_stat.st_size,
-                    my_ip,
                     7331); //FIXME: Our port is in prefs somewhere
 
             if (daemon_send (r->daemon, answer) < 0) {
