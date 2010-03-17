@@ -5,6 +5,7 @@
 
 #include "../../util/logger.h"  // log_failure ()
 #include "../../util/string.h"  // string_remove_trailer ()
+#include "socket.h"             // socket_getline_with_trailer ()
 
 #define NB_QUEUE            10
 #define SOCKET_BUFFSIZE     128
@@ -43,12 +44,13 @@ socket_init (struct sockaddr_in *sa) {
     return sd;
 }
 
-
-
-
-
 char *
 socket_getline (int src_sock) {
+    return string_remove_trailer (socket_getline_with_trailer (src_sock));
+}
+
+char *
+socket_getline_with_trailer (int src_sock) {
     char    *message = NULL;
     int     nb_received;
     char    buffer[SOCKET_BUFFSIZE];
@@ -79,7 +81,27 @@ socket_getline (int src_sock) {
             break;
     }
 
-    string_remove_trailer (message);
     return message;
 }
 
+void
+socket_sendline (int dest_sock, const char *msg) {
+    int         nb_sent;
+    int         nb_sent_sum;
+    int         send_size;
+
+    send_size = strlen (msg);
+
+    nb_sent_sum = 0;
+    while (nb_sent_sum < send_size) {
+        nb_sent = send (dest_sock,
+                        msg + nb_sent_sum,
+                        send_size - nb_sent_sum,
+                        0);
+        if (nb_sent < 0) {
+            log_failure (log_file, "socket_sendline (): Failed to send");
+            return;
+        }
+        nb_sent_sum += nb_sent;
+    }
+}

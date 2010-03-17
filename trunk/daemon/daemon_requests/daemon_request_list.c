@@ -58,8 +58,9 @@ daemon_request_list (void *arg) {
                     prefs->shared_folder);
         return NULL;
     }
-
+    // Browsing my own files
     for (entry = readdir (dir); entry != NULL; entry = readdir (dir)) {
+        // Listing all regular files
         if (entry->d_type == DT_REG) {
             sprintf (entry_full_path,
                     "%s/%s",

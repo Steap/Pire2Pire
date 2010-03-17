@@ -1,6 +1,8 @@
 #ifndef RESOURCE_H
 #define RESOURCE_H
 
+#include <semaphore.h>
+
 #include "client.h"
 #include "daemon.h"
 
@@ -10,11 +12,17 @@
 
 typedef long long unsigned int res_size_t;
 
+struct seeder {
+    char    ip_port[RESOURCE_IP_PORT_SIZE + 1];
+};
+
 struct resource {
     char                filename[RESOURCE_FILENAME_SIZE + 1];
     char                key[RESOURCE_KEY_SIZE + 1];
     res_size_t          size;
-    char                ip_port[RESOURCE_IP_PORT_SIZE + 1];
+    struct seeder       *seeders;
+    int                 nb_seeders;
+    sem_t               seeders_lock;
 };
 
 struct resource_tree {
@@ -29,6 +37,9 @@ resource_new (const char *name, const char *key,
 
 void
 resource_free (struct resource *resource);
+
+void
+resource_add_seeder (struct resource *resource, const char *ip_port);
 
 struct resource_tree *
 resource_tree_add (struct resource_tree *tree, struct resource *resource);

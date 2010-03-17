@@ -14,9 +14,9 @@ resource_new (const char *filename, const char *key,
                 res_size_t size, const char *ip_port) {
     struct resource *resource;
     int filename_size;
-    int ip_port_size;
 
     resource = (struct resource *)malloc (sizeof (struct resource));
+
     if (!resource) {
         printf ("Error allocating resource\n");
         exit (EXIT_FAILURE);
@@ -31,16 +31,38 @@ resource_new (const char *filename, const char *key,
 
     resource->size = size;
 
-    ip_port_size = MIN (RESOURCE_IP_PORT_SIZE, strlen (ip_port)) + 1;
-    strncpy (resource->ip_port, ip_port, ip_port_size);
-    resource->ip_port[ip_port_size - 1] = '\0';
+    resource->seeders = (struct seeder *)malloc (sizeof (struct seeder));
+    strncpy (resource->seeders->ip_port, ip_port, RESOURCE_IP_PORT_SIZE + 1);
+
+    resource->nb_seeders = 1;
+
+    sem_init (&resource->seeders_lock, 0, 1);
 
     return resource;
 }
 
 void
 resource_free (struct resource *resource) {
+    free (resource->seeders);
+    sem_destroy (&resource->seeders_lock);
     free (resource);
+}
+
+void
+resource_add_seeder (struct resource *resource, const char *ip_port) {
+    sem_wait (&resource->seeders_lock);
+    for (int i = 0; i < resource->nb_seeders; i++)
+        if (strncmp (ip_port,
+                    resource->seeders[i].ip_port,
+                    RESOURCE_IP_PORT_SIZE +1))
+            return;
+    resource->seeders = (struct seeder *)realloc (resource->seeders,
+                        (resource->nb_seeders + 1) * sizeof (struct seeder));
+    strncpy (resource->seeders[resource->nb_seeders].ip_port,
+                ip_port,
+                RESOURCE_IP_PORT_SIZE + 1);
+    resource->nb_seeders++;
+    sem_post (&resource->seeders_lock);
 }
 
 struct resource_tree *

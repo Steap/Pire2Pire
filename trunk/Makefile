@@ -1,6 +1,12 @@
 CC=gcc
 CFLAGS=-Wextra -Wall -g -std=c99 -D_BSD_SOURCE -D_POSIX_C_SOURCE=199506
 LDFLAGS=-lpthread
+
+HASCOLOR = $(shell if test `which colorgcc`; then echo true; else echo false; fi)
+ifeq ($(HASCOLOR),true)
+CC := $(addprefix color, $(CC)) 
+endif
+
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 

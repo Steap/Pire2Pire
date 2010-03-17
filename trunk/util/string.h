@@ -21,6 +21,6 @@
 /*
  * Replaces first '\r' or '\n' by a '\0'
  */
-void string_remove_trailer (char *msg);
+char *string_remove_trailer (char *msg);
 
 #endif

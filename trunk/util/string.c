@@ -1,6 +1,6 @@
 #include <string.h>
 
-void
+char *
 string_remove_trailer (char *msg) {
     char *to_be_replaced;
 
@@ -12,4 +12,6 @@ string_remove_trailer (char *msg) {
     if (to_be_replaced != NULL) {
         *to_be_replaced = '\0';
     }
+
+    return msg;
 }
