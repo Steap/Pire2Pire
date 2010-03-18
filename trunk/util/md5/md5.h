@@ -39,5 +39,6 @@ void MD5Update PROTO_LIST
   ((MD5_CTX *, unsigned char *, unsigned int));
 void MD5Final PROTO_LIST ((unsigned char [16], MD5_CTX *));
 void MDFile PROTO_LIST ((unsigned char digest[16], char *file));
+void MDPartOfFile PROTO_LIST ((unsigned char[16], char *, int, int));
 
 #endif /* MD5_H */

@@ -27,13 +27,12 @@ documentation and/or software.
  */
 #define TEST_BLOCK_LEN 1000
 #define TEST_BLOCK_COUNT 1000
-
+#if 0
 static void MDString PROTO_LIST ((unsigned char[16], char *));
 static void MDTimeTrial PROTO_LIST ((void));
-void MDFile PROTO_LIST ((unsigned char[16], char *));
-static void MDPartOfFile PROTO_LIST ((unsigned char[16], char *, int, int));
 static void MDFilter PROTO_LIST ((void));
 static void MDPrint PROTO_LIST ((unsigned char[16]));
+#endif
 
 /* Main driver.
 
@@ -54,7 +53,7 @@ int main (int argc, char *argv[]) {
         {
 	    if (argv[i][0] == '-' && argv[i][1] == 's') 
             {
-		MDString (&digest, argv[i] + 2);
+        		MDString (&digest, argv[i] + 2);
                 /*
                 printf ("\nMD%d (\"%s\") = ", MD, argv[i] + 2);
                 MDPrint (digest);
@@ -65,16 +64,17 @@ int main (int argc, char *argv[]) {
 	        MDTimeTrial ();
 	    else 
             {
-		MDFile (&digest, argv[i]);
+        		MDFile (&digest, argv[i]);
                 //MDPartOfFile (&digest, argv[i], 1000, 1003);
                 
                 //printf ("\nMD%d (%s) = ", MD, argv[i]);
                 //fprintf (stderr, "xxxx %02x\n", digest[0]);
                 unsigned int lol;
                 char ans[32];
+                fprintf(stderr, "Wrote : ");
                 for (lol = 0; lol < 16; lol++)
                 {
-                 //   fprintf (stderr, "Wrote %02x\n", digest[lol]);
+                    fprintf (stderr, "%02x", digest[lol]);
                     sprintf (ans+2*lol, "%02x", digest[lol]);
                 }
                 #if 1
@@ -93,8 +93,10 @@ int main (int argc, char *argv[]) {
     return (0);
 }
 #endif
+
 /* Digests a string and puts the result into digest[16].
  */
+#if 0
 static void MDString (unsigned char digest[16], char *string) {
     MD5_CTX context;
     unsigned int len = strlen (string);
@@ -109,10 +111,12 @@ static void MDString (unsigned char digest[16], char *string) {
     printf ("\n");
     */
 }
+#endif
 
 /* Measures the time to digest TEST_BLOCK_COUNT TEST_BLOCK_LEN-byte
   blocks.
  */
+#if 0
 static void MDTimeTrial () {
     MD5_CTX context;
     time_t endTime, startTime;
@@ -147,6 +151,7 @@ static void MDTimeTrial () {
 	 (long) TEST_BLOCK_LEN * (long) TEST_BLOCK_COUNT / (endTime -
 							    startTime));
 }
+#endif
 
 /* Digests an entire file and puts the result into digest.
  */
@@ -177,7 +182,7 @@ void MDFile (unsigned char digest[16], char *filename) {
 
 /* Digests a file between 'beginning' and 'end' octets and puts the result into digest.
  */
-static void MDPartOfFile (unsigned char digest[16], char *filename, int beginning, int end) {
+void MDPartOfFile (unsigned char digest[16], char *filename, int beginning, int end) {
     FILE *file;
     MD5_CTX context;
     int len;
@@ -237,6 +242,7 @@ static void MDPartOfFile (unsigned char digest[16], char *filename, int beginnin
 
 /* Digests the standard input and prints the result.
  */
+#if 0
 static void MDFilter () {
     MD5_CTX context;
     int len;
@@ -250,11 +256,18 @@ static void MDFilter () {
     MDPrint (digest);
     printf ("\n");
 }
-
+#endif
+ 
 /* Prints a message digest in hexadecimal.
  */
+#if 0
 static void MDPrint (unsigned char digest[16]) {
     unsigned int i;
-    for (i = 0; i < 16; i++)
+    char ans[32];
+    for (i = 0; i < 16; i++) {
         fprintf (stderr, "%02x ", digest[i]);
+        sprintf (ans+2*i, "%02x", digest[i]);
+    }
+    fprintf (stderr, "\nANS : %s\n", ans);
 }
+#endif
