@@ -10,6 +10,7 @@
 #define DEFAULT_CLIENT_PORT      1337
 #define DEFAULT_DAEMON_PORT      7331
 #define DEFAULT_SHARED_FOLDER   "/tmp"
+#define DEFAULT_INTERFACE       "eth0"
 
 #define MIN_PORT                  1024
 #define MAX_PORT                 40000 // FIXME
@@ -28,6 +29,7 @@ conf_retrieve (const char *path) {
     prefs->client_port   = DEFAULT_CLIENT_PORT; 
     prefs->daemon_port   = DEFAULT_DAEMON_PORT;
     prefs->shared_folder = DEFAULT_SHARED_FOLDER;
+    prefs->interface     = DEFAULT_INTERFACE;
 
     if ((conf_file = fopen (path, "r")) == NULL) {
         fprintf (stderr, "Cant open conf\n");
@@ -48,6 +50,9 @@ conf_retrieve (const char *path) {
         else if (strcmp (key, "shared_folder") == 0) {
             prefs->shared_folder = strdup (value);
         }
+        else if (strcmp (key, "interface") == 0) {
+            prefs->interface = strdup (value);
+        }
     }
     
     fclose (conf_file);
@@ -61,6 +66,8 @@ conf_free (struct prefs *p) {
     
     if (p->shared_folder)
         free (p->shared_folder);
+    if (p->interface)
+        free (p->interface);
 
     free (p);
 }

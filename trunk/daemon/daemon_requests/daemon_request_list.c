@@ -16,6 +16,7 @@ extern struct prefs *prefs;
 #define SHARED_FOLDER prefs->shared_folder
 
 extern FILE *log_file;
+extern char my_ip[INET_ADDRSTRLEN];
 extern struct daemon *daemons;
 
 static char*
@@ -77,11 +78,11 @@ daemon_request_list (void *arg) {
             if (!key)
                 continue;
 
-            // 0.0.0.0 means "I own this file"
-            sprintf (answer, "file %s %s %d 0.0.0.0:%d\n",
+            sprintf (answer, "file %s %s %d %s:%d\n",
                     entry->d_name,
                     key,
                     (int) entry_stat.st_size,
+                    my_ip,
                     7331); //FIXME: Our port is in prefs somewhere
 
             if (daemon_send (r->daemon, answer) < 0) {

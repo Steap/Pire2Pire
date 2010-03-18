@@ -5,6 +5,7 @@ struct prefs {
     int         client_port;
     int         daemon_port;
     char        *shared_folder;
+    char        *interface;
 };
 
 struct prefs *conf_retrieve (const char*);

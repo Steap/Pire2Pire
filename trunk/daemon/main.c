@@ -1,5 +1,8 @@
+#include <sys/ioctl.h>      // ioctl ()
 #include <sys/stat.h>       // umask ()
 
+#include <arpa/inet.h>      // inet_ntop ()
+#include <net/if.h>         // struct ifreq
 #include <netinet/in.h>     // struct sockaddr_in
 
 #include <fcntl.h>          // open ()
@@ -22,6 +25,7 @@
 #define NFDS(a,b)   (((a)>(b))?(a+1):(b+1))
 
 FILE *log_file;
+char my_ip[INET_ADDRSTRLEN];
 
 /* Preferences defined in daemon.conf. */
 struct prefs *prefs;
@@ -133,15 +137,17 @@ void daemonize(void) {
 
 static void
 start_server (const char *conf_file) {
-    int     client_sd;
-    int     daemon_sd;
-    int     connected_sd;
+    int                 client_sd;
+    int                 daemon_sd;
+    int                 connected_sd;
     struct sockaddr_in  client_sa;
     struct sockaddr_in  daemon_sa;
     struct sockaddr_in  connected_sa;
-    socklen_t size = sizeof (struct sockaddr);
-    fd_set  sockets;
-    int nfds;
+    socklen_t           size;
+    fd_set              sockets;
+    int                 nfds;
+    struct ifreq        if_info;
+    struct sockaddr_in  *if_addr;
 
     prefs = conf_retrieve (conf_file);
 
@@ -179,8 +185,19 @@ start_server (const char *conf_file) {
         exit (EXIT_FAILURE);
     }
 
+    // We get our ip
+    memcpy (if_info.ifr_name, prefs->interface, strlen (prefs->interface) + 1);
+    if (ioctl (daemon_sd, SIOCGIFADDR, &if_info) == -1) {
+        log_failure (log_file, "Can't get my ip from interface");
+        exit (EXIT_FAILURE);
+    }
+    if_addr = (struct sockaddr_in *)&if_info.ifr_addr;
+    inet_ntop (AF_INET, &if_addr->sin_addr, my_ip, INET_ADDRSTRLEN);
+    log_success (log_file, "Found my IP : >%s<", my_ip);
+
     // sockets contains both client_sd and daemon_sd
     FD_ZERO (&sockets);
+    size = sizeof (connected_sa);
     nfds = NFDS (client_sd, daemon_sd);
     for (;;) {
         /*
