@@ -13,10 +13,11 @@ client_request_new (char *cmd, struct client *client) {
         return NULL;
     
 //    r->cmd         = strdup (cmd);
-    r->cmd = cmd;
-    r->client      = client;
-    r->prev        = NULL;
-    r->next        = NULL;
+    r->cmd          = cmd;
+    r->client       = client;
+    r->prev         = NULL;
+    r->next         = NULL;
+    r->thread_id    = -1;
 
     return r;
 }

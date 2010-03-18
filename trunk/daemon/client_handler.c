@@ -110,15 +110,17 @@ start_request_thread (void *arg) {
     wrapper = (struct request_thread_wrapper *)arg;
     if (!wrapper)
         return NULL;
+    r = wrapper->request;
+    r->thread_id = pthread_self ();
 
     // Now we call the request handler
     wrapper->callback (wrapper->request);
 
     // And we remove the request properly
 #if 1
-    r = wrapper->request;
     sem_wait (&r->client->req_lock);
-    r->client->requests = client_request_remove (r->client->requests, r->thread_id);
+    r->client->requests = client_request_remove (r->client->requests,
+                                                    r->thread_id);
     sem_post (&r->client->req_lock);
     client_request_free (r);
 #endif
@@ -164,7 +166,7 @@ handle_requests (void *arg) {
             sprintf (answer, " < Too many requests, mister, plz calm down\n");
             send (client->socket, answer, strlen (answer), 0);
             continue;
-        }        
+        } 
 
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
@@ -202,7 +204,7 @@ handle_requests (void *arg) {
                             NULL,
                             start_request_thread,
                             &wrapper);
-        
+ 
         if (r < 0) {
             sprintf (answer, 
                     " < Could not treat your request for an unexpected \

@@ -64,6 +64,9 @@ socket_getline_with_trailer (int src_sock) {
             log_failure (log_file, "socket_getline () : recv failed");
             return NULL;
         }
+        else if (nb_received == 0) {
+            return message;
+        }
         buffer[nb_received] = '\0';
 
         if ((message = realloc (message,

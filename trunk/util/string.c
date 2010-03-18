@@ -4,6 +4,9 @@ char *
 string_remove_trailer (char *msg) {
     char *to_be_replaced;
 
+    if (!msg)
+        return msg;
+
     to_be_replaced = strchr(msg, '\r');
     if (to_be_replaced != NULL) {
         *to_be_replaced = '\0';
