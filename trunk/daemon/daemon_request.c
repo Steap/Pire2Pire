@@ -20,10 +20,11 @@ daemon_request_new (char *cmd, struct daemon *daemon) {
         return NULL;
     
 //    r->cmd         = strdup (cmd);
-    r->cmd = cmd;
-    r->daemon      = daemon;
-    r->prev        = NULL;
-    r->next        = NULL;
+    r->cmd          = cmd;
+    r->daemon       = daemon;
+    r->prev         = NULL;
+    r->next         = NULL;
+    r->thread_id    = -1;
 
     return r;
 }

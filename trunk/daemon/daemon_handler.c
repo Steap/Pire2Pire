@@ -67,12 +67,13 @@ start_request_thread (void *arg) {
     wrapper = (struct request_thread_wrapper *)arg;
     if (!wrapper)
         return NULL;
+    r = wrapper->request;
+    r->thread_id = pthread_self ();
 
     // Now we call the request handler
     wrapper->callback (wrapper->request);
 
     // And we remove the request properly
-    r = wrapper->request;
     sem_wait (&r->daemon->req_lock);
     r->daemon->requests = daemon_request_remove (r->daemon->requests,
                                                  r->thread_id);
@@ -130,6 +131,7 @@ handle_requests (void *arg) {
             callback = &daemon_request_file;
         else
             callback = &daemon_request_unknown;
+
         request = daemon_request_new (message, daemon);
 
         if (!request) {
@@ -137,7 +139,7 @@ handle_requests (void *arg) {
             send (daemon->socket, answer, strlen (answer), 0);
             continue;
         }
-        
+
         sem_wait (&daemon->req_lock);
         daemon->requests = daemon_request_add (daemon->requests, request);
         sem_post (&daemon->req_lock);
