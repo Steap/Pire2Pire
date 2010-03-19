@@ -6,7 +6,6 @@
 #include <stdlib.h>         // NULL
 #include <stdio.h>          // perror ()
 #include <string.h>         // strcpy ()
-#include <stropts.h>        // ioctl ()
 #include <termios.h>        // termios
 #include <unistd.h>         // STDIN_FILENO
 
