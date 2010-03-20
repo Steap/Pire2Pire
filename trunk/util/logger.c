@@ -12,6 +12,14 @@ logger (FILE *log, const char *msg, const char *header, va_list *arg) {
     fflush (log);
 }
 
+static void
+logger_no_newline (FILE *log, const char *msg,
+                    const char *header, va_list *arg) {
+    fprintf (log, "%s", header);
+    vfprintf (log, msg, *arg);
+    fflush (log);
+}
+
 void
 log_success (FILE *log, const char *msg, ...) {
     va_list arg;
@@ -43,7 +51,7 @@ log_send (FILE *log, const char *msg, ...) {
 #if ALL_MESSAGES
     va_list arg;
     va_start (arg, msg);
-    logger (log, msg, " [>] ", &arg);
+    logger_no_newline (log, msg, " [>] ", &arg);
     va_end (arg);
 #endif
 }

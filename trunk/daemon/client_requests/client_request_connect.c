@@ -153,19 +153,19 @@ client_request_connect (void *arg) {
         goto send_msg;
     }
 
-    log_failure (log_file, "connect : before sem_wait");
+    //log_failure (log_file, "connect : before sem_wait");
 
 #define SEM 1
 #if SEM
     sem_wait (&daemons_lock);
 #endif
     daemons = daemon_add (daemons, daemon);
-    log_failure (log_file, "connect : after add");
+    //log_failure (log_file, "connect : after add");
 #if SEM
     sem_post (&daemons_lock);
 #endif
 
-    log_failure (log_file, "connect : after post");
+    //log_failure (log_file, "connect : after post");
   
     sprintf (answer, "Connected to %s. Everything went fine.\n", addr); 
      

@@ -287,8 +287,7 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
         return;
     }
 
-    log_failure (log_file, "NUMBER %d", client_numbers (clients));
-
+    //log_failure (log_file, "NUMBER %d", client_numbers (clients));
 
     r = pthread_create (&c->thread_id, NULL, handle_requests, c);
     if (r < 0) {
