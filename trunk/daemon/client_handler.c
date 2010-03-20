@@ -179,6 +179,8 @@ handle_requests (void *arg) {
             callback = &client_request_info;
         else if (strncmp (message, "list", 4) == 0)
             callback = &client_request_list;
+        else if (strncmp (message, "raw", 3) == 0)
+            callback = &client_request_raw;
         else if (strncmp (message, "set", 3) == 0)
             callback = &client_request_set;
         else if (strncmp (message, "bar", 3) == 0)
@@ -233,16 +235,16 @@ out:
 #if 1
     if (message) {
         free (message);
-        log_failure (log_file, "hr : Freed message");
+//        log_failure (log_file, "hr : Freed message");
     }
 #endif
     if (request) {
-        log_failure (log_file, "hr : client_request_free ()");
+//        log_failure (log_file, "hr : client_request_free ()");
         client_request_free (request);
     }
 #if 1
     if (client) {
-        log_failure (log_file, "hr : client_free ()");
+//        log_failure (log_file, "hr : client_free ()");
         client_free (client);
     }
 #endif

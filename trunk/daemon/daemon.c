@@ -11,17 +11,17 @@
 extern FILE *log_file;
 
 struct daemon *
-daemon_new (int socket, char *addr) {
+daemon_new (int socket, char *addr, int port) {
     struct daemon *d;
     d = malloc (sizeof (struct daemon));
     if (d == NULL)
         return NULL;
 
-   // d->id     = id;
-    d->socket = socket;
-    d->addr   = strdup (addr);
-    d->next= NULL;
-    d->prev =NULL;
+    d->socket   = socket;
+    d->addr     = strdup (addr);
+    d->port     = port;
+    d->next     = NULL;
+    d->prev     = NULL;
     d->requests = NULL;
     sem_init (&d->req_lock, 0, 1);
     sem_init (&d->socket_lock, 0, 1);
@@ -99,7 +99,7 @@ daemon_send (struct daemon *d, const char *msg) {
     int     nb_sent;
     int     nb_sent_sum;
     int     send_size;
-    char    ending_char;
+//    char    ending_char;
 
     // Log this (see ../util/logger.c to disactivate this)
     log_send (log_file, msg);
@@ -126,16 +126,6 @@ daemon_send (struct daemon *d, const char *msg) {
             return -1;
         }
         nb_sent_sum += nb_sent;
-    }
-
-    // This is to assure we send a full response
-    if (msg[send_size - 1] != '\n') {
-        ending_char = '\n';
-        if (send (dest_sock, &ending_char, 1, 0) < 1) {
-            log_failure (log_file,
-                        "Failed to send a '\\n' terminated response");
-            return -1;
-        }
     }
 
     if (sem_post (&d->socket_lock) < 0) {

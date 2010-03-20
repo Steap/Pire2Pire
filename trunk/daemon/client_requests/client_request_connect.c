@@ -23,7 +23,7 @@ extern sem_t daemons_lock;
 #define INVALID_PORT          -3
 #define INVALID_IP            -4
 
-struct option options[] = {
+static struct option options[] = {
     {NULL, NULL, 0}
 };
 static int 
@@ -81,7 +81,7 @@ client_request_connect (void *arg) {
 
     nb_arguments = argc - optind;
     if (nb_arguments == 0) {
-        sprintf (answer, "connect : you should specify an ip and a port.\n");
+        sprintf (answer, " < connect : you should specify an ip and a port.\n");
         goto send_msg;
     }
 
@@ -90,28 +90,28 @@ client_request_connect (void *arg) {
     switch (is_valid_ip_port (addr, &port)) {
         case 1:
             sprintf (answer, 
-                     "connect : should connect to %s, port %d.\n",
+                     " < connect : should connect to %s, port %d.\n",
                      addr,
                      port);
             break;
         case NOT_A_COUPLE:
-            sprintf (answer, "You must specify an ip and a port.\n");
+            sprintf (answer, " < You must specify an ip and a port.\n");
             goto send_msg;
             break;
         case NO_PORT_SPECIFIED:
-            sprintf (answer, "No port specified\n");
+            sprintf (answer, " < No port specified\n");
             goto send_msg;
             break;
         case NO_IP_SPECIFIED:
-            sprintf (answer, "No ip specified\n");
+            sprintf (answer, " < No ip specified\n");
             goto send_msg;
             break;
         case INVALID_PORT:
-            sprintf (answer, "invalid port\n");
+            sprintf (answer, " < invalid port\n");
             goto send_msg;
             break;
         case INVALID_IP:
-            sprintf (answer, "invalid ip\n");
+            sprintf (answer, " < invalid ip\n");
             goto send_msg;
             break;
         default:
@@ -127,7 +127,7 @@ client_request_connect (void *arg) {
     daemon_socket = socket (AF_INET, SOCK_STREAM, 0);
     if (daemon_socket < 0) {
         sprintf (answer,
-                 "Could not open a new socket to %s. Error : %s\n",
+                 " < Could not open a new socket to %s. Error : %s\n",
                  addr,
                  strerror (errno));
         goto send_msg;
@@ -142,14 +142,14 @@ client_request_connect (void *arg) {
                 (struct sockaddr *) &daemon_addr,
                 sizeof (daemon_addr)) < 0) {    
         sprintf (answer, 
-                 "Could not connect to %s:%d.\n Error : %s.\n",
+                 " < Could not connect to %s:%d.\n Error : %s.\n",
                  addr, port, strerror (errno));
         goto send_msg;
     }
 
-    daemon = daemon_new (daemon_socket, addr);
+    daemon = daemon_new (daemon_socket, addr, port);
     if (!daemon) {
-        sprintf (answer, "Could not create a new daemon object");
+        sprintf (answer, " < Could not create a new daemon object");
         goto send_msg;
     }
 
@@ -167,7 +167,7 @@ client_request_connect (void *arg) {
 
     //log_failure (log_file, "connect : after post");
   
-    sprintf (answer, "Connected to %s. Everything went fine.\n", addr); 
+    sprintf (answer, " < Connected to %s. Everything went fine.\n", addr); 
      
 
 send_msg:

@@ -48,6 +48,7 @@ client_request_list (void *arg) {
     nb_daemons = daemon_numbers (daemons);
     sockets = (int *)malloc (nb_daemons * sizeof (int));
     d = daemons;
+    // For each daemon, we will try to initialize and connect a socket
     for (int i = 0; i < nb_daemons; i++, d = d->next) {
         sockets[i] = socket (AF_INET, SOCK_STREAM, 0);
         if (sockets[i] < 0) {
@@ -62,7 +63,7 @@ client_request_list (void *arg) {
             continue;
         }
         d_addr.sin_family = AF_INET;    // FIXME: d should have a sockaddr_in
-        d_addr.sin_port = htons (7331); // FIXME: d should have a sockaddr_in
+        d_addr.sin_port = htons (d->port);
         if (connect (sockets[i],
             (struct sockaddr *)&d_addr,
             sizeof (d_addr)) < 0) {
@@ -111,6 +112,7 @@ client_request_list (void *arg) {
                 if (sockets[i] >= 0) {
                     if (FD_ISSET (sockets[i], &sockets_set)) {
                         response = socket_getline_with_trailer (sockets[i]);
+                        client_send (r->client, " < ");
                         client_send (r->client, response);
                         free (response);
                     }

@@ -30,7 +30,7 @@ client_new (int socket, char *addr) {
 
 void 
 client_free (struct client *c) {
-    log_failure (log_file, "Freeing client %s", c->addr);
+//    log_failure (log_file, "Freeing client %s", c->addr);
     if (!c)
         return;
     if (c->addr) {
@@ -68,8 +68,8 @@ client_numbers (struct client *l) {
 
 struct client*
 client_remove (struct client *l, pthread_t pt) {
-    log_failure (log_file, "about to remove a client");
-    log_failure (log_file, "nb of clients : %d", client_numbers (l));
+//    log_failure (log_file, "about to remove a client");
+//    log_failure (log_file, "nb of clients : %d", client_numbers (l));
     if (!l)
         return NULL;
     struct client *tmp;
@@ -96,7 +96,6 @@ client_send (struct client *c, const char *msg) {
     int     nb_sent;
     int     nb_sent_sum;
     int     send_size;
-    char    ending_char;
 
     dest_sock = c->socket;
     if (sem_wait (&c->socket_lock) < 0) {
@@ -120,16 +119,6 @@ client_send (struct client *c, const char *msg) {
             return -1;
         }
         nb_sent_sum += nb_sent;
-    }
-
-    // This is to assure we send a full response
-    if (msg[send_size - 1] != '\n') {
-        ending_char = '\n';
-        if (send (dest_sock, &ending_char, 1, 0) < 1) {
-            log_failure (log_file,
-                        "Failed to send a '\\n' terminated response");
-            return -1;
-        }
     }
 
     if (sem_post (&c->socket_lock) < 0) {

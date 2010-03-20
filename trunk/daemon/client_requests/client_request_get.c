@@ -48,16 +48,16 @@ client_request_get (void *arg) {
     nb_arguments = argc - optind;
     if (nb_arguments == 0) {
         sprintf (answer,
-                 "get : you need to specify a key.\n");
+                 " < get : you need to specify a key.\n");
     }
     else {
         if (strlen (argv[optind]) != HASH_SIZE) {
             sprintf (answer,
-                     "get : hash size is not good, man.\n");
+                     " < get : hash size is not good, man.\n");
         }
         else {
             sprintf (answer, 
-                     "get : should be getting file whose key is %s.\n",
+                     " < get : should be getting file whose key is %s.\n",
                      argv[optind]);
         }
     }

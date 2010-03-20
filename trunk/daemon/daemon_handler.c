@@ -211,7 +211,7 @@ handle_daemon (int daemon_socket, struct sockaddr_in *daemon_addr) {
                     &daemon_addr->sin_addr,
                     addr,
                     INET_ADDRSTRLEN)) {
-        d = daemon_new (daemon_socket, addr);
+        d = daemon_new (daemon_socket, addr, ntohs (daemon_addr->sin_port));
     }
 
     if (!d)

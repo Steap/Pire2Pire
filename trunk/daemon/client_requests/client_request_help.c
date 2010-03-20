@@ -11,6 +11,7 @@ get KEY             Has your daemon download the file whose key is KEY      \n\
 help                Displays this message                                   \n\
 info                Displays info about the daemon state                    \n\
 list                Displays a list of available files on the network       \n\
+raw IP:PORT CMD     Sends the command CMD to daemon specified               \n\
 set                 Lists available options                                 \n\
 set option=value    Sets an option's value                                  \n\
 quit                Quits                                                   \n\

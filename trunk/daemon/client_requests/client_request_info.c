@@ -27,7 +27,7 @@ client_request_info (void *arg) {
     sem_wait (&r->client->req_lock);
     count = client_numbers (clients);
     sprintf (answer, 
-             "INFO : there %s %d client%s connected.\n", 
+             " < INFO : there %s %d client%s connected.\n", 
              (count > 1)?"are":"is",
              count,
              (count > 1)?"s":"");
@@ -35,7 +35,7 @@ client_request_info (void *arg) {
 
     count = daemon_numbers (daemons);
     sprintf (answer, 
-             "INFO : there %s %d daemon%s connected.\n", 
+             " < INFO : there %s %d daemon%s connected.\n", 
              (count > 1)?"are":"is",
              count,
              (count > 1)?"s":"");
@@ -43,13 +43,13 @@ client_request_info (void *arg) {
 
     count = client_request_count (r->client->requests);
     sprintf (answer, 
-             "INFO : You have %d request%s currently running.\n", 
+             " < INFO : You have %d request%s currently running.\n", 
              count,
              (count > 1)?"s":"");
     client_send (r->client, answer);
    
     for (tmp = r->client->requests, n = 1; tmp; tmp = tmp->next, n++) {
-        sprintf (answer, "INFO : %d - %s\n", n, tmp->cmd);
+        sprintf (answer, " < INFO : %d - %s\n", n, tmp->cmd);
         client_send (r->client, answer);
     }
     sem_post (&r->client->req_lock);

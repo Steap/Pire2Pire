@@ -6,11 +6,11 @@
 #include "daemon_request.h" // struct daemon_request
 
 struct daemon {
-    //int                   id;
     int                     socket;
     /* We need to lock the socket to send atomic messages */
     sem_t                   socket_lock;
     char                    *addr; /* IPv4, IPv6, whatever... */
+    int                     port;   // Host short, use htons () if needed
     pthread_t               thread_id;
     /* 
      * Many different requests will try and modify "requests", using request_add
@@ -22,7 +22,7 @@ struct daemon {
     struct daemon           *prev;
 };
 
-struct daemon *daemon_new     (int socket, char *addr);
+struct daemon *daemon_new     (int socket, char *addr, int port);
 void           daemon_free    (struct daemon *d);
 struct daemon *daemon_add     (struct daemon *l, struct daemon *d);
 int            daemon_numbers (struct daemon *l);

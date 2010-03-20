@@ -50,14 +50,14 @@ client_request_set (void *arg) {
     switch (nb_arguments) {
         case 0:
             sprintf (answer, 
-                     "No arguments, should display all available options\n");
+                     " < No arguments, should display all available options\n");
             break;
         case 1:
-            sprintf (answer, "Should have set %s\n", argv[optind]);
+            sprintf (answer, " < Should have set %s\n", argv[optind]);
             break;
         /* More than one arg */
         default:
-            sprintf (answer, "You shall only set one option at a time...\n");
+            sprintf (answer, " < You shall only set one option at a time...\n");
             break;
     } 
 #if 0
