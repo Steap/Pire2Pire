@@ -78,7 +78,7 @@ client_request_list (void *arg) {
     // Then we send a list message to each of them
     for (int i = 0; i < nb_daemons; i++) {
         if (sockets[i] >= 0) {
-            socket_sendline (sockets[i], "list");
+            socket_sendline (sockets[i], "list\n");
         }
 
         // While we're at it, we prepare nfds
@@ -126,7 +126,7 @@ client_request_list (void *arg) {
     // And close the sockets properly
     for (int i = 0; i < nb_daemons; i++) {
         if (sockets[i] >=0) {
-            socket_sendline (sockets[i], "quit");
+            socket_sendline (sockets[i], "quit\n");
             close (sockets[i]);
         }
     }
