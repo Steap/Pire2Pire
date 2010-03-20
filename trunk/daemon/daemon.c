@@ -1,6 +1,7 @@
 #include <sys/socket.h>     // send ()
 
 #include <pthread.h>        // pthread_equal ()
+#include <signal.h>         // pthread_kill ()
 #include <stdlib.h>         // malloc ()
 #include <string.h>         // strdup ()
 
@@ -32,6 +33,11 @@ void
 daemon_free (struct daemon *d) {
     if (!d)
         return;
+
+    /*
+     * TODO: Shouldn't we pthread_kill the remaining requests threads ?
+     */
+
     if (d->addr) {
         free (d->addr);
         d->addr = NULL;

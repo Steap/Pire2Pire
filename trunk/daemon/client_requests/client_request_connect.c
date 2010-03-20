@@ -119,6 +119,11 @@ client_request_connect (void *arg) {
             break;
     }
 
+    /*
+     * TODO: We should not connect to ourselves, check the IP with my_ip
+     * and with 127.0.0.1 at least
+     */
+
     daemon_socket = socket (AF_INET, SOCK_STREAM, 0);
     if (daemon_socket < 0) {
         sprintf (answer,

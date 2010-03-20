@@ -1,7 +1,9 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
-#include <semaphore.h>
+#include <semaphore.h>      // sem_t
+
+#include "daemon_request.h" // struct daemon_request
 
 struct daemon {
     //int                   id;

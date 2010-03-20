@@ -69,7 +69,7 @@ client_request_list (void *arg) {
             log_failure (log_file,
                     "client_request_list (): Couldn't connect to a daemon");
             close (sockets[i]);
-            sockets[i] = 0;
+            sockets[i] = -1;
         }
     }
     sem_post (&daemons_lock);
@@ -77,7 +77,8 @@ client_request_list (void *arg) {
     nfds = 0;
     // Then we send a list message to each of them
     for (int i = 0; i < nb_daemons; i++) {
-        socket_sendline (sockets[i], "list");
+        if (sockets[i] >= 0) {
+            socket_sendline (sockets[i], "list");
 
         // While we're at it, we prepare nfds
         if (sockets[i] > nfds)
@@ -124,11 +125,14 @@ client_request_list (void *arg) {
     // And close the sockets properly
     for (int i = 0; i < nb_daemons; i++) {
         if (sockets[i] >=0) {
+            socket_sendline (sockets[i], "quit");
             close (sockets[i]);
         }
     }
 
     client_send (r->client, "END OF FILES\n");
+
+    free (sockets);
 
     return NULL; 
 }
