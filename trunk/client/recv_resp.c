@@ -27,11 +27,13 @@ proper_quit (int signum) {
 
 void *
 recv_resp (void *arg) {
-    int     src_sock = *((int *)arg);
-    int     nb_received;
-    char    buffer[BUFFER_SIZE];
-    int     buffer_offset;
+    int                 src_sock;
+    int                 nb_received;
+    char                buffer[BUFFER_SIZE];
+    int                 buffer_offset;
     struct sigaction    quit_action;
+
+    src_sock = *((int *)arg);
 
     sigemptyset(&quit_action.sa_mask);
     quit_action.sa_handler = proper_quit;
@@ -51,6 +53,11 @@ recv_resp (void *arg) {
             nb_received = recv (src_sock, buffer, BUFFER_SIZE - 1, 0);
             if (nb_received < 0) {
                 perror ("recv");
+                exit (EXIT_FAILURE);
+            }
+            else if (nb_received == 0) {
+                printf ("Server disconnected\nExiting\n");
+                // TODO: Send a signal to parent thread and free memory
                 exit (EXIT_FAILURE);
             }
             buffer[nb_received] = '\0';

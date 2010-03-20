@@ -30,7 +30,6 @@ paste () {
     int                 nb_read;
     struct sigaction    old_action;
 
-
     // We don't want to be interrupted within this interruption handling.
     sigaction (SIGUSR1, NULL, &old_action);
 
