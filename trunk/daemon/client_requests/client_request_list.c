@@ -131,8 +131,6 @@ client_request_list (void *arg) {
         }
     }
 
-    client_send (r->client, "END OF FILES\n");
-
     free (sockets);
 
     return NULL; 
