@@ -79,6 +79,7 @@ client_request_list (void *arg) {
     for (int i = 0; i < nb_daemons; i++) {
         if (sockets[i] >= 0) {
             socket_sendline (sockets[i], "list");
+        }
 
         // While we're at it, we prepare nfds
         if (sockets[i] > nfds)
