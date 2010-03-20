@@ -65,6 +65,7 @@ socket_getline_with_trailer (int src_sock) {
             return NULL;
         }
         else if (nb_received == 0) {
+            log_failure (log_file, "socket_getline () : empty line");
             return message;
         }
         buffer[nb_received] = '\0';

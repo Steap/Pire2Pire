@@ -17,7 +17,6 @@ client_request_new (char *cmd, struct client *client) {
     r->client       = client;
     r->prev         = NULL;
     r->next         = NULL;
-    r->thread_id    = -1;
 
     return r;
 }

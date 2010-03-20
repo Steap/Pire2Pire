@@ -24,7 +24,6 @@ daemon_request_new (char *cmd, struct daemon *daemon) {
     r->daemon       = daemon;
     r->prev         = NULL;
     r->next         = NULL;
-    r->thread_id    = -1;
 
     return r;
 }

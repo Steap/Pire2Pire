@@ -111,7 +111,6 @@ start_request_thread (void *arg) {
     if (!wrapper)
         return NULL;
     r = wrapper->request;
-    r->thread_id = pthread_self ();
 
     // Now we call the request handler
     wrapper->callback (wrapper->request);

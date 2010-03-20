@@ -159,6 +159,7 @@ client_request_connect (void *arg) {
 #if SEM
     sem_post (&daemons_lock);
 #endif
+
     log_failure (log_file, "connect : after post");
   
     sprintf (answer, "Connected to %s. Everything went fine.\n", addr); 
