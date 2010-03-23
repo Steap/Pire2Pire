@@ -3,12 +3,13 @@
 
 #include "cmd_parser.h"
 
-#define CMD_TO_PARSE "list -e foo -r caca pipi lol --exclude bar\n"
+#define CMD_TO_PARSE "list -e foo caca -r pipi -g - lol --gay -- foo --exclude bar\n"
 
 static struct option_template options[] = {
     {"e", "exclude", ARG_REQUIRED},
     {"g", "gay", ARG_REQUIRED},
     {"r", "recursive", NO_ARG},
+    {"t", "tomato", ARG_REQUIRED},
     {NULL, NULL, 0}
 };
 
@@ -21,7 +22,7 @@ int main () {
         exit (EXIT_FAILURE);
 
     printf ("Command: %s\n", pcmd->cmd);
-    printf ("Options:\n");
+    printf ("Options (%d):\n", pcmd->nb_options);
     for (int i = 0; options[i].short_name != NULL; i++) {
         printf ("--%-20s (-%s) is %s",
                 options[i].long_name,
@@ -33,7 +34,7 @@ int main () {
         }
         printf ("\n");
     }
-    printf ("Arguments:\n");
+    printf ("Arguments (%d):\n", pcmd->nb_arguments);
     arg = pcmd->arguments;
     while (arg) {
         printf ("%s\n", arg->text);

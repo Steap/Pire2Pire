@@ -94,6 +94,7 @@ cmd_parse (const char *cmd, struct option_template *template) {
     parsed_cmd->options = (struct parsed_option *)
                             calloc (parsed_cmd->nb_options,
                                     sizeof(struct parsed_option));
+    parsed_cmd->nb_arguments = 0;
     parsed_cmd->arguments = NULL;
 
     while ((token = get_token (cmd, &cursor))) {
@@ -102,6 +103,7 @@ cmd_parse (const char *cmd, struct option_template *template) {
             // "ls -" > "-" is considered an argument
             if (token_size == 1) {
                 parsed_cmd->arguments = add_arg (parsed_cmd->arguments, token);
+                parsed_cmd->nb_arguments++;
                 continue;
             }
             if (token[1] == '-') {
@@ -110,6 +112,7 @@ cmd_parse (const char *cmd, struct option_template *template) {
                 if (token_size == 2) {
                     parsed_cmd->arguments = add_arg (parsed_cmd->arguments,
                                                         token);
+                    parsed_cmd->nb_arguments++;
                     continue;
                 }
 
@@ -212,6 +215,7 @@ cmd_parse (const char *cmd, struct option_template *template) {
         // We're dealing with an argument here
         else {
             parsed_cmd->arguments = add_arg (parsed_cmd->arguments, token);
+            parsed_cmd->nb_arguments++;
             continue;
         }
     }
