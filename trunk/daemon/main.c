@@ -1,3 +1,4 @@
+#include <errno.h>
 #include <sys/ioctl.h>      // ioctl ()
 #include <sys/stat.h>       // umask ()
 
@@ -185,16 +186,18 @@ start_server (const char *conf_file) {
         exit (EXIT_FAILURE);
     }
 
+#if 1
     // We get our ip
     memcpy (if_info.ifr_name, prefs->interface, strlen (prefs->interface) + 1);
     if (ioctl (daemon_sd, SIOCGIFADDR, &if_info) == -1) {
         log_failure (log_file, "Can't get my ip from interface");
+        log_failure (log_file, "LOL ERRNO : %s\n", strerror (errno));
         exit (EXIT_FAILURE);
     }
     if_addr = (struct sockaddr_in *)&if_info.ifr_addr;
     inet_ntop (AF_INET, &if_addr->sin_addr, my_ip, INET_ADDRSTRLEN);
     log_success (log_file, "Found my IP : >%s<", my_ip);
-
+#endif
     // sockets contains both client_sd and daemon_sd
     FD_ZERO (&sockets);
     size = sizeof (connected_sa);

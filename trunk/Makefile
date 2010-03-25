@@ -17,25 +17,26 @@ CLIENT_SOURCES=\
 	client/util/prompt.c
 
 DAEMON_SOURCES=\
-	daemon/callback_argument.c			            \
+	daemon/callback_argument.c			                \
 	daemon/client.c					                \
-	daemon/client_handler.c				            \
-	daemon/client_requests/client_request_connect.c	\
-	daemon/client_requests/client_request_get.c	    \
-	daemon/client_requests/client_request_help.c	\
-	daemon/client_requests/client_request_info.c	\
-	daemon/client_requests/client_request_list.c	\
-    daemon/client_requests/client_request_raw.c     \
-	daemon/client_requests/client_request_set.c	    \
-	daemon/client_requests/client_request_unknown.c	\
-	daemon/client_request.c				            \
+	daemon/client_handler.c				                \
+	daemon/client_requests/client_request_connect.c	                \
+	daemon/client_requests/client_request_get.c	                \
+	daemon/client_requests/client_request_help.c	                \
+	daemon/client_requests/client_request_info.c	                \
+	daemon/client_requests/client_request_list.c	                \
+        daemon/client_requests/client_request_raw.c                     \
+	daemon/client_requests/client_request_set.c	                \
+	daemon/client_requests/client_request_unknown.c    	        \
+	daemon/client_request.c				                \
 	daemon/conf.c					                \
 	daemon/daemon.c					                \
-	daemon/daemon_handler.c				            \
-	daemon/daemon_requests/daemon_request_file.c	\
-	daemon/daemon_requests/daemon_request_list.c	\
-	daemon/daemon_requests/daemon_request_unknown.c	\
-	daemon/daemon_request.c				            \
+	daemon/daemon_handler.c				                \
+	daemon/daemon_requests/daemon_request_file.c	                \
+	daemon/daemon_requests/daemon_request_list.c	                \
+        daemon/daemon_requests/daemon_request_neighbourhood.c           \
+	daemon/daemon_requests/daemon_request_unknown.c	                \
+	daemon/daemon_request.c				                \
 	daemon/main.c					                \
 	daemon/resource.c				                \
 	daemon/util/cmd.c				                \

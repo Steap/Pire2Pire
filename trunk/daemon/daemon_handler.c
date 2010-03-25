@@ -128,6 +128,8 @@ handle_requests (void *arg) {
             callback = &daemon_request_list;
         else if (strncmp (message, "file", 4) == 0)
             callback = &daemon_request_file;
+        else if (strncmp (message, "neighbourhood", 13) == 0)
+            callback = &daemon_request_neighbourhood;
         else
             callback = &daemon_request_unknown;
 
