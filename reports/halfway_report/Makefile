@@ -5,6 +5,9 @@ all: clean report
 
 report:
 	latex report
+	bibtex report
+	latex report
+	latex report
 	dvipdf report.dvi
 
 clean:
