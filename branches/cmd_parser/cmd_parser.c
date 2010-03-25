@@ -51,15 +51,17 @@ get_token (const char *cmd, int *offset) {
 }
 
 /*
- * Adds an argument to a linked list of arguments
+ * Appends an arg to the given arg_list, and returns the arg created (new last)
  */
 static
-struct arg_list *add_arg (struct arg_list *arg_list, char *arg_text) {
+struct arg_list *append_arg (struct arg_list *last, char *arg_text) {
     struct arg_list *new_arg;
 
     new_arg = (struct arg_list *)malloc (sizeof (struct arg_list));
     new_arg->text = arg_text;
-    new_arg->next = arg_list;
+    new_arg->next = NULL;
+    if (last)
+        last->next = new_arg;
 
     return new_arg;
 }
@@ -106,6 +108,7 @@ cmd_parse (const char *cmd, struct option_template *template) {
     struct option_template  *option;
     void                    *error;
     int                     i;
+    struct arg_list         *last_arg;
 
     error = NULL;
 
@@ -128,13 +131,16 @@ cmd_parse (const char *cmd, struct option_template *template) {
                                     sizeof(struct parsed_option));
     parsed_cmd->nb_arguments = 0;
     parsed_cmd->arguments = NULL;
+    last_arg = NULL;
 
     while ((token = get_token (cmd, &cursor))) {
         token_size = strlen (token);
         if (token[0] == '-') {
             /* "ls -" > "-" is considered an argument */
             if (token_size == 1) {
-                parsed_cmd->arguments = add_arg (parsed_cmd->arguments, token);
+                last_arg = append_arg (last_arg, token);
+                if (!parsed_cmd->arguments)
+                    parsed_cmd->arguments = last_arg;
                 parsed_cmd->nb_arguments++;
                 continue;
             }
@@ -142,8 +148,9 @@ cmd_parse (const char *cmd, struct option_template *template) {
                 /* TODO: is -- the end of options? */
                 /* for now, -- is considered an argument */
                 if (token_size == 2) {
-                    parsed_cmd->arguments = add_arg (parsed_cmd->arguments,
-                                                        token);
+                    last_arg = append_arg (last_arg, token);
+                    if (!parsed_cmd->arguments)
+                        parsed_cmd->arguments = last_arg;
                     parsed_cmd->nb_arguments++;
                     continue;
                 }
@@ -257,7 +264,9 @@ cmd_parse (const char *cmd, struct option_template *template) {
         }
         /* We're dealing with an argument here */
         else {
-            parsed_cmd->arguments = add_arg (parsed_cmd->arguments, token);
+            last_arg = append_arg (last_arg, token);
+            if (!parsed_cmd->arguments)
+                parsed_cmd->arguments = last_arg;
             parsed_cmd->nb_arguments++;
             continue;
         }
