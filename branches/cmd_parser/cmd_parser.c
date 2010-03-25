@@ -115,7 +115,7 @@ cmd_parse (const char *cmd, struct option_template *template) {
     cursor = 0;
     token = get_token (cmd, &cursor);
     if (!token) {
-        return NULL;
+        return PARSER_EMPTY_COMMAND;
     }
     parsed_cmd = (struct parsed_cmd *)malloc (sizeof (struct parsed_cmd));
     parsed_cmd->cmd = token;

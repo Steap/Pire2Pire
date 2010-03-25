@@ -3,6 +3,7 @@
 
 #define PARSER_MISSING_ARGUMENT     (struct parsed_cmd *)-1
 #define PARSER_UNKNOWN_OPTION       (struct parsed_cmd *)-2
+#define PARSER_EMPTY_COMMAND        (struct parsed_cmd *)-3
 
 // Define whether an argument is needed for an option
 enum opt_arg {
