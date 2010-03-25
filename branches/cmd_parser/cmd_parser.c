@@ -24,7 +24,15 @@ get_token (const char *cmd, int *offset) {
     int     beginning_offset;
     int     token_size;
 
+    /* We avoid the possibly numerous delimiters from the offset */
+    while(is_a_delimiter (cmd[*offset])) {
+        if (cmd[*offset] == '\0')
+            return NULL;
+        (*offset)++;
+    }
+    /* Now we're on a "real" character, so we can get the token */
     beginning_offset = *offset;
+    /* Seeking the token end */
     while (!is_a_delimiter (cmd[*offset]))
         (*offset)++;
 
@@ -35,8 +43,7 @@ get_token (const char *cmd, int *offset) {
     token = (char *)malloc ((token_size + 1) * sizeof (char));
     strncpy (token, cmd + beginning_offset, token_size);
     token[token_size] = '\0';
-
-    // We prepare the offset for the next command
+    /* Prepare the offset for the next command */
     if (cmd[*offset] != '\0')
         (*offset)++;
 

@@ -3,7 +3,7 @@
 
 #include "cmd_parser.h"
 
-#define CMD_TO_PARSE "list -e foo caca -r pipi -g - lol --gay -- foo --exclude bar\n"
+#define CMD_TO_PARSE "list -e   foo caca  -r bla --gay -- foo --exclude \n  bar   \n"
 #define CMD_ERR1 "unknownoption -e lol -d prout noob"
 #define CMD_ERR2 "missingargument -e"
 
