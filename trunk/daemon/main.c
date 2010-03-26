@@ -17,7 +17,7 @@
 #include "client_handler.h" // handle_daemon ()
 #include "conf.h"           // struct prefs
 #include "daemon_handler.h" // handle_client ()
-//#include "resource.h"       // struct resource_tree
+#include "resource.h"       // struct resource_tree
 #include "util/socket.h"    // socket_init ()
 
 #define LOG_FILE        "/tmp/g"
@@ -33,11 +33,13 @@ struct prefs *prefs;
 
 /* The lists lock that must be init on startup */
 extern sem_t    clients_lock;
+extern struct client    *clients;
 extern sem_t    daemons_lock;
+extern struct daemon    *daemons;
 
 // Handler of known files and its semaphor
-//struct resource_tree    *resources;
-//sem_t                   resources_lock;
+struct resource_tree    *resources;
+sem_t                   resources_lock;
 
 /* Rename, plz... Or not, it is just  a silly test */
 static void
@@ -52,14 +54,35 @@ signal_handler (int sig) {
 
 static void 
 server_stop (int sig) {
+    struct client   *c;
+    struct daemon   *d;
+
     (void) sig;
-/*
-    if (resources) {
-        sem_wait (&resources_lock);
-        resource_tree_free (resources);
-        sem_post (&resources_lock);
+
+    sem_destroy (&clients_lock);
+    sem_destroy (&daemons_lock);
+    sem_destroy (&resources_lock);
+
+    if (clients) {
+        while (clients) {
+            c = clients->next;
+            free (clients);
+            clients = c;
+        }
     }
-*/
+
+    if (daemons) {
+        while (daemons) {
+            d = daemons->next;
+            daemon_free (daemons);
+            daemons = d;
+        }
+    }
+
+    if (resources) {
+        resource_tree_free (resources);
+    }
+
     if (unlink (LOCK_FILE) < 0)
         if (log_file)
             log_failure (log_file, "Could not destroy the lock file");
@@ -69,6 +92,7 @@ server_stop (int sig) {
     }
     if (prefs)
         conf_free (prefs);
+
     exit (0);
 }
 
@@ -153,13 +177,13 @@ start_server (const char *conf_file) {
     prefs = conf_retrieve (conf_file);
 
     // Initialize the resource handler
-/*
+
     if (sem_init (&resources_lock, 0, 1) < 0) {
         log_failure (log_file, "Unable to sem_init resources_lock");
         exit (EXIT_FAILURE);
     }
     resources = NULL;
-*/
+
     /* Initializing the global semaphores */
     if (sem_init (&clients_lock, 0, 1) < 0) {
         log_failure (log_file, "Unable to sem_init clients_lock");

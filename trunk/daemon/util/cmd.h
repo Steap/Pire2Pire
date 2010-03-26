@@ -20,7 +20,7 @@ extern char *optarg;
 struct option 
 {
     char *short_name;
-    char *long_name; 
+    char *long_name;
     int  has_arg; /* FIXME: Should be ENUM */
 };
 

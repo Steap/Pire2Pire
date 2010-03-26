@@ -2,32 +2,40 @@
 
 #include <arpa/inet.h>          // inet_pton () 
 
+#include <dirent.h>             // DIR
 #include <stdio.h>              // NULL
 #include <stdlib.h>             // malloc ()
-#include <dirent.h>             // DIR
 #include <unistd.h>             // close ()
 
 #include "../../util/md5/md5.h" // MDFile ()
 #include "../../util/logger.h"  // log_failure ()
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request
-//#include "../resource.h"        // resource_tree_to_client ()
+#include "../resource.h"        // resource_tree_to_client ()
 #include "../conf.h"
 #include "../daemon.h"          // struct daemon
+#include "../util/cmd.h"        // cmd_to_argc_argv ()
+//#include "../util/cmd_parser.h" // cmd_parse ()
 #include "../util/socket.h"     // socket_sendline ()
 
 extern struct prefs *prefs;
 //#define SHARED_FOLDER "/tmp/lol/"
 #define SHARED_FOLDER prefs->shared_folder
 
-extern FILE             *log_file;
-//extern struct resource_tree     *resources;
-//extern sem_t                    resources_lock;
-extern struct daemon    *daemons;
-extern sem_t            daemons_lock;
+extern FILE                     *log_file;
+extern struct resource_tree     *resources;
+extern sem_t                    resources_lock;
+extern struct daemon            *daemons;
+extern sem_t                    daemons_lock;
 
 void*
 client_request_list (void *arg) {
+/* cmd_parser version: */
+#if 0
+    static struct option_template options[] = {
+        {0, NULL, 0}
+    };
+#endif
     struct client_request   *r;
     struct daemon           *d;
     struct sockaddr_in      d_addr;
@@ -38,6 +46,14 @@ client_request_list (void *arg) {
     struct timeval          timeout;
     int                     select_value;
     char                    *response;
+/* cmd version: */
+    int                     argc;
+    char                    **argv;
+/* cmd_parser version: */
+#if 0
+    struct parsed_cmd       *pcmd;
+    struct arg_list         *arg_list;
+#endif
 
     r = (struct client_request *)arg;
     if (!r)
@@ -97,6 +113,9 @@ client_request_list (void *arg) {
         if (sockets[i] >= 0)
             FD_SET (sockets[i], &sockets_set);
     }
+    // We will recreate the resource tree
+    sem_wait (&resources_lock);
+    resources = resource_tree_free (resources);
     for (;;) {
         select_value = select (nfds, &sockets_set, NULL, NULL, &timeout);
         if (select_value < 0) {
@@ -112,6 +131,46 @@ client_request_list (void *arg) {
                 if (sockets[i] >= 0) {
                     if (FD_ISSET (sockets[i], &sockets_set)) {
                         response = socket_getline_with_trailer (sockets[i]);
+                        /* response is supposedly: file NAME KEY SIZE IP:PORT */
+/* cmd version: */
+                        argv = cmd_to_argc_argv (response, &argc);
+                        if (argc != 5) {
+                            cmd_free (argv);
+                            free (response);
+                            continue;
+                        }
+                        /* FIXME: not 2 and 4 if there are options... */
+                        resources = resource_tree_add (resources,
+                                                        argv[2],
+                                                        argv[4]);
+                        cmd_free (argv);
+/* cmd_parser version: */
+#if 0
+                        pcmd = cmd_parse (response, options);
+                        /* If it is not parsed, we don't forward it */
+                        if (pcmd == PARSER_MISSING_ARGUMENT
+                            || pcmd == PARSER_UNKNOWN_OPTION
+                            || pcmd == PARSER_EMPTY_COMMAND) {
+                            free (response);
+                            continue;
+                        }
+                        /* We skip NAME */
+                        arg_list = pcmd->arguments->next;
+                        /* arg_list points to KEY */
+                        resources = resource_tree_add (resources,
+                                                /* KEY */
+                                                arg_list->text,
+                                                /* IP:PORT */
+                                                arg_list->next->next->text);
+
+                        cmd_parse_free (pcmd);
+                        /* Just in case: */
+                        key = NULL;
+                        ip_port = NULL;
+                        pcmd = NULL;
+                        arg_list = NULL;
+#endif
+
                         client_send (r->client, " < ");
                         client_send (r->client, response);
                         free (response);
@@ -124,6 +183,7 @@ client_request_list (void *arg) {
             }
         }
     }
+    sem_post (&resources_lock);
 
     // And close the sockets properly
     for (int i = 0; i < nb_daemons; i++) {
@@ -138,20 +198,3 @@ client_request_list (void *arg) {
     return NULL; 
 }
 
-/* With resource.c
-void*
-client_request_list (void *arg) {
-    struct client_request   *r;
-
-    r = (struct client_request *)arg;
-
-    sem_wait (&resources_lock);
-    if (resources)
-        resource_tree_to_client (resources, r->client);
-    else
-        client_send (r->client, " < error list : no known files on network\n");
-    sem_post (&resources_lock);
-
-    return NULL; 
-}
-*/
