@@ -220,7 +220,7 @@ start_server (const char *conf_file) {
     }
     if_addr = (struct sockaddr_in *)&if_info.ifr_addr;
     inet_ntop (AF_INET, &if_addr->sin_addr, my_ip, INET_ADDRSTRLEN);
-    log_success (log_file, "Found my IP : >%s<", my_ip);
+    log_success (log_file, "Found my IP : %s", my_ip);
 #endif
     // sockets contains both client_sd and daemon_sd
     FD_ZERO (&sockets);

@@ -23,6 +23,7 @@ daemon_new (int socket, char *addr, int port) {
     d->next     = NULL;
     d->prev     = NULL;
     d->requests = NULL;
+    memset (&d->thread_id, 0, sizeof (d->thread_id));
     sem_init (&d->req_lock, 0, 1);
     sem_init (&d->socket_lock, 0, 1);
 
