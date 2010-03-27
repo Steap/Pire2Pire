@@ -31,29 +31,36 @@ aux commandes reçues du daemon.
 	
 	\section{Gestion des requ\^etes}
 
-Actuellement, notre client sait gérer les requêtes suivantes :
-\begin{itemize}
-\item help : affiche une aide
-\item list [options] : donne la liste des ressources disponibles sur le réseau 
-      sous la forme: \verb"cle nom taille \n"
-\item info: affiche des informations/statistiques sur l'état du programme.
-\item connect ip:port: indique au programme de se connecter à un autre 
-      programme
-\item raw ip:port cmd: envoie la commande de protocole cmd à un programme. 
-\end{itemize}
-
-D'après la documentation, le client doit être également capable de gérer les 
-requêtes suivantes :
-\begin{itemize}
-\item set : fournit la liste des options disponibles dans le programme
-\item set option=valeur: modifie la valeur d'une option
-\item get cle: récupère la ressource cle
-\item download : affiche des informations sur les fichiers en cours de 
-      récupération (format libre)
-\item upload : affiche des informations sur les fichiers en cours de transfert
-      (format libre)
-\end{itemize}
+Le client s'occupe uniquement de renvoyer à l'utilisateur les réponses reçues
+du daemon. En conséquence, l'intégralité des requêtes utilisateurs ne sont pas 
+gérées directement par la partie client de notre application, mais par le 
+daemon.
 	
 	\section{Implémentation actuelle}
+
+Actuellement, notre application gère les requêtes utilisateur suivantes :
+\begin{itemize}
+\item \verb"help" : affiche une aide
+\item \verb"list [options]" : donne la liste des ressources disponibles sur le 
+      réseau sous la forme: \verb"cle nom taille \n"
+\item \verb"info" : affiche des informations/statistiques sur l'état du 
+      programme.
+\item \verb"connect ip:port" : indique au programme de se connecter à un autre 
+      programme
+\item \verb"raw ip:port cmd" : envoie la commande de protocole cmd à un 
+      programme. 
+\end{itemize}
+
+D'après la documentation, l'application doit être également capable de gérer 
+les requêtes suivantes :
+\begin{itemize}
+\item \verb"set" : fournit la liste des options disponibles dans le programme
+\item \verb"set option=valeur" : modifie la valeur d'une option
+\item \verb"get cle" : récupère la ressource cle
+\item \verb"download" : affiche des informations sur les fichiers en cours de 
+      récupération (format libre)
+\item \verb"upload" : affiche des informations sur les fichiers en cours de 
+      transfert (format libre)
+\end{itemize}
 	
 	\paragraph{}conclusion...
