@@ -59,7 +59,42 @@ struct client_request {
 	
 	\section{Gestion des fichiers}
 	
-	\section{Protocoles clients-daemon}
+    \section{Protocole client/daemon}
+    blahblah
+
+\begin{itemize}
+\item{\textbf{set [option=value]}} Si "option=valeur" est spécifié, modifie la valeur
+d'une option. Sinon, affiche la liste des options disponibles. Cette commande
+est implémentée, mais aucune option n'existe.
+
+\item{\textbf{help}} Affiche une aide indiquant la liste des options
+disponibles. Implémentée.
+
+\item{\textbf{list [options]}} Donne la liste des ressources des disponibles sur
+le réseau sous la forme suivante : \textit{clé nom taille}.
+
+\item{\textbf{get clé}} Récupère la ressource \textit{clé}.
+
+\item{\textbf{info}} affiche des informations sur l'état du programme sous la
+forme suivante :
+
+There [is/are] n client(s) connected.     \\
+There [is/are] n daemon(s) connected.     \\
+You have n request(s) currently running : \\
+1 - CMD1                                  \\ 
+2 - CMD2                                  \\
+...
+
+\item{\textbf{download}} 
+
+\item{\textbf{upload}}
+
+\item{\textbf{connect ip:port}} demande au démon de se connecter à un autre
+démon. Implémentée.
+
+\item{\textbf{raw ip:port cmd}}
+
+\end{itemize} 
 	
 	\section{Protocoles inter-daemons}
 
