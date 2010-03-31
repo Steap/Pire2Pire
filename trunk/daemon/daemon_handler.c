@@ -132,6 +132,8 @@ handle_requests (void *arg) {
             callback = &daemon_request_neighbourhood;
         else if (strncmp (message, "neighbour", 9) == 0)
             callback = &daemon_request_neighbour;
+        else if (strncmp (message, "ready", 5) == 0)
+            callback = &daemon_request_ready;
         else
             callback = &daemon_request_unknown;
 

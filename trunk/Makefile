@@ -36,6 +36,7 @@ DAEMON_SOURCES=\
 	daemon/daemon_requests/daemon_request_list.c	                \
         daemon/daemon_requests/daemon_request_neighbour.c               \
         daemon/daemon_requests/daemon_request_neighbourhood.c           \
+    daemon/daemon_requests/daemon_request_ready.c       \
 	daemon/daemon_requests/daemon_request_unknown.c	                \
 	daemon/daemon_request.c				                \
 	daemon/main.c					                \
