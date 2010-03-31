@@ -6,7 +6,7 @@
 	Notre choix d'architecture se base sur la possiblité d'agir en multi-utilisateurs 
 	sur une machine, à travers une interface commune de communication vers le réseau.
 	Notre client peer-to-peer se décompose donc en un serveur local de fichiers 
-	(que nous désignerons dans ce rapport par le terme \textbf{« daemon »}), et un certain 
+	(que nous désignerons dans ce rapport par le terme \textbf{« démon »}), et un certain 
 	nombre de processus utilisateurs (que nous nommerons des \textbf{« clients »} )
 	connectés à cette interface réseau commune.\\
 	
@@ -14,8 +14,8 @@
 	architecture, les commandes utilisables par l'utilisateur à travers ce client, et
 	l'état actuel de l'implémentation.\\
 	
-	On détaillera ensuite le rôle du daemon que nous avons mis en place.
+	On détaillera ensuite le rôle du démon que nous avons mis en place.
 	Nous expliciterons son architecture puis nous aborderons des points 
 	techniques tels que la gestion du multithreading et des fichiers. Nous 
-	aborderons enfin les protocoles inter-daemons d'échanges de données et 
+	aborderons enfin les protocoles inter-démons d'échanges de données et 
 	de requêtes. 

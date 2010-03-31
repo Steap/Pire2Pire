@@ -53,14 +53,12 @@ struct client_request {
 \end{lstlisting}
 
 
-	\section{Architecture du daemon}
-	
-	\section{Gestion du multithreading}
+	\section{Architecture du démon}
 	
 	\section{Gestion des fichiers}
 	
-    \section{Protocole client/daemon}
-    Nous allons maintenant vous présenter les différentes requêtes du client et leur état actuel.
+    \section{Protocole client/démon}
+    Nous allons maintenant présenter les différentes requêtes du client et leur état actuel.
 
 \begin{itemize}
 \item{\textbf{set [option=value]}} Si "option=valeur" est spécifié, modifie la valeur
@@ -77,12 +75,13 @@ le réseau sous la forme suivante : \textit{clé nom taille}.
 
 \item{\textbf{info}} affiche des informations sur l'état du programme sous la
 forme suivante :
-
-There [is/are] n client(s) connected.     \\
-There [is/are] n daemon(s) connected.     \\
-You have n request(s) currently running : \\
-1 - CMD1                                  \\ 
-2 - CMD2                                  \\
+\begin{verbatim}
+There [is/are] n client(s) connected.
+There [is/are] n daemon(s) connected.
+You have n request(s) currently running :
+1 - CMD1
+2 - CMD2
+\end{verbatim}
 ...
 
 \item{\textbf{download}} affiche la liste des fichiers en cours de récupération, non encore implémentée.
@@ -97,7 +96,7 @@ démon. Implémentée.
 \end{itemize} 
 	
 	\section{Protocoles inter-daemons}
-Abordons à présent les requêtes inter-daemons et leur état actuel.
+		Abordons à présent les requêtes inter-démons et leur état actuel.
 
 \begin{itemize}
 \item{\textbf{list [options]}} Donne la liste des ressources disponibles localement. Implémentée mais sans option pour l'instant.
