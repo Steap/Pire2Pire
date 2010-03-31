@@ -1,16 +1,21 @@
 \chapter{Introduction}
-Ce projet consiste en la réalisation d'un logiciel d'échange de fichiers selon
-le concept "peer to peer". Nous allons vous présenter dans ce rapport 
-l'avancement de notre projet à la sixième semaine.\\
-\\
-Notre choix d'architecture comportant un daemon et un client, nous allons vous
-décrire les fonctionnalités de chaque partie.\\
-Tout d'abord le client, qui fait le lien entre l'utilisateur et le daemon. Nous
-détaillerons dans cette partie son architecture, les requêtes demandées par le
-protocole et enfin l'état actuel de leur implémentation.\\
-Ensuite le daemon, qui est appelé ainsi car l'utilisateur n'y a pas accès
-directement.
-%%ma définition n'est peut être pas la bonne... si vous voulez la changer...
-Nous expliciterons son architecture aussi puis nous aborderons des points 
-techniques tels que la gestion du multithreading et des fichiers. Nous 
-aborderons enfin les protocoles clients-daemon et inter-daemons.
+	Ce projet consiste en la réalisation d'un logiciel d'échange de fichiers 
+	selon le concept « peer to peer ». Nous présentons dans ce rapport 
+	l'avancement de notre projet à la sixième semaine.\\
+	
+	Notre choix d'architecture se base sur la possiblité d'agir en multi-utilisateurs 
+	sur une machine, à travers une interface commune de communication vers le réseau.
+	Notre client peer-to-peer se décompose donc en un serveur local de fichiers 
+	(que nous désignerons dans ce rapport par le terme \textbf{« daemon »}), et un certain 
+	nombre de processus utilisateurs (que nous nommerons des \textbf{« clients »} )
+	connectés à cette interface réseau commune.\\
+	
+	Nous présenterons d'abord le processus client, et détaillerons dans cette partie son 
+	architecture, les commandes utilisables par l'utilisateur à travers ce client, et
+	l'état actuel de l'implémentation.\\
+	
+	On détaillera ensuite le rôle du daemon que nous avons mis en place.
+	Nous expliciterons son architecture puis nous aborderons des points 
+	techniques tels que la gestion du multithreading et des fichiers. Nous 
+	aborderons enfin les protocoles inter-daemons d'échanges de données et 
+	de requêtes. 
