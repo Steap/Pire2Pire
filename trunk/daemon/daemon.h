@@ -1,6 +1,9 @@
 #ifndef DAEMON_H
 #define DAEMON_H
 
+#define for_each_daemon(d) \
+        for (d = daemons; d; d = d->next)
+
 #include <semaphore.h>      // sem_t
 
 #include "daemon_request.h" // struct daemon_request

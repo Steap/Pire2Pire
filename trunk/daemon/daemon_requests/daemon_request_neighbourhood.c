@@ -32,8 +32,8 @@ daemon_request_neighbourhood (void *arg) {
 
     sem_wait (&daemons_lock);
 
-    for (tmp = daemons; tmp; tmp = tmp->next) {
-        sprintf (answer, "neighbour %s", tmp->addr);
+    for_each_daemon (tmp) {
+        sprintf (answer, "neighbour %s\n", tmp->addr);
         daemon_send (r->daemon, answer);
     }
 

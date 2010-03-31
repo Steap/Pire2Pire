@@ -50,7 +50,7 @@ daemon_request_neighbour (void *arg) {
 
     sem_wait (&daemons_lock);
     /* Checking whether the daemon is used */
-    for (tmp = daemons; tmp; tmp = tmp->next)
+    for_each_daemon (tmp) 
         if (strcmp (tmp->addr, addr) == 0)
             goto out;
     
