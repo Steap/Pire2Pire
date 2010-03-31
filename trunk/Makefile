@@ -38,7 +38,7 @@ DAEMON_SOURCES=\
 	daemon/daemon_requests/daemon_request_unknown.c	                \
 	daemon/daemon_request.c				                \
 	daemon/main.c					                \
-	daemon/resource.c				                \
+	daemon/file_cache.c				                \
 	daemon/util/cmd.c				                \
 	daemon/util/socket.c
 

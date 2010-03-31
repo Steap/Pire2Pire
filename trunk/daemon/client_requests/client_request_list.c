@@ -11,7 +11,7 @@
 #include "../../util/logger.h"  // log_failure ()
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request
-#include "../resource.h"        // resource_tree_to_client ()
+#include "../file_cache.h"        // file_tree_to_client ()
 #include "../conf.h"
 #include "../daemon.h"          // struct daemon
 #include "../util/cmd.h"        // cmd_to_argc_argv ()
@@ -22,11 +22,11 @@ extern struct prefs *prefs;
 //#define SHARED_FOLDER "/tmp/lol/"
 #define SHARED_FOLDER prefs->shared_folder
 
-extern FILE                     *log_file;
-extern struct resource_tree     *resources;
-extern sem_t                    resources_lock;
-extern struct daemon            *daemons;
-extern sem_t                    daemons_lock;
+extern FILE                 *log_file;
+extern struct file_cache    *file_cache;
+extern sem_t                file_cache_lock;
+extern struct daemon        *daemons;
+extern sem_t                daemons_lock;
 
 void*
 client_request_list (void *arg) {
@@ -113,9 +113,10 @@ client_request_list (void *arg) {
         if (sockets[i] >= 0)
             FD_SET (sockets[i], &sockets_set);
     }
-    // We will recreate the resource tree
-    sem_wait (&resources_lock);
-    resources = resource_tree_free (resources);
+    // We will recreate the file_cache tree
+    sem_wait (&file_cache_lock);
+    file_cache_free (file_cache);
+    file_cache = NULL;
     for (;;) {
         select_value = select (nfds, &sockets_set, NULL, NULL, &timeout);
         if (select_value < 0) {
@@ -131,7 +132,10 @@ client_request_list (void *arg) {
                 if (sockets[i] >= 0) {
                     if (FD_ISSET (sockets[i], &sockets_set)) {
                         response = socket_getline_with_trailer (sockets[i]);
-                        /* response is supposedly: file NAME KEY SIZE IP:PORT */
+                        /*
+                         * response is supposedly:
+                         * file_cache NAME KEY SIZE IP:PORT
+                         */
 /* cmd version: */
                         argv = cmd_to_argc_argv (response, &argc);
                         if (argc != 5) {
@@ -140,8 +144,10 @@ client_request_list (void *arg) {
                             continue;
                         }
                         /* FIXME: not 2 and 4 if there are options... */
-                        resources = resource_tree_add (resources,
+                        file_cache = file_cache_add (file_cache,
+                                                        argv[1],
                                                         argv[2],
+                                                        atoi (argv[3]),
                                                         argv[4]);
                         cmd_free (argv);
 /* cmd_parser version: */
@@ -157,7 +163,7 @@ client_request_list (void *arg) {
                         /* We skip NAME */
                         arg_list = pcmd->arguments->next;
                         /* arg_list points to KEY */
-                        resources = resource_tree_add (resources,
+                        file_caches = file_tree_add (files,
                                                 /* KEY */
                                                 arg_list->text,
                                                 /* IP:PORT */
@@ -183,7 +189,7 @@ client_request_list (void *arg) {
             }
         }
     }
-    sem_post (&resources_lock);
+    sem_post (&file_cache_lock);
 
     // And close the sockets properly
     for (int i = 0; i < nb_daemons; i++) {

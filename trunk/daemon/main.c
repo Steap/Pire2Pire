@@ -17,7 +17,7 @@
 #include "client_handler.h" // handle_daemon ()
 #include "conf.h"           // struct prefs
 #include "daemon_handler.h" // handle_client ()
-#include "resource.h"       // struct resource_tree
+#include "file_cache.h"     // struct file_cache
 #include "util/socket.h"    // socket_init ()
 
 #define LOG_FILE        "/tmp/g"
@@ -38,8 +38,8 @@ extern sem_t    daemons_lock;
 extern struct daemon    *daemons;
 
 // Handler of known files and its semaphor
-struct resource_tree    *resources;
-sem_t                   resources_lock;
+struct file_cache   *file_cache;
+sem_t               file_cache_lock;
 
 /* Rename, plz... Or not, it is just  a silly test */
 static void
@@ -61,7 +61,7 @@ server_stop (int sig) {
 
     sem_destroy (&clients_lock);
     sem_destroy (&daemons_lock);
-    sem_destroy (&resources_lock);
+    sem_destroy (&file_cache_lock);
 
     if (clients) {
         while (clients) {
@@ -79,8 +79,8 @@ server_stop (int sig) {
         }
     }
 
-    if (resources) {
-        resource_tree_free (resources);
+    if (file_cache) {
+        file_cache_free (file_cache);
     }
 
     if (unlink (LOCK_FILE) < 0)
@@ -176,13 +176,13 @@ start_server (const char *conf_file) {
 
     prefs = conf_retrieve (conf_file);
 
-    // Initialize the resource handler
+    // Initialize the file_cache handler
 
-    if (sem_init (&resources_lock, 0, 1) < 0) {
-        log_failure (log_file, "Unable to sem_init resources_lock");
+    if (sem_init (&file_cache_lock, 0, 1) < 0) {
+        log_failure (log_file, "Unable to sem_init file_caches_lock");
         exit (EXIT_FAILURE);
     }
-    resources = NULL;
+    file_cache = NULL;
 
     /* Initializing the global semaphores */
     if (sem_init (&clients_lock, 0, 1) < 0) {
