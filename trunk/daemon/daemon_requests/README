@@ -1,0 +1,36 @@
+All files in this directory are called daemon_request_<foo>.{c,h}, where foo is
+one of the commands from the daemon/daemon protocol. When receiving the <foo>
+command, the daemon runs daemon_request_<foo> (). 
+
+
+There is only one exception : the list command.
+
+
+
+
+/-------\
+|       |
+|  Foo  |
+|       |=?==
+\-------/   |        /-------\                       /-------\
+            ===1337==|       |==7331===========7331==|       |
+                     |   D0  |                       |  D1   |
+            ===1337==|       |                       |       |
+/-------\   |        \-------/                       \-------/
+|       |=?==
+|  Bar  |
+|       |
+\-------/
+
+
+
+
+- Foo and Bar are our clients (running on dumb machines)
+- D0 is our daemon, running on the real machine.
+- D1 is another daemon. There could be more, but that does not really matter.
+
+
+- Let's say that Foo sends "list" to D0.
+- Then D0 will send "list" to all known daemons (well, that is the dummy
+  implementation, but eh)
+- blah
