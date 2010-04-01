@@ -187,7 +187,7 @@ file_cache_get_by_key (struct file_cache *tree, const char *key) {
     if (!tree)
         return NULL;
 
-    compare = strncmp (tree->key, key, FILE_KEY_SIZE + 1);
+    compare = strcmp (key, tree->key);
     if (!compare)
         return tree;
     else if (compare < 0)
