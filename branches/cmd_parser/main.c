@@ -17,7 +17,6 @@ static struct option_template options[] = {
 
 int main () {
     struct parsed_cmd   *pcmd;
-    struct arg_list     *arg;
     int                 opt_index;
     char *              opt_value;
     char                opt_read;
@@ -25,7 +24,13 @@ int main () {
     pcmd = cmd_parse (CMD_TO_PARSE, options);
     if (!pcmd)
         exit (EXIT_FAILURE);
-    printf ("Command:\n%s\nOptions:\n", pcmd->cmd);
+
+    printf ("Arguments (%d):\n", pcmd->argc);
+    for (int i = 0; i < pcmd->argc; i++) {
+        printf ("%s\n", pcmd->argv[i]);
+    }
+
+    printf ("Options:\n");
     opt_index = 0;
     while ((opt_read = cmd_get_next_opt (pcmd, options, &opt_index))) {
         switch (opt_read) {
@@ -47,12 +52,6 @@ int main () {
         if ((opt_value = cmd_get_opt_value (pcmd, options, &opt_index)))
             printf (" %s", opt_value);
         printf ("\n");
-    }
-    printf ("Arguments (%d):\n", pcmd->nb_arguments);
-    arg = pcmd->arguments;
-    while (arg) {
-        printf ("%s\n", arg->text);
-        arg = arg->next;
     }
 
     cmd_parse_free (pcmd);

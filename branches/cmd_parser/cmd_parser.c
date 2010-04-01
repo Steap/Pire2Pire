@@ -4,6 +4,12 @@
 
 #include "cmd_parser.h"
 
+// A simple linked list of arguments, avoiding several realloc ()
+struct arg_list {
+    char                *text;
+    struct arg_list     *next;
+};
+
 static int
 is_a_delimiter (char c) {
     return c == ' ' || c == '\n' || c == '\0';
@@ -53,6 +59,7 @@ get_token (const char *cmd, int *offset) {
 /*
  * Appends an arg to the given arg_list, and returns the arg created (new last)
  */
+/*
 static
 struct arg_list *append_arg (struct arg_list *last, char *arg_text) {
     struct arg_list *new_arg;
@@ -65,9 +72,33 @@ struct arg_list *append_arg (struct arg_list *last, char *arg_text) {
 
     return new_arg;
 }
+*/
+static
+struct arg_list *add_arg (struct arg_list *l, char *arg_text) {
+    struct arg_list *new_arg;
+
+    new_arg = (struct arg_list *)malloc (sizeof (struct arg_list));
+    new_arg->text = arg_text;
+    new_arg->next = l;
+
+    return new_arg;
+}
 
 /*
- * Frees an argument linked list properly
+ * Frees an argument linked list but not its text fields
+ */
+static void
+unlink_arg_list (struct arg_list *arg_list) {
+    if (arg_list) {
+        if (arg_list->next)
+            unlink_arg_list (arg_list->next);
+        /* Don't free arg_list->text since we use it in argv */
+        free (arg_list);
+    }
+}
+
+/*
+ * Frees an argument linked list and its text fields
  */
 static void
 free_arg_list (struct arg_list *arg_list) {
@@ -81,21 +112,25 @@ free_arg_list (struct arg_list *arg_list) {
 
 /* see .h */
 void
-cmd_parse_free (struct parsed_cmd *parsed_cmd) {
+cmd_parse_free (struct parsed_cmd *pcmd) {
     /* If the parse ended bad, nothing to free */
-    if (!parsed_cmd
-        || parsed_cmd == PARSER_MISSING_ARGUMENT
-        || parsed_cmd == PARSER_UNKNOWN_OPTION)
+    if (!pcmd
+        || pcmd == PARSER_MISSING_ARGUMENT
+        || pcmd == PARSER_UNKNOWN_OPTION)
         return;
     /* Else... */
-    free (parsed_cmd->cmd);
-    for (int i = 0; i < parsed_cmd->nb_template_options; i++) {
-        if(parsed_cmd->options[i].value)
-            free (parsed_cmd->options[i].value);
+    for (int i = 0; i < pcmd->nb_template_options; i++) {
+        if(pcmd->options[i].value)
+            free (pcmd->options[i].value);
     }
-    free (parsed_cmd->options);
-    free_arg_list (parsed_cmd->arguments);
-    free (parsed_cmd);
+    free (pcmd->options);
+
+    if (pcmd->argv)
+        for (int i = 0; i < pcmd->argc; i++)
+            free (pcmd->argv[i]);
+    free (pcmd->argv);
+
+    free (pcmd);
 }
 
 /* see .h */
@@ -108,17 +143,14 @@ cmd_parse (const char *cmd, struct option_template *template) {
     struct option_template  *option;
     void                    *error;
     int                     i;
-    struct arg_list         *last_arg;
+    struct arg_list         *arguments;
+    struct arg_list         *tmp;
+    int                     argn;
 
     error = NULL;
 
     cursor = 0;
-    token = get_token (cmd, &cursor);
-    if (!token) {
-        return PARSER_EMPTY_COMMAND;
-    }
     parsed_cmd = (struct parsed_cmd *)malloc (sizeof (struct parsed_cmd));
-    parsed_cmd->cmd = token;
 
     /* Reckon the number of options in the template */
     option = template;
@@ -129,29 +161,25 @@ cmd_parse (const char *cmd, struct option_template *template) {
     parsed_cmd->options = (struct parsed_option *)
                             calloc (parsed_cmd->nb_template_options,
                                     sizeof(struct parsed_option));
-    parsed_cmd->nb_arguments = 0;
-    parsed_cmd->arguments = NULL;
-    last_arg = NULL;
+    parsed_cmd->argc = 0;
+    parsed_cmd->argv = NULL;
+    arguments = NULL;
 
     while ((token = get_token (cmd, &cursor))) {
         token_size = strlen (token);
         if (token[0] == '-') {
             /* "ls -" > "-" is considered an argument */
             if (token_size == 1) {
-                last_arg = append_arg (last_arg, token);
-                if (!parsed_cmd->arguments)
-                    parsed_cmd->arguments = last_arg;
-                parsed_cmd->nb_arguments++;
+                arguments = add_arg (arguments, token);
+                parsed_cmd->argc++;
                 continue;
             }
             if (token[1] == '-') {
                 /* TODO: is -- the end of options? */
                 /* for now, -- is considered an argument */
                 if (token_size == 2) {
-                    last_arg = append_arg (last_arg, token);
-                    if (!parsed_cmd->arguments)
-                        parsed_cmd->arguments = last_arg;
-                    parsed_cmd->nb_arguments++;
+                    arguments = add_arg (arguments, token);
+                    parsed_cmd->argc++;
                     continue;
                 }
 
@@ -264,19 +292,33 @@ cmd_parse (const char *cmd, struct option_template *template) {
         }
         /* We're dealing with an argument here */
         else {
-            last_arg = append_arg (last_arg, token);
-            if (!parsed_cmd->arguments)
-                parsed_cmd->arguments = last_arg;
-            parsed_cmd->nb_arguments++;
+            arguments = add_arg (arguments, token);
+            parsed_cmd->argc++;
             continue;
         }
     }
+    // If we finished parsing without finding any command
+    if (!arguments) {
+        error = PARSER_EMPTY_COMMAND;
+        goto parse_error;
+    }
+
+    // TODO: Change arg_list to argv and free arg_list
+    parsed_cmd->argv = (char **)malloc (parsed_cmd->argc * sizeof (char *));
+    for (argn = 1, tmp = arguments; tmp; argn++, tmp = tmp->next) {
+        /* We created the linked list in the reverse side, so argc - argn */
+        parsed_cmd->argv[parsed_cmd->argc - argn] = tmp->text;
+    }
+
+    unlink_arg_list (arguments);
 
     return parsed_cmd;
 
 parse_error:
     cmd_parse_free (parsed_cmd);
-    free (token);
+    free_arg_list (arguments);
+    if (token)
+        free (token);
     return error;
 }
 

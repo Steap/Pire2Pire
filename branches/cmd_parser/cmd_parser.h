@@ -26,23 +26,16 @@ struct parsed_option {
     char    *value;
 };
 
-// A simple linked list of arguments given to the command line
-struct arg_list {
-    char                *text;
-    struct arg_list     *next;
-};
-
 // Return of the function cmd_parse ()
 struct parsed_cmd {
-    char                    *cmd;           // The command (first token)
     // The number of options IN THE TEMPLATE, useful for free-ing this struct
     int                     nb_template_options;
     // An array with one parsed_option by non-NULL element in the template
     struct parsed_option    *options;
-    // The number of arguments passed in the command line
-    int                     nb_arguments;
-    // Linked list of arguments
-    struct arg_list         *arguments;
+    // The number of arguments passed in the command line (+ 1 for command)
+    int                     argc;
+    // Similar to well-known argv, omitting all options and their value
+    char              **argv;
 };
 
 /*
