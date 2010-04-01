@@ -9,4 +9,4 @@ report:
 	dvipdf report.dvi
 
 clean:
-	rm -f *.aux *.log *.toc
+	rm -f *.aux *.log *.toc 
