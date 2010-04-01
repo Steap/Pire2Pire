@@ -101,13 +101,18 @@ démon. Implémentée.
 \begin{itemize}
 \item{\textbf{list [options]}} Donne la liste des ressources disponibles localement. Implémentée mais sans option pour l'instant.
 \item{\textbf{file nom-de-fichier cle taille ip:port}} donne les informations sur le fichier \textit{nom-de-fichier}.
-\item{\textbf{get clé début fin}} demande à recevoir les octets compris entre \textit{début} et \textit{fin} du fichier ayant pour md5 \textit{clé}. Non implémentée
+\item{\textbf{get clé début fin}} demande à recevoir les octets compris entre \textit{début} et \textit{fin} du 
+fichier ayant pour md5 \textit{clé}. Non implémentée
 \item{\textbf{traffic}} demande la liste des transmissions prévues ou en cours. Non encore implémentée.
-\item{\textbf{ready clé delay ip port proto debut fin}} indique une transmission prévue dans \textit{delay} secondes du fragment compris entre \textit{début} et \textit{fin} du fichier identifié par \textit{clé}. Non encore implémentée.
-\item{\textbf{checksum clé taille-bloc début fin checksum checksum...}} donne la liste des checksum des blocs de \textit{taille-bloc} octets du fichier de clé \textit{clé} et compris entre \textit{début} et \textit{fin}. Non encore implémentée.
+item{\textbf{ready clé delay ip port proto debut fin}} indique une transmission prévue dans \textit{delay} secondes 
+du fragment compris entre \textit{début} et \textit{fin} du fichier identifié par \textit{clé}. Non encore implémentée.
+\item{\textbf{checksum clé taille-bloc début fin checksum checksum...}} donne la liste des checksum des blocs de
+ \textit{taille-bloc} octets du fichier de clé \textit{clé} et compris entre \textit{début} et \textit{fin}. Non encore implémentée.
 \item{\textbf{neighbourhood}} demande une liste de voisins connus. Implémentée.
 \item{\textbf{neighbour ip:port}} Fournit l'adresse et le port d'un membre du réseau.
-\item{\textbf{error requête [message]}}Signale un erreur pouvant entrainer une requête \textit{requête} et pouvant être suivie d'un message explicatif \textit{message}
+\item{\textbf{error requête [message]}}Signale un erreur pouvant entrainer une requête \textit{requête} et
+ pouvant être suivie d'un message explicatif \textit{message}
+\item{\textbf{redirect clé ip:port}} Renvoie un message informatif indiquant ou se trouve une ressource. Non implémentée
 \end{itemize}
 
-	\paragraph*{}conclusion
+	\paragraph*{Voici donc l'état actuel de notre projet}
