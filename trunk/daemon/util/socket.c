@@ -8,7 +8,6 @@
 #include "socket.h"             // socket_getline_with_trailer ()
 
 #define NB_QUEUE            10
-#define SOCKET_BUFFSIZE     128
 
 extern FILE *log_file;
 
@@ -57,13 +56,17 @@ char *
 socket_getline_with_trailer (int src_sock) {
     char    *message = NULL;
     int     nb_received;
-    char    buffer[SOCKET_BUFFSIZE];
+    char    character;
     int     buffer_offset;
 
     buffer_offset = 0;
 
     for (;;) {
-        nb_received = recv (src_sock, buffer, SOCKET_BUFFSIZE - 1, 0);
+        /*
+         * BUGFIX: Here we do not want to received more than one character at
+         * a time, so that we can stop readling a line on '\n'
+         */
+        nb_received = recv (src_sock, &character, 1, 0);
         if (nb_received < 0) {
             log_failure (log_file, "socket_getline () : recv failed");
             return NULL;
@@ -72,20 +75,17 @@ socket_getline_with_trailer (int src_sock) {
             log_failure (log_file, "socket_getline () : empty line");
             return message;
         }
-        buffer[nb_received] = '\0';
 
-        if ((message = realloc (message,
-                            buffer_offset + nb_received + 1)) == NULL) {
+        // TODO: would be better to double the size each time needed
+        if ((message = realloc (message, buffer_offset + 2)) == NULL) {
             log_failure (log_file, "socket_getline () : realloc failed");
             return NULL;
         }
-
-        strcpy (message + buffer_offset, buffer);
-        buffer_offset += nb_received;
-
+        message[buffer_offset] = character;
+        buffer_offset += 1;
         message[buffer_offset] = '\0';
 
-        if (message[buffer_offset - 1] == '\n')
+        if (character == '\n')
             break;
     }
 

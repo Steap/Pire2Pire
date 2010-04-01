@@ -15,11 +15,9 @@
 #include "../conf.h"
 #include "../daemon.h"          // struct daemon
 #include "../util/cmd.h"        // cmd_to_argc_argv ()
-//#include "../util/cmd_parser.h" // cmd_parse ()
 #include "../util/socket.h"     // socket_sendline ()
 
 extern struct prefs *prefs;
-//#define SHARED_FOLDER "/tmp/lol/"
 #define SHARED_FOLDER prefs->shared_folder
 
 extern FILE                 *log_file;
@@ -28,38 +26,44 @@ extern sem_t                file_cache_lock;
 extern struct daemon        *daemons;
 extern sem_t                daemons_lock;
 
+static int                      nb_daemons;
+static int                      *sockets;
+static int                      nfds;
+static struct client_request    *r;
+
+static void create_socket_table ();
+static void send_list_to_each_socket ();
+static void forward_responses ();
+static void free_socket_table ();
+
 void*
 client_request_list (void *arg) {
-/* cmd_parser version: */
-#if 0
-    static struct option_template options[] = {
-        {0, NULL, 0}
-    };
-#endif
-    struct client_request   *r;
-    struct daemon           *d;
-    struct sockaddr_in      d_addr;
-    int                     nb_daemons;
-    int                     *sockets;
-    fd_set                  sockets_set;
-    int                     nfds;
-    struct timeval          timeout;
-    int                     select_value;
-    char                    *response;
-/* cmd version: */
-    int                     argc;
-    char                    **argv;
-/* cmd_parser version: */
-#if 0
-    struct parsed_cmd       *pcmd;
-    struct arg_list         *arg_list;
-#endif
-
     r = (struct client_request *)arg;
     if (!r)
         return NULL;
 
-    // First we must make a big list of sockets connected to all daemons
+    /*
+     * Here, we will create a socket for each daemon, in order to broadcast a
+     * "list" message, and forward all "file" responses to the client who asked
+     * for the list.
+     */
+
+    create_socket_table ();
+
+    send_list_to_each_socket ();
+
+    forward_responses ();
+
+    free_socket_table ();
+
+    return NULL; 
+}
+
+static void
+create_socket_table () {
+    struct daemon           *d;
+    struct sockaddr_in      d_addr;
+
     sem_wait (&daemons_lock);
     nb_daemons = daemon_numbers (daemons);
     sockets = (int *)malloc (nb_daemons * sizeof (int));
@@ -72,13 +76,14 @@ client_request_list (void *arg) {
                     "client_request_list (): Failed to create a socket");
             continue;
         }
-        // TODO: IPv6
+        /* TODO: IPv6 */
         if (inet_pton (AF_INET, d->addr, &d_addr.sin_addr) <= 0) {
             log_failure (log_file,
                     "client_request_list (): Failed to convert daemon addr");
             continue;
         }
-        d_addr.sin_family = AF_INET;    // FIXME: d should have a sockaddr_in
+        /* FIXME: d should have a sockaddr_in field */
+        d_addr.sin_family = AF_INET;
         d_addr.sin_port = htons (d->port);
         if (connect (sockets[i],
             (struct sockaddr *)&d_addr,
@@ -90,34 +95,46 @@ client_request_list (void *arg) {
         }
     }
     sem_post (&daemons_lock);
+}
 
+static void
+send_list_to_each_socket () {
     nfds = 0;
-    // Then we send a list message to each of them
+    /* Then we send a list message to each of them */
     for (int i = 0; i < nb_daemons; i++) {
         if (sockets[i] >= 0) {
             socket_sendline (sockets[i], "list\n");
         }
 
-        // While we're at it, we prepare nfds
+        /* While we're at it, we prepare nfds */
         if (sockets[i] > nfds)
             nfds = sockets[i];
     }
-    // nfds is the max of socket descriptors + 1
     nfds++;
+}
 
-    // Finally, we select () the sockets and client_send () responses
+static void
+forward_responses () {
+    int                     argc;
+    char                    **argv;
+    char                    *response;
+    int                     select_value;
+    struct timeval          timeout;
+    fd_set                  sockets_set;
+
+    /* Finally, we select () the sockets and client_send () responses */
     FD_ZERO (&sockets_set);
-    timeout.tv_sec = 1;
-    timeout.tv_usec = 0;
     for (int i = 0; i < nb_daemons; i++) {
         if (sockets[i] >= 0)
             FD_SET (sockets[i], &sockets_set);
     }
-    // We will recreate the file_cache tree
+    /* We will recreate the file_cache tree */
     sem_wait (&file_cache_lock);
     file_cache_free (file_cache);
     file_cache = NULL;
     for (;;) {
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
         select_value = select (nfds, &sockets_set, NULL, NULL, &timeout);
         if (select_value < 0) {
             log_failure (log_file, "client_request_list (): select failed");
@@ -136,21 +153,21 @@ client_request_list (void *arg) {
                          * response is supposedly:
                          * file_cache NAME KEY SIZE IP:PORT
                          */
-/* cmd version: */
                         argv = cmd_to_argc_argv (response, &argc);
                         if (argc != 5) {
+                            log_failure (log_file,
+                            "cr_list forward_responses (): Unable to parse %s",
+                                        response);
                             cmd_free (argv);
                             free (response);
                             continue;
                         }
-                        /* FIXME: not 2 and 4 if there are options... */
                         file_cache = file_cache_add (file_cache,
                                                         argv[1],
                                                         argv[2],
                                                         atoi (argv[3]),
                                                         argv[4]);
                         cmd_free (argv);
-/* cmd_parser version: */
 #if 0
                         pcmd = cmd_parse (response, options);
                         /* If it is not parsed, we don't forward it */
@@ -176,7 +193,6 @@ client_request_list (void *arg) {
                         pcmd = NULL;
                         arg_list = NULL;
 #endif
-
                         client_send (r->client, " < ");
                         client_send (r->client, response);
                         free (response);
@@ -190,8 +206,10 @@ client_request_list (void *arg) {
         }
     }
     sem_post (&file_cache_lock);
+}
 
-    // And close the sockets properly
+static void
+free_socket_table () {
     for (int i = 0; i < nb_daemons; i++) {
         if (sockets[i] >=0) {
             socket_sendline (sockets[i], "quit\n");
@@ -200,7 +218,4 @@ client_request_list (void *arg) {
     }
 
     free (sockets);
-
-    return NULL; 
 }
-
