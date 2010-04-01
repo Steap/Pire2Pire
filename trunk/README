@@ -1,7 +1,27 @@
-* Daemon
---------
+French cuz I'm lazy.
 
-make daemon
-bin/daemon
-kill -1 `cat /tmp/k`
-cat /tmp/g
+Echange de fichiers.
+
+
+cr_get.c
+--------
+Reçoit get key
+1) Trouver l'IP associé au fichier dont la clé st "key".
+2) Pour chaque bloc d'une taille donnée
+       envoyer get key begin end à D1
+       lire "ready" (ajouter un timeout plus tard)
+       Récupérer le port de connexion (dans le ready)
+       S'y connecter
+       Recv...
+       Ecrire sur disque
+
+
+
+dr_get.c
+--------
+1) Reçoit : get k b e
+2) Lire get k b e
+3) Trouver le fichier qui va bien (recalculer les hash)
+4) Ouvrir une socket en écoute (osef du port)
+5) Accept
+6) Envoyer (e-b) octets
