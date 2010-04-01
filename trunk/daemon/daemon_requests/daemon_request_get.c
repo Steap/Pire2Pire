@@ -163,7 +163,7 @@ daemon_request_get (void *arg) {
         log_failure (log_file, "daemon_request_get (): getsockname () failed");
     }
 
-    // FIXME: beginning and end are unused, protocol and delay are unused
+    // FIXME: beginning, end, protocol and delay are unused
     sprintf (answer,
                 "ready %s 0 %s %d tcp 0 0\n",
                 key,
@@ -187,7 +187,6 @@ daemon_request_get (void *arg) {
 
     to_be_sent = entry_stat.st_size;
     while (to_be_sent) {
-log_success (log_file, "Sending file...");
         nb_read = read (file, buffer, BUFFSIZE);
         while (nb_read) {
             nb_sent = send (data_sock, buffer, nb_read, 0);
@@ -195,12 +194,11 @@ log_success (log_file, "Sending file...");
             nb_read -= nb_sent;
         }
     }
-log_success (log_file, "File completely sent");
 
     close (data_sock);
 
     close (file);
 
-    return NULL; 
+    return NULL;
 }
 
