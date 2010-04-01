@@ -66,9 +66,6 @@ __file_cache_free (struct file_cache *file_cache) {
     if (!file_cache)
         return;
 
-    free (file_cache->filename);
-    free (file_cache->key);
-
     sem_wait (&file_cache->seeders_lock);
     to_be_freed = file_cache->seeders;
     while (to_be_freed) {
@@ -130,15 +127,12 @@ file_cache_add (struct file_cache *tree,
     return tree;
 }
 
+/* FIXME: Invalid free... */
 void
 file_cache_free (struct file_cache *tree) {
-    if (tree != NULL) {
-        if (tree->left != NULL) {
-            file_cache_free (tree->left);
-        }
-        if (tree->right != NULL) {
-            file_cache_free (tree->right);
-        }
+    if (tree) {
+        file_cache_free (tree->left);
+        file_cache_free (tree->right);
         __file_cache_free (tree);
     }
 }
