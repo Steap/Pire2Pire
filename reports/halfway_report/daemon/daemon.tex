@@ -57,22 +57,17 @@ struct client_request {
 Ci-dessous une figure représentant l'architecture de notre démon.
 	
     \section{Protocole client/démon}\label{protclient}
-    Nous allons maintenant présenter les différentes requêtes du client et leur
- état actuel.
+    Nous allons maintenant présenter les différentes requêtes du client et leur état actuel.
 
+    Tout d'abord, voici les requêtes implémentées :
 \begin{itemize}
-\item{\textbf{set [option=value]}} Si "option=valeur" est spécifié, modifie la
- valeur
-d'une option. Sinon, affiche la liste des options disponibles. Cette commande
-est implémentée, mais aucune option n'existe.
-
-\item{\textbf{help}} Affiche une aide indiquant la liste des options
-disponibles. Implémentée.
-
-\item{\textbf{list [options]}} Donne la liste des ressources disponibles sur
-le réseau sous la forme suivante : \textit{clé nom taille}.
+\item{\textbf{connect ip:port}} demande au démon de se connecter à un autre
+démon. 
 
 \item{\textbf{get clé}} Récupère la ressource \textit{clé}.
+
+\item{\textbf{help}} Affiche une aide indiquant la liste des options
+disponibles. 
 
 \item{\textbf{info}} affiche des informations sur l'état du programme sous la
 forme suivante :
@@ -82,52 +77,71 @@ There [is/are] n daemon(s) connected.
 You have n request(s) currently running :
 1 - CMD1
 2 - CMD2
-\end{verbatim}
 ...
+\end{verbatim}
 
-\item{\textbf{download}} affiche la liste des fichiers en cours de récupération,
- non encore implémentée.
+\item{\textbf{list [options]}} Donne la liste des ressources disponibles sur
+le réseau sous la forme suivante : \textit{clé nom taille}.
 
-\item{\textbf{upload}} affiche la liste des fichiers en cours de transfert, non
- encore implémentée.
+\item{\textbf{raw ip:port cmd}} envoie la commande de protocole cmd à un autre programme.
 
-\item{\textbf{connect ip:port}} demande au démon de se connecter à un autre
-démon. Implémentée.
+\item{\textbf{set [option=value]}} Si "option=valeur" est spécifié, modifie la valeur
+d'une option. Sinon, affiche la liste des options disponibles. Cette commande
+est implémentée, mais aucune option n'existe.
 
-\item{\textbf{raw ip:port cmd}} envoie la commande de protocole cmd à un autre
- programme.
-
-\end{itemize} 
-	
-	\section{Protocoles inter-daemons}
-	Abordons à présent les requêtes inter-démons et leur état actuel.
-
-\begin{itemize}
-\item{\textbf{list [options]}} Donne la liste des ressources disponibles 
-localement. Implémentée mais sans option pour l'instant.
-\item{\textbf{file nom-de-fichier cle taille ip:port}} donne les informations
- sur le fichier \textit{nom-de-fichier}.
-\item{\textbf{get clé début fin}} demande à recevoir les octets compris entre
- \textit{début} et \textit{fin} du 
-fichier ayant pour md5 \textit{clé}. Non implémentée
-\item{\textbf{traffic}} demande la liste des transmissions prévues ou en cours.
- Non encore implémentée.
-item{\textbf{ready clé delay ip port proto debut fin}} indique une transmission
- prévue dans \textit{delay} secondes 
-du fragment compris entre \textit{début} et \textit{fin} du fichier identifié
- par \textit{clé}. Non encore implémentée.
-\item{\textbf{checksum clé taille-bloc début fin checksum checksum...}} donne 
-la liste des checksum des blocs de
- \textit{taille-bloc} octets du fichier de clé \textit{clé} et compris entre
- \textit{début} et \textit{fin}. Non encore implémentée.
-\item{\textbf{neighbourhood}} demande une liste de voisins connus. Implémentée.
-\item{\textbf{neighbour ip:port}} Fournit l'adresse et le port d'un membre du
- réseau.
-\item{\textbf{error requête [message]}}Signale un erreur pouvant entrainer une 
-requête \textit{requête} et
- pouvant être suivie d'un message explicatif \textit{message}
-\item{\textbf{redirect clé ip:port}} Renvoie un message informatif indiquant 
-ou se trouve une ressource. Non implémentée
 \end{itemize}
 
-	\paragraph*{}
+\paragraph{}
+
+Il nous reste encore à implémenter les requêtes suivantes :
+\begin{itemize}
+
+\item{\textbf{download}} affiche la liste des fichiers en cours de récupération.
+
+\item{\textbf{upload}} affiche la liste des fichiers en cours de transfert.
+
+\end{itemize}
+	
+	\section{Protocoles inter-démons}
+		Abordons à présent les requêtes inter-démons et leur état actuel.
+
+        Ci-dessous sont présentées les requêtes actuellement implémentées :
+\begin{itemize}
+\item{\textbf{error requête [message]}}Signale un erreur pouvant entrainer une requête \textit{requête} et
+ pouvant être suivie d'un message explicatif \textit{message}.
+
+\item{\textbf{list [options]}} Donne la liste des ressources disponibles 
+localement. Implémentée mais sans option pour l'instant.
+
+\item{\textbf{neighbour ip:port}} Fournit l'adresse et le port d'un membre du 
+réseau.
+
+\item{\textbf{neighbourhood}} demande une liste de voisins connus. 
+
+\end{itemize}
+
+\paragraph{} 
+
+        Il reste encore à implémenter les requêtes suivantes :
+\begin{itemize}
+\item{\textbf{checksum clé taille-bloc début fin checksum checksum...}} donne la liste des checksum des blocs de
+ \textit{taille-bloc} octets du fichier de clé \textit{clé} et compris entre 
+\textit{début} et \textit{fin}.
+
+\item{\textbf{file nom-de-fichier cle taille ip:port}} donne les informations 
+sur le fichier \textit{nom-de-fichier}.
+
+\item{\textbf{get clé début fin}} demande à recevoir les octets compris entre 
+\textit{début} et \textit{fin} du 
+fichier ayant pour md5 \textit{clé}.
+
+\item{\textbf{ready clé delay ip port proto debut fin}} indique une 
+transmission prévue dans \textit{delay} secondes 
+du fragment compris entre \textit{début} et \textit{fin} du fichier identifié 
+par \textit{clé}.
+
+\item{\textbf{redirect clé ip:port}} Renvoie un message informatif indiquant ou se trouve une ressource.
+
+\item{\textbf{traffic}} demande la liste des transmissions prévues ou en cours.
+
+\end{itemize}
