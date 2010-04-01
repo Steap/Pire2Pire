@@ -44,6 +44,7 @@ DAEMON_SOURCES=\
 	daemon/main.c					                \
 	daemon/file_cache.c				                \
 	daemon/util/cmd.c				                \
+    daemon/util/cmd_parser.c                        \
 	daemon/util/socket.c
 
 UTIL_SOURCES=\

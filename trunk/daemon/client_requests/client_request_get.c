@@ -96,7 +96,7 @@ client_request_get (void *arg) {
      * Sending the "get key begin end" message.
      */ 
     sprintf (answer, 
-             "get %s %d %d\n", 
+             "get %s %d %ld\n", 
              file_to_dl->key,
              0,
              file_to_dl->size);

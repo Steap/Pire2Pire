@@ -14,7 +14,7 @@
 #include "../file_cache.h"        // file_tree_to_client ()
 #include "../conf.h"
 #include "../daemon.h"          // struct daemon
-#include "../util/cmd.h"        // cmd_to_argc_argv ()
+#include "../util/cmd_parser.h" // cmd_parse ()
 #include "../util/socket.h"     // socket_sendline ()
 
 extern struct prefs *prefs;
@@ -115,12 +115,14 @@ send_list_to_each_socket () {
 
 static void
 forward_responses () {
-    int                     argc;
-    char                    **argv;
     char                    *response;
     int                     select_value;
     struct timeval          timeout;
     fd_set                  sockets_set;
+    struct option_template options[] = {
+        {0, NULL, NO_ARG}
+    };
+    struct parsed_cmd       *pcmd;
 
     /* Finally, we select () the sockets and client_send () responses */
     FD_ZERO (&sockets_set);
@@ -153,6 +155,7 @@ forward_responses () {
                          * response is supposedly:
                          * file_cache NAME KEY SIZE IP:PORT
                          */
+#if 0
                         argv = cmd_to_argc_argv (response, &argc);
                         if (argc != 5) {
                             log_failure (log_file,
@@ -168,7 +171,8 @@ forward_responses () {
                                                         atoi (argv[3]),
                                                         argv[4]);
                         cmd_free (argv);
-#if 0
+#endif
+#if 1
                         pcmd = cmd_parse (response, options);
                         /* If it is not parsed, we don't forward it */
                         if (pcmd == PARSER_MISSING_ARGUMENT
@@ -177,21 +181,12 @@ forward_responses () {
                             free (response);
                             continue;
                         }
-                        /* We skip NAME */
-                        arg_list = pcmd->arguments->next;
-                        /* arg_list points to KEY */
-                        file_caches = file_tree_add (files,
-                                                /* KEY */
-                                                arg_list->text,
-                                                /* IP:PORT */
-                                                arg_list->next->next->text);
-
+                        file_cache = file_cache_add (file_cache,
+                                                    pcmd->argv[1],
+                                                    pcmd->argv[2],
+                                                    atoi (pcmd->argv[3]),
+                                                    pcmd->argv[4]);
                         cmd_parse_free (pcmd);
-                        /* Just in case: */
-                        key = NULL;
-                        ip_port = NULL;
-                        pcmd = NULL;
-                        arg_list = NULL;
 #endif
                         client_send (r->client, " < ");
                         client_send (r->client, response);
