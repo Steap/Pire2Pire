@@ -10,12 +10,13 @@
 
 #define FILE_NAME_SIZE      256
 #define FILE_KEY_SIZE       32
-#define FILE_IP_PORT_SIZE   (INET_ADDRSTRLEN + 6) //FIXME: IPv6
+#define FILE_IP_SIZE        INET_ADDRSTRLEN
 
 typedef long unsigned int file_size_t;
 
 struct seeder {
-    char            ip_port[FILE_IP_PORT_SIZE + 1];
+    char            ip[FILE_IP_SIZE + 1];
+    int             port;
     struct seeder   *next;
 };
 
@@ -33,7 +34,8 @@ struct file_cache *file_cache_add (struct file_cache *tree,
                                     const char *filename,
                                     const char *key,
                                     file_size_t size,
-                                    const char *ip_port);
+                                    const char *ip,
+                                    int port);
 
 void file_cache_free (struct file_cache *tree);
 

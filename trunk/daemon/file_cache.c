@@ -16,7 +16,8 @@ static struct file_cache *
 file_cache_new (const char *filename,
                 const char *key,
                 file_size_t size,
-                const char *ip_port) {
+                const char *ip,
+                int port) {
     struct file_cache *file_cache;
 
     file_cache = (struct file_cache *)malloc (sizeof (struct file_cache));
@@ -38,7 +39,8 @@ file_cache_new (const char *filename,
     file_cache->size = size;
 
     file_cache->seeders = (struct seeder *)malloc (sizeof (struct seeder));
-    strncpy (file_cache->seeders->ip_port, ip_port, FILE_IP_PORT_SIZE + 1);
+    strncpy (file_cache->seeders->ip, ip, FILE_IP_SIZE + 1);
+    file_cache->seeders->port = port;
     file_cache->seeders->next = NULL;
 
     if (sem_init (&file_cache->seeders_lock, 0, 1) < 0) {
@@ -83,14 +85,15 @@ file_cache_add (struct file_cache *tree,
                 const char *filename,
                 const char *key,
                 file_size_t size,
-                const char *ip_port) {
+                const char *ip,
+                int port) {
     /* bias determines if we go left or right in the binary tree */
     int                 bias = 0;
     struct seeder       *s;
 
     // If the tree is empty, we create it
     if (!tree) {
-        tree = file_cache_new (filename, key, size, ip_port);
+        tree = file_cache_new (filename, key, size, ip, port);
         if (!tree) {
             log_failure (log_file,
                         "file_cache_add (): Unable to file_cache_new ()");
@@ -101,10 +104,19 @@ file_cache_add (struct file_cache *tree,
     else {
         bias = strcmp (key, tree->key);
         if (bias < 0) {
-            tree->left = file_cache_add (tree->left, filename, key, size, ip_port);
+            tree->left = file_cache_add (tree->left,
+                                            filename,
+                                            key,
+                                            size,
+                                            ip,
+                                            port);
         }
         else if (bias > 0) {
-            tree->right = file_cache_add (tree->right, filename, key, size, ip_port);
+            tree->right = file_cache_add (tree->right,
+                                            filename,
+                                            key,
+                                            size,
+                                            ip, port);
         }
         // If a node with the same key exist, let's assume it's the same file_cache
         else {
@@ -117,7 +129,8 @@ file_cache_add (struct file_cache *tree,
                             "file_cache_add (): Unable to allocate seeder");
                 return tree;
             }
-            strcpy (s->ip_port, ip_port);
+            strcpy (s->ip, ip);
+            s->port = port;
             sem_wait (&tree->seeders_lock);
             s->next = tree->seeders;
             tree->seeders = s;

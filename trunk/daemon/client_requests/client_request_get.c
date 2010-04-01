@@ -75,8 +75,9 @@ client_request_get (void *arg) {
                 goto out;
             }
             sprintf (answer,
-                    "< get : seeder is %s ",
-                    file_to_dl->seeders->ip_port);
+                    "< get : seeder is %s:%d",
+                    file_to_dl->seeders->ip,
+                    file_to_dl->seeders->port);
         }
     }
 
@@ -91,16 +92,15 @@ client_request_get (void *arg) {
      * Assigned to : roelandt
      */
     struct daemon *d;
-    char *addr = strdup (file_to_dl->seeders->ip_port);
-    *(strchr (addr, ':')) = '\0';
+    char *addr = file_to_dl->seeders->ip;
     for_each_daemon (d) {
         if (strcmp (d->addr, addr) == 0)
             break;
-    }    
+    }
     if (!d)
         goto out;
-   
-    log_success (log_file, "OK, got the daemon %s", d->addr); 
+
+    log_success (log_file, "OK, got the daemon %s", d->addr);
     cmd_free (argv);
 
     /*

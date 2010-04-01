@@ -5,14 +5,15 @@
 #include <dirent.h>             // DIR
 #include <stdio.h>              // NULL
 #include <stdlib.h>             // malloc ()
+#include <string.h>             // strchr ()
 #include <unistd.h>             // close ()
 
 #include "../../util/md5/md5.h" // MDFile ()
 #include "../../util/logger.h"  // log_failure ()
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request
-#include "../file_cache.h"        // file_tree_to_client ()
-#include "../conf.h"
+#include "../file_cache.h"      // struct file_cache
+#include "../conf.h"            // struct prefs
 #include "../daemon.h"          // struct daemon
 #include "../util/cmd_parser.h" // cmd_parse ()
 #include "../util/socket.h"     // socket_sendline ()
@@ -163,11 +164,20 @@ forward_responses () {
                             free (response);
                             continue;
                         }
+
+                        /*
+                         * Hackety hack:
+                         * IP:PORT\0   ->   IP\0PORT\0
+                         */
+                        char *port = strchr (pcmd->argv[4], ':');
+                        *port = '\0';
+                        port++;
                         file_cache = file_cache_add (file_cache,
                                                     pcmd->argv[1],
                                                     pcmd->argv[2],
-                                                    atoi (pcmd->argv[3]),
-                                                    pcmd->argv[4]);
+                                                    atol (pcmd->argv[3]),
+                                                    pcmd->argv[4],
+                                                    atoi (port));
                         cmd_parse_free (pcmd);
 
                         client_send (r->client, " < ");
