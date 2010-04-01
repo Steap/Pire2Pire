@@ -98,6 +98,7 @@ daemon_request_ready (void* arg) {
     nb_received_sum = 0;
     // FIXME: nb_received_sum should be compared to end - begin
     while (nb_received_sum < file->size) {
+log_success (log_file, "Receiving file...");
         nb_received = recv (dl_sock, buffer, BUFFSIZE, 0);
         if (nb_received < 0) {
             log_failure (log_file,
@@ -115,6 +116,7 @@ daemon_request_ready (void* arg) {
             nb_received -= nb_written;
         }
     }
+log_success (log_file, "File completely received");
 
     close (dl_sock);
     close (local_file);

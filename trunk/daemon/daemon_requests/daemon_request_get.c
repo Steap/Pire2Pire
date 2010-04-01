@@ -4,6 +4,7 @@
 #include <netinet/in.h>         // struct sockaddr_in
 
 #include <dirent.h>             // DIR
+#include <errno.h>
 #include <fcntl.h>              // open ()
 #include <stdlib.h>             // malloc ()
 #include <string.h>             // strcmp ()
@@ -135,17 +136,24 @@ daemon_request_get (void *arg) {
         return NULL;
     }
 
+    listen_addr.sin_family = AF_INET;
+/* FIXME: this is not working, I don't know why
     if (inet_pton (AF_INET, r->daemon->addr, &listen_addr) < 1) {
         log_failure (log_file, "daemon_request_get (): inet_pton () failed");
         return NULL;
     }
+*/
+    listen_addr.sin_addr.s_addr = htonl (INADDR_ANY);
+
     /* Let the OS give you a port */
     listen_addr.sin_port = 0;
+
+    listen_addr_size = sizeof (listen_addr);
 
     if (bind (listen_sock,
                 (struct sockaddr *)&listen_addr,
                 listen_addr_size) < 0) {
-        log_failure (log_file, "daemon_request_get (): bind () failed");
+        log_failure (log_file, "daemon_request_get (): bind () failed %d", errno);
         return NULL;
     }
 
@@ -179,6 +187,7 @@ daemon_request_get (void *arg) {
 
     to_be_sent = entry_stat.st_size;
     while (to_be_sent) {
+log_success (log_file, "Sending file...");
         nb_read = read (file, buffer, BUFFSIZE);
         while (nb_read) {
             nb_sent = send (data_sock, buffer, nb_read, 0);
@@ -186,6 +195,7 @@ daemon_request_get (void *arg) {
             nb_read -= nb_sent;
         }
     }
+log_success (log_file, "File completely sent");
 
     close (data_sock);
 
