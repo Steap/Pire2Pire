@@ -11,9 +11,13 @@
 #define DEFAULT_DAEMON_PORT      7331
 #define DEFAULT_SHARED_FOLDER   "/tmp"
 #define DEFAULT_INTERFACE       "eth0"
-
+ 
+ /*
+ * Valid values for our ports. 
+ * See http://www.iana.org/assignments/port-numbers
+ */
 #define MIN_PORT                  1024
-#define MAX_PORT                 40000 // FIXME
+#define MAX_PORT                 49151
 
 struct prefs*
 conf_retrieve (const char *path) {

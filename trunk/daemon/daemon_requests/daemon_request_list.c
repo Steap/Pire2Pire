@@ -82,7 +82,7 @@ daemon_request_list (void *arg) {
                     key,
                     (int) entry_stat.st_size,
                     my_ip,
-                    7331); //FIXME: Our port is in prefs somewhere
+                    prefs->daemon_port);
 
             if (daemon_send (r->daemon, answer) < 0) {
                 log_failure (log_file,

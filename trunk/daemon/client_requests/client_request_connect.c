@@ -29,8 +29,6 @@ static struct option options[] = {
 static int 
 is_valid_ip_port (char *foo, int *port)
 {
-    // FIXME: printf () !?
-    printf ("FOO IS %s\n", foo);
     char *sep;
 
     sep = strchr (foo, ':');
@@ -153,19 +151,10 @@ client_request_connect (void *arg) {
         goto send_msg;
     }
 
-    //log_failure (log_file, "connect : before sem_wait");
-
-#define SEM 1
-#if SEM
     sem_wait (&daemons_lock);
-#endif
     daemons = daemon_add (daemons, daemon);
-    //log_failure (log_file, "connect : after add");
-#if SEM
     sem_post (&daemons_lock);
-#endif
 
-    //log_failure (log_file, "connect : after post");
   
     sprintf (answer, " < Connected to %s. Everything went fine.\n", addr); 
      
