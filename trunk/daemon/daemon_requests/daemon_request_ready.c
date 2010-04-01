@@ -32,7 +32,7 @@ daemon_request_ready (void* arg) {
     struct file_cache       *file;
     int                     local_file;
     int                     nb_received;
-    res_size_t              nb_received_sum;
+    file_size_t             nb_received_sum;
     char                    buffer[BUFFSIZE];
     int                     nb_written;
     char                    *full_path;

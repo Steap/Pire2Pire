@@ -15,7 +15,7 @@ extern FILE *log_file;
 static struct file_cache *
 file_cache_new (const char *filename,
                 const char *key,
-                res_size_t size,
+                file_size_t size,
                 const char *ip_port) {
     struct file_cache *file_cache;
 
@@ -85,7 +85,7 @@ struct file_cache *
 file_cache_add (struct file_cache *tree,
                 const char *filename,
                 const char *key,
-                res_size_t size,
+                file_size_t size,
                 const char *ip_port) {
     /* bias determines if we go left or right in the binary tree */
     int                 bias = 0;

@@ -17,7 +17,6 @@ extern struct prefs *prefs;
 
 extern FILE *log_file;
 extern char my_ip[INET_ADDRSTRLEN];
-extern struct daemon *daemons;
 
 static char*
 get_md5 (const char *path) {
@@ -55,7 +54,7 @@ daemon_request_list (void *arg) {
     dir = opendir (prefs->shared_folder);
     if (dir == NULL) {
         log_failure (log_file,
-                    "daemon_request_list () : Unable to opendir %s",
+                    "daemon_request_list (): Unable to opendir %s",
                     prefs->shared_folder);
         return NULL;
     }
@@ -69,7 +68,7 @@ daemon_request_list (void *arg) {
                     entry->d_name);
             if (stat (entry_full_path, &entry_stat) < 0) {
                 log_failure (log_file,
-                            "daemon_request_list () : can't stat file %s",
+                            "daemon_request_list (): can't stat file %s",
                             entry_full_path);
                 continue;
             }
@@ -87,7 +86,7 @@ daemon_request_list (void *arg) {
 
             if (daemon_send (r->daemon, answer) < 0) {
                 log_failure (log_file,
-                            "do_list () : failed to send data to daemon");
+                    "daemon_request_list (): failed to send data to daemon");
             }
 
             free (key);
@@ -96,7 +95,8 @@ daemon_request_list (void *arg) {
     }
 
     if (closedir (dir) < 0) {
-        log_failure (log_file, "do_list () : can't close shared directory");
+        log_failure (log_file,
+                    "daemon_request_list () : can't close shared directory");
         return NULL;
     }
 

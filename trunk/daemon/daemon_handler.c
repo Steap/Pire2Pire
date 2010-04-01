@@ -126,6 +126,8 @@ handle_requests (void *arg) {
         /* FIXME : use the IS_CMD macro */
         if (strncmp (message, "list", 4) == 0) 
             callback = &daemon_request_list;
+        else if (strncmp (message, "get", 3) == 0)
+            callback = &daemon_request_get;
         else if (strncmp (message, "file", 4) == 0)
             callback = &daemon_request_file;
         else if (strncmp (message, "neighbourhood", 13) == 0)

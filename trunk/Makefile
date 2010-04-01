@@ -33,6 +33,7 @@ DAEMON_SOURCES=\
 	daemon/daemon_handler.c				                \
 	daemon/daemon_requests/daemon_request_error.c	                \
 	daemon/daemon_requests/daemon_request_file.c	                \
+    daemon/daemon_requests/daemon_request_get.c     \
 	daemon/daemon_requests/daemon_request_list.c	                \
         daemon/daemon_requests/daemon_request_neighbour.c               \
         daemon/daemon_requests/daemon_request_neighbourhood.c           \
