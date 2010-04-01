@@ -119,7 +119,7 @@ forward_responses () {
     int                     select_value;
     struct timeval          timeout;
     fd_set                  sockets_set;
-    struct option_template options[] = {
+    struct option_template  options[] = {
         {0, NULL, NO_ARG}
     };
     struct parsed_cmd       *pcmd;
@@ -155,24 +155,6 @@ forward_responses () {
                          * response is supposedly:
                          * file_cache NAME KEY SIZE IP:PORT
                          */
-#if 0
-                        argv = cmd_to_argc_argv (response, &argc);
-                        if (argc != 5) {
-                            log_failure (log_file,
-                            "cr_list forward_responses (): Unable to parse %s",
-                                        response);
-                            cmd_free (argv);
-                            free (response);
-                            continue;
-                        }
-                        file_cache = file_cache_add (file_cache,
-                                                        argv[1],
-                                                        argv[2],
-                                                        atoi (argv[3]),
-                                                        argv[4]);
-                        cmd_free (argv);
-#endif
-#if 1
                         pcmd = cmd_parse (response, options);
                         /* If it is not parsed, we don't forward it */
                         if (pcmd == PARSER_MISSING_ARGUMENT
@@ -187,7 +169,7 @@ forward_responses () {
                                                     atoi (pcmd->argv[3]),
                                                     pcmd->argv[4]);
                         cmd_parse_free (pcmd);
-#endif
+
                         client_send (r->client, " < ");
                         client_send (r->client, response);
                         free (response);
@@ -214,3 +196,21 @@ free_socket_table () {
 
     free (sockets);
 }
+
+/* TODO: remove this if it is unneeded
+                        argv = cmd_to_argc_argv (response, &argc);
+                        if (argc != 5) {
+                            log_failure (log_file,
+                            "cr_list forward_responses (): Unable to parse %s",
+                                        response);
+                            cmd_free (argv);
+                            free (response);
+                            continue;
+                        }
+                        file_cache = file_cache_add (file_cache,
+                                                        argv[1],
+                                                        argv[2],
+                                                        atoi (argv[3]),
+                                                        argv[4]);
+                        cmd_free (argv);
+*/
