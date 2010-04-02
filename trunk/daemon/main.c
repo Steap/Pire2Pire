@@ -311,6 +311,7 @@ static int create_dir (const char *path, mode_t mode) {
         if (errno != EEXIST)
             goto out;
     }
+    free (sub_path);
     return 0;
 
 out:
