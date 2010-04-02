@@ -322,6 +322,12 @@ parse_error:
     return error;
 }
 
+int cmd_parse_failed (struct parsed_cmd *pcmd) {
+    return pcmd == PARSER_MISSING_ARGUMENT
+            || pcmd == PARSER_UNKNOWN_OPTION
+            || pcmd == PARSER_EMPTY_COMMAND;
+}
+
 char cmd_get_next_opt (struct parsed_cmd *pcmd,
                     struct option_template *template,
                     int *option_index) {

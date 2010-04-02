@@ -156,15 +156,12 @@ forward_responses () {
                          * response is supposedly:
                          * file_cache NAME KEY SIZE IP:PORT
                          */
-                        pcmd = cmd_parse (response, options);
                         /* If it is not parsed, we don't forward it */
-                        if (pcmd == PARSER_MISSING_ARGUMENT
-                            || pcmd == PARSER_UNKNOWN_OPTION
-                            || pcmd == PARSER_EMPTY_COMMAND) {
+                        if (cmd_parse_failed (pcmd = cmd_parse (response,
+                                                                options))) {
                             free (response);
                             continue;
                         }
-
                         /*
                          * Hackety hack:
                          * IP:PORT\0   ->   IP\0PORT\0

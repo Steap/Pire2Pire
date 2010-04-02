@@ -47,6 +47,13 @@ struct parsed_cmd *cmd_parse (const char *cmd,
                                 struct option_template *template);
 
 /*
+ * This function takes the return of cmd_parse and tells if the parse failed
+ * RETURN VALUE:
+ * 0 if the parse failed, 1 otherwise
+ */
+int cmd_parse_failed (struct parsed_cmd *pcmd);
+
+/*
  * This frees a struct parsed_cmd created by cmd_parse ()
  */
 void cmd_parse_free (struct parsed_cmd *parsed_cmd);

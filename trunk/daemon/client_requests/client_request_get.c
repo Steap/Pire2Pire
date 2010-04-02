@@ -210,7 +210,7 @@ client_request_get (void *arg) {
     // FIXME: We should not truncate the file when downloading it by blocks
     int local_file;
     //local_file = open (file_to_dl->filename, O_WRONLY | O_TRUNC);
-    local_file = open (full_path, O_CREAT | O_WRONLY | O_TRUNC);
+    local_file = open (full_path, O_CREAT | O_WRONLY | O_TRUNC, (mode_t)0644);
     free (full_path);
     if (local_file < 0) {
         log_failure (log_file, 

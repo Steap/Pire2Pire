@@ -16,7 +16,7 @@
 #include "../daemon.h"          // daemon_send ()
 #include "../daemon_request.h"  // struct daemon_request
 #include "../file_cache.h"      // file_size_t
-#include "../util/cmd.h"        // cmd_to_argc_argv ()
+#include "../util/cmd_parser.h" // cmd_parse ()
 
 #define BUFFSIZE    128
 
@@ -51,9 +51,6 @@ daemon_request_get (void *arg) {
     struct stat             entry_stat;
     char                    *key;
     int                     file;
-/* cmd version: */
-    int                     argc;
-    char                    **argv;
     int                     listen_sock;
     struct sockaddr_in      listen_addr;
     socklen_t               listen_addr_size;
@@ -62,20 +59,26 @@ daemon_request_get (void *arg) {
     char                    buffer[BUFFSIZE];
     int nb_read;
     int nb_sent;
+    struct option_template options [] = {
+        {0, NULL, NO_ARG}
+    };
+    struct parsed_cmd       *pcmd;
 
     r = (struct daemon_request *) arg;
     if (!r)
         return NULL;
 
-
     /*
      * cmd is supposedly:
      * get KEY BEGINNING END
      */
-    argv = cmd_to_argc_argv (r->cmd, &argc);
-    if (argc != 4) {
-        cmd_free (argv);
-        // TODO: send an error message everytime we return like this...
+    if (cmd_parse_failed (pcmd = cmd_parse (r->cmd, options))) {
+        // TODO: send an error message
+        return NULL;
+    }
+    if (pcmd->argc != 4) {
+        cmd_parse_free (pcmd);
+        // TODO: send an error message
         return NULL;
     }
 
@@ -104,7 +107,7 @@ daemon_request_get (void *arg) {
             }
             key = get_md5 (full_path);
             /* TODO: Free md5 */
-            if (strcmp (key, argv[1]) == 0)
+            if (strcmp (key, pcmd->argv[1]) == 0)
                 break;
         }
     }
@@ -112,7 +115,7 @@ daemon_request_get (void *arg) {
         // TODO: send an error message
         log_failure (log_file,
                     "daemon_request_get (): Unable to locate file with key %s",
-                    argv[1]);
+                    pcmd->argv[1]);
         return NULL;
     }
 

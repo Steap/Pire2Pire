@@ -179,7 +179,7 @@ start_server (const char *conf_file) {
     prefs = conf_retrieve (conf_file);
 
     /* Create the shared directory if it does not exist already */
-    if (create_dir (prefs->shared_folder, (mode_t)0644) < 0) {
+    if (create_dir (prefs->shared_folder, (mode_t)0755) < 0) {
         log_failure (log_file, "Unable to create shared directory");
         exit (EXIT_FAILURE);
     }
