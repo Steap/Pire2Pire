@@ -41,6 +41,8 @@ extern struct daemon    *daemons;
 struct file_cache   *file_cache;
 sem_t               file_cache_lock;
 
+static int create_dir (const char *path, mode_t mode);
+
 /* Rename, plz... Or not, it is just  a silly test */
 static void
 signal_handler (int sig) {
@@ -176,10 +178,15 @@ start_server (const char *conf_file) {
 
     prefs = conf_retrieve (conf_file);
 
-    // Initialize the file_cache handler
+    /* Create the shared directory if it does not exist already */
+    if (create_dir (prefs->shared_folder, (mode_t)0644) < 0) {
+        log_failure (log_file, "Unable to create shared directory");
+        exit (EXIT_FAILURE);
+    }
 
+    /* Initialize the file_cache handler */
     if (sem_init (&file_cache_lock, 0, 1) < 0) {
-        log_failure (log_file, "Unable to sem_init file_caches_lock");
+        log_failure (log_file, "Unable to sem_init file_cache_lock");
         exit (EXIT_FAILURE);
     }
     file_cache = NULL;
@@ -211,7 +218,7 @@ start_server (const char *conf_file) {
     }
 
 #if 1
-    // We get our ip
+    /* We get our ip */
     memcpy (if_info.ifr_name, prefs->interface, strlen (prefs->interface) + 1);
     if (ioctl (daemon_sd, SIOCGIFADDR, &if_info) == -1) {
         log_failure (log_file, "Can't get my ip from interface");
@@ -222,7 +229,7 @@ start_server (const char *conf_file) {
     inet_ntop (AF_INET, &if_addr->sin_addr, my_ip, INET_ADDRSTRLEN);
     log_success (log_file, "Found my IP : %s", my_ip);
 #endif
-    // sockets contains both client_sd and daemon_sd
+    /* sockets contains both client_sd and daemon_sd */
     FD_ZERO (&sockets);
     size = sizeof (connected_sa);
     nfds = NFDS (client_sd, daemon_sd);
@@ -234,7 +241,7 @@ start_server (const char *conf_file) {
         FD_SET (client_sd, &sockets);
         FD_SET (daemon_sd, &sockets);
 
-        // Block until a socket is ready to accept
+        /* Block until a socket is ready to accept */
         if (select (nfds, &sockets, NULL, NULL, NULL) < 0) {
             log_failure (log_file, "main () : select failed");
         }
@@ -254,7 +261,7 @@ start_server (const char *conf_file) {
             handle_daemon (connected_sd, &connected_sa);
         }
         else {
-            // This should never happen : neither client nor daemon!?
+            /* This should never happen : neither client nor daemon!? */
             log_failure (log_file, "Unknown connection");
         }
     } 
@@ -272,3 +279,42 @@ main (int argc, char *argv[])
     
     return EXIT_SUCCESS;
 }
+
+/*
+ * Create a full path of directories
+ */
+static int create_dir (const char *path, mode_t mode) {
+    char *sub_path;
+    char *last_slash;
+
+    if (!(sub_path = strdup (path)))
+        return -1;
+    last_slash = sub_path;
+
+    /*
+     * To create /a/b/c/d we must create /a, /a/b, /a/b/c and /a/b/c/d
+     * To create a/b/c we must create a, a/b, a/b/c
+     */
+    while ((last_slash = strchr (last_slash + 1, '/'))) {
+        *last_slash = '\0';
+        if (mkdir (sub_path, mode) < 0) {
+            if (errno != EEXIST) {
+                goto out;
+            }
+        }
+        *last_slash = '/';
+    }
+    /*
+     * One last time to create the full path
+     */
+    if (mkdir (sub_path, mode) < 0) {
+        if (errno != EEXIST)
+            goto out;
+    }
+    return 0;
+
+out:
+    free (sub_path);
+    return -1;
+}
+
