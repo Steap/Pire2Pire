@@ -44,14 +44,14 @@ struct parsed_cmd {
  * parsed_cmd_free () once you are done with it.
  */
 struct parsed_cmd *cmd_parse (const char *cmd,
-                                struct option_template *template);
+                                const struct option_template *template);
 
 /*
  * This function takes the return of cmd_parse and tells if the parse failed
  * RETURN VALUE:
  * 0 if the parse failed, 1 otherwise
  */
-int cmd_parse_failed (struct parsed_cmd *pcmd);
+int cmd_parse_failed (const struct parsed_cmd *pcmd);
 
 /*
  * This frees a struct parsed_cmd created by cmd_parse ()
@@ -62,16 +62,16 @@ void cmd_parse_free (struct parsed_cmd *parsed_cmd);
  * This returns the next option set from option_index in pcmd, according to
  * template. Returns 0 when no option left.
  */
-char cmd_get_next_opt (struct parsed_cmd *pcmd,
-                        struct option_template *template,
+char cmd_get_next_opt (const struct parsed_cmd *pcmd,
+                        const struct option_template *template,
                         int *option_index);
 
 /*
  * This function MUST BE CALLED after a cmd_get_next_opt () call, in order
  * to retrieve (if it exists) the value of the option
  */
-char *cmd_get_opt_value (struct parsed_cmd *pcmd,
-                        struct option_template *template,
-                        const int *option_index);
+char *cmd_get_opt_value (const struct parsed_cmd *pcmd,
+                            const struct option_template *template,
+                            const int *option_index);
 
 #endif

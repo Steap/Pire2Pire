@@ -123,7 +123,8 @@ cmd_parse_free (struct parsed_cmd *pcmd) {
         if(pcmd->options[i].value)
             free (pcmd->options[i].value);
     }
-    free (pcmd->options);
+    if (pcmd->options)
+        free (pcmd->options);
 
     if (pcmd->argv)
         for (int i = 0; i < pcmd->argc; i++)
@@ -135,12 +136,11 @@ cmd_parse_free (struct parsed_cmd *pcmd) {
 
 /* see .h */
 struct parsed_cmd *
-cmd_parse (const char *cmd, struct option_template *template) {
+cmd_parse (const char *cmd, const struct option_template *template) {
     struct parsed_cmd       *parsed_cmd;
     int                     cursor;
     char                    *token;
     int                     token_size;
-    struct option_template  *option;
     void                    *error;
     int                     i;
     struct arg_list         *arguments;
@@ -153,14 +153,20 @@ cmd_parse (const char *cmd, struct option_template *template) {
     parsed_cmd = (struct parsed_cmd *)malloc (sizeof (struct parsed_cmd));
 
     /* Reckon the number of options in the template */
-    option = template;
-    for (parsed_cmd->nb_template_options = 0;
-            option[parsed_cmd->nb_template_options].short_name != 0;
-            parsed_cmd->nb_template_options++);
-    /* calloc so that each "is_in_cmd" is initialized to 0 and "value" to NULL */
-    parsed_cmd->options = (struct parsed_option *)
-                            calloc (parsed_cmd->nb_template_options,
-                                    sizeof(struct parsed_option));
+    if (!template) {
+        parsed_cmd->nb_template_options = 0;
+        parsed_cmd->options = NULL;
+    }
+    else {
+        /* This loop counts the template options */
+        for (parsed_cmd->nb_template_options = 0;
+                template[parsed_cmd->nb_template_options].short_name != 0;
+                parsed_cmd->nb_template_options++);
+        /* calloc so that each "is_in_cmd" is initialized to 0 and "value" to NULL */
+        parsed_cmd->options = (struct parsed_option *)
+                                calloc (parsed_cmd->nb_template_options,
+                                        sizeof(struct parsed_option));
+    }
     parsed_cmd->argc = 0;
     parsed_cmd->argv = NULL;
     arguments = NULL;
@@ -187,10 +193,13 @@ cmd_parse (const char *cmd, struct option_template *template) {
                  * We're dealing with a --long_name here
                  * Let's find the option in the template
                  */
-                option = template;
-                for (i = 0; option[i].short_name != 0; i++) {
+                if (!template) {
+                    error = PARSER_UNKNOWN_OPTION;
+                    goto parse_error;
+                }
+                for (i = 0; template[i].short_name != 0; i++) {
                     /* + 2 to avoid the beginning "--" */
-                    if (strcmp (token + 2, option[i].long_name) == 0) {
+                    if (strcmp (token + 2, template[i].long_name) == 0) {
                         /*
                          * We've found what option we're dealing with so
                          * let's free token
@@ -212,12 +221,12 @@ cmd_parse (const char *cmd, struct option_template *template) {
                         /*
                          * If the option requires an argument
                          */
-                        if (option[i].opt_arg == ARG_REQUIRED) {
+                        if (template[i].opt_arg == ARG_REQUIRED) {
                             /* Retrieve the argument */
                             token = get_token (cmd, &cursor);
                             if (!token) {
                                 error = PARSER_MISSING_ARGUMENT;
-                                goto parse_error; 
+                                goto parse_error;
                             }
                             parsed_cmd->options[i].value = token;
                         }
@@ -225,7 +234,7 @@ cmd_parse (const char *cmd, struct option_template *template) {
                     }
                 }
                 /* If we didn't find the option in the template, error */
-                if (!option[i].short_name) {
+                if (!template[i].short_name) {
                     error = PARSER_UNKNOWN_OPTION;
                     goto parse_error;
                 }
@@ -242,12 +251,14 @@ cmd_parse (const char *cmd, struct option_template *template) {
                 error = PARSER_UNKNOWN_OPTION;
                 goto parse_error;
             }
-
             /* We're dealing with a -short_name here */
-            option = template;
-            for (i = 0; option[i].short_name != 0; i++) {
+            if (!template) {
+                error = PARSER_UNKNOWN_OPTION;
+                goto parse_error;
+            }
+            for (i = 0; template[i].short_name != 0; i++) {
                 /* + 1 to avoid the beginning "-" */
-                if (token[1] == option[i].short_name) {
+                if (token[1] == template[i].short_name) {
                     /*
                      * We've found what option we're dealing with so
                      * let's free token
@@ -269,12 +280,12 @@ cmd_parse (const char *cmd, struct option_template *template) {
                     /*
                      * If the option requires an argument
                      */
-                    if (option[i].opt_arg == ARG_REQUIRED) {
+                    if (template[i].opt_arg == ARG_REQUIRED) {
                         /* Retrieve the argument */
                         token = get_token (cmd, &cursor);
                         if (!token) {
                             error = PARSER_MISSING_ARGUMENT;
-                            goto parse_error; 
+                            goto parse_error;
                         }
                         parsed_cmd->options[i].value = token;
                     }
@@ -282,7 +293,7 @@ cmd_parse (const char *cmd, struct option_template *template) {
                 }
             }
             /* If we didn't find the option in the template, error */
-            if (!option[i].short_name) {
+            if (!template[i].short_name) {
                 error = PARSER_UNKNOWN_OPTION;
                 goto parse_error;
             }
@@ -297,19 +308,20 @@ cmd_parse (const char *cmd, struct option_template *template) {
             continue;
         }
     }
-    // If we finished parsing without finding any command
+    /* If we finished parsing without finding any command */
     if (!arguments) {
         error = PARSER_EMPTY_COMMAND;
         goto parse_error;
     }
 
-    // TODO: Change arg_list to argv and free arg_list
+    /*Now we build argv from arguments */
     parsed_cmd->argv = (char **)malloc (parsed_cmd->argc * sizeof (char *));
     for (argn = 1, tmp = arguments; tmp; argn++, tmp = tmp->next) {
         /* We created the linked list in the reverse side, so argc - argn */
         parsed_cmd->argv[parsed_cmd->argc - argn] = tmp->text;
     }
 
+    /* We free arguments but keep the text fields that are linked by argv */
     unlink_arg_list (arguments);
 
     return parsed_cmd;
@@ -322,15 +334,17 @@ parse_error:
     return error;
 }
 
-int cmd_parse_failed (struct parsed_cmd *pcmd) {
+int cmd_parse_failed (const struct parsed_cmd *pcmd) {
     return pcmd == PARSER_MISSING_ARGUMENT
             || pcmd == PARSER_UNKNOWN_OPTION
             || pcmd == PARSER_EMPTY_COMMAND;
 }
 
-char cmd_get_next_opt (struct parsed_cmd *pcmd,
-                    struct option_template *template,
-                    int *option_index) {
+char cmd_get_next_opt (const struct parsed_cmd *pcmd,
+                        const struct option_template *template,
+                        int *option_index) {
+    if (!template)
+        return -1;
     /* We browse the options from option_index */
     while (template[*option_index].short_name) {
         /* If it is set, we want to return its short name */
@@ -344,12 +358,14 @@ char cmd_get_next_opt (struct parsed_cmd *pcmd,
         else
             (*option_index)++;
     }
-    return 0;
+    return -1;
 }
 
-char *cmd_get_opt_value (struct parsed_cmd *pcmd,
-                            struct option_template *template,
+char *cmd_get_opt_value (const struct parsed_cmd *pcmd,
+                            const struct option_template *template,
                             const int *option_index) {
+    if (!template)
+        return NULL;
     /*
      * Here, we must remember that cmd_get_next_opt () has already incremented
      * option_index, so we want to check option_index - 1
