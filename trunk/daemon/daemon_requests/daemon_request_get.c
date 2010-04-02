@@ -24,6 +24,25 @@ extern struct prefs *prefs;
 extern FILE         *log_file;
 extern char         my_ip[INET_ADDRSTRLEN];
 
+static struct daemon_request    *r;
+static struct sockaddr_in       listen_addr;
+/* Full path to the requested file */
+static char                     full_path[512];
+/* The socket we will wait for the peer to connect on */
+static int                      listen_sock;
+static struct dirent            *entry;         /* The file we will send */
+static struct stat              entry_stat;     /* Information about the file */
+/* File descriptor of the requested file */
+static int                      file;
+static char                     *key;           /* MD5 hash of the file */
+static struct parsed_cmd        *pcmd;          /* Parsed command */
+/* The connected socket we will actually use to send the file */
+static int                  data_sock;
+
+static int find_file ();
+static int prepare_sending ();
+static int send_file ();
+
 static char*
 get_md5 (const char *path) {
     int           i;
@@ -43,26 +62,14 @@ get_md5 (const char *path) {
 
 void*
 daemon_request_get (void *arg) {
-    struct daemon_request   *r;
     char                    answer[512];
-    DIR                     *dir;
-    struct dirent           *entry;
-    char                    full_path[512];
-    struct stat             entry_stat;
-    char                    *key;
-    int                     file;
-    int                     listen_sock;
-    struct sockaddr_in      listen_addr;
-    socklen_t               listen_addr_size;
-    int                     data_sock;
-    file_size_t              to_be_sent;
-    char                    buffer[BUFFSIZE];
-    int nb_read;
-    int nb_sent;
     struct option_template options [] = {
         {0, NULL, NO_ARG}
     };
-    struct parsed_cmd       *pcmd;
+
+    listen_sock = -1;
+    data_sock = -1;
+    file = -1;
 
     r = (struct daemon_request *) arg;
     if (!r)
@@ -73,35 +80,100 @@ daemon_request_get (void *arg) {
      * get KEY BEGINNING END
      */
     if (cmd_parse_failed (pcmd = cmd_parse (r->cmd, options))) {
-        // TODO: send an error message
+        /* TODO: send an error message */
         return NULL;
     }
     if (pcmd->argc != 4) {
         cmd_parse_free (pcmd);
-        // TODO: send an error message
+        /* TODO: send an error message */
         return NULL;
     }
 
-    r = (struct daemon_request *) arg;
-    if (!r)
-        return NULL;
+    /*
+     * First we find the file by its key, and store its full path in full_path
+     */
+    if (find_file () < 0)
+        goto out;
+
+    file = open (full_path, O_RDONLY);
+    if (file < 0) {
+         log_failure (log_file,
+                        "dr_get (): open () failed for file %s",
+                        full_path);
+        goto out;
+    }
+
+    /*
+     * We prepare a socket to send the file
+     */
+    if (prepare_sending () < 0)
+        goto out;
+
+    /*
+     * We notify the daemon that the file is ready
+     */
+    /* FIXME: beginning, end, protocol and delay are unused */
+    sprintf (answer,
+                "ready %s 0 %s %d tcp 0 0\n",
+                key,
+                my_ip,
+                ntohs (listen_addr.sin_port));
+    daemon_send (r->daemon, answer);
+
+    /*
+     * Then we wait for the daemon to connect
+     */
+    data_sock = accept (listen_sock, NULL, 0);
+    if (data_sock < 0) {
+        log_failure (log_file, "dr_get (): accept () failed");
+        goto out;
+    }
+
+    /*
+     * FIXME: If the guy that connected isn't the daemon, we should stop
+     * and accept again
+     */
+    close (listen_sock);
+
+    /*
+     * And send the file
+     */
+    if (send_file () < 0)
+        goto out;
+
+    return NULL;
+
+out:
+    if (listen_sock >= 0)
+        close (listen_sock);
+    if (data_sock >= 0)
+        close (data_sock);
+    if (file >= 0)
+        close (file);
+
+    return NULL;
+}
+
+static int
+find_file () {
+    DIR                     *dir;
 
     dir = opendir (prefs->shared_folder);
     if (dir == NULL) {
         log_failure (log_file,
-                    "daemon_request_list () : Unable to opendir %s",
+                    "dr_get () : opendir () failed for dir %s",
                     prefs->shared_folder);
-        return NULL;
+        return -1;
     }
-    // Browsing my own files
+    /* Browsing my own files */
     for (entry = readdir (dir); entry != NULL; entry = readdir (dir)) {
-        // Listing all regular files
+        /* Listing all regular files */
         if (entry->d_type == DT_REG) {
-            // FIXME: buffer overflow
+            /* FIXME: buffer overflow */
             sprintf (full_path, "%s/%s", prefs->shared_folder, entry->d_name);
             if (stat (full_path, &entry_stat) < 0) {
                 log_failure (log_file,
-                            "daemon_request_get (): can't stat file %s",
+                            "dr_get (): stat () failed for file %s",
                             full_path);
                 continue;
             }
@@ -109,99 +181,90 @@ daemon_request_get (void *arg) {
             /* TODO: Free md5 */
             if (strcmp (key, pcmd->argv[1]) == 0)
                 break;
+            free (key);
         }
     }
     if (!entry) {
-        // TODO: send an error message
+        /* TODO: send an error message */
         log_failure (log_file,
-                    "daemon_request_get (): Unable to locate file with key %s",
-                    pcmd->argv[1]);
-        return NULL;
+                        "dr_get (): Unable to locate file with key %s",
+                        pcmd->argv[1]);
+        return -1;
     }
 
     if (closedir (dir) < 0) {
-        log_failure (log_file,
-                    "daemon_request_get (): can't close shared directory");
-        return NULL;
+        log_failure (log_file, "dr_get (): closedir () failed");
+        return -1;
     }
 
-    file = open (full_path, O_RDONLY);
-    if (file < 0) {
-         log_failure (log_file,
-                    "daemon_request_get (): can't open file %s",
-                    full_path);
-        return NULL;
+    return 0;
+}
 
-    }
+static int
+prepare_sending () {
+    socklen_t               listen_addr_size;
 
     if ((listen_sock = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-        log_failure (log_file, "daemon_request_get (): socket () failed");
-        return NULL;
+        log_failure (log_file, "dr_get: socket () failed");
+        return -1;
     }
 
     listen_addr.sin_family = AF_INET;
-/* FIXME: this is not working, I don't know why
-    if (inet_pton (AF_INET, r->daemon->addr, &listen_addr) < 1) {
-        log_failure (log_file, "daemon_request_get (): inet_pton () failed");
-        return NULL;
-    }
-*/
     listen_addr.sin_addr.s_addr = htonl (INADDR_ANY);
-
-    /* Let the OS give you a port */
-    listen_addr.sin_port = 0;
-
+    listen_addr.sin_port = 0;           /* The OS finds an available port */
     listen_addr_size = sizeof (listen_addr);
 
     if (bind (listen_sock,
                 (struct sockaddr *)&listen_addr,
                 listen_addr_size) < 0) {
-        log_failure (log_file, "daemon_request_get (): bind () failed %d", errno);
-        return NULL;
+        log_failure (log_file, "dr_get: bind () failed");
+        log_failure (log_file, "errno %d", errno);
+        return -1;
     }
 
     if (getsockname (listen_sock,
                         (struct sockaddr *)&listen_addr,
                         &listen_addr_size) < 0) {
-        log_failure (log_file, "daemon_request_get (): getsockname () failed");
+        log_failure (log_file, "dr_get (): getsockname () failed");
     }
-
-    // FIXME: beginning, end, protocol and delay are unused
-    sprintf (answer,
-                "ready %s 0 %s %d tcp 0 0\n",
-                key,
-                my_ip,
-                ntohs (listen_addr.sin_port));
 
     if (listen (listen_sock, 1) < 0) {
-        log_failure (log_file, "daemon_request_get (): listen () failed");
-        return NULL;
+        log_failure (log_file, "dr_get (): listen () failed");
+        return -1;
     }
 
-    daemon_send (r->daemon, answer);
+    return 0;
+}
 
-    data_sock = accept (listen_sock, NULL, 0);
-    if (data_sock < 0) {
-        log_failure (log_file, "daemon_request_get (): accept () failed");
-        return NULL;
-    }
-
-    close (listen_sock);
+static int
+send_file () {
+    int             nb_read;
+    int             nb_sent;
+    file_size_t     to_be_sent;
+    char            buffer[BUFFSIZE];
 
     to_be_sent = entry_stat.st_size;
     while (to_be_sent) {
         nb_read = read (file, buffer, BUFFSIZE);
+        if (nb_read < 0) {
+            log_failure (log_file,
+                        "dr_get (): read failed in send_file ()");
+            return -1;
+        }
         while (nb_read) {
             nb_sent = send (data_sock, buffer, nb_read, 0);
+            if (nb_sent < 0) {
+                log_failure (log_file,
+                            "dr_get (): send failed in send_file ()");
+                return -1;
+            }
             to_be_sent -= nb_sent;
             nb_read -= nb_sent;
         }
     }
 
     close (data_sock);
-
     close (file);
 
-    return NULL;
+    return 0;
 }
-
