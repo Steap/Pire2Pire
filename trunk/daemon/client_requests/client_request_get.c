@@ -78,8 +78,9 @@ client_request_get (void *arg) {
              file_to_dl->key,
              0,
              file_to_dl->size);
+log_success (log_file, "Sending to d @%s (sd:%d)", d->addr, d->socket);
     if (daemon_send (d, answer) < 0) {
-        log_failure (log_file, "cr_get: could not send the ready command");
+        log_failure (log_file, "cr_get: could not send the get command");
         goto out;
     }
 

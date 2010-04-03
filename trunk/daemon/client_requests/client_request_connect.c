@@ -59,7 +59,7 @@ void*
 client_request_connect (void *arg) {
     struct client_request   *r = NULL;
     char                    answer[256];
-    int                     daemon_socket = -1;
+    int                     daemon_socket;
     struct sockaddr_in      daemon_addr;
     struct daemon           *daemon = NULL;
     struct parsed_cmd       *pcmd = NULL;
@@ -127,7 +127,6 @@ client_request_connect (void *arg) {
         goto send_msg;
     }
 
-    // FIXME: inet_atop () ?
     if (inet_pton (AF_INET, ip, &daemon_addr.sin_addr.s_addr) < 0) {
         sprintf (answer, " < connect: couldn't parse IP %s\n", ip);
     }
@@ -162,8 +161,6 @@ send_msg:
     if (client_send (r->client, answer) < 0) {
         log_failure (log_file, "cr_connect: client_send () failed");
     }
-    if (daemon_socket >= 0)
-        close (daemon_socket);
     if (pcmd)
         cmd_parse_free (pcmd);
 

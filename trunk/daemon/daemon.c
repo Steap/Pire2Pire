@@ -1,5 +1,6 @@
 #include <sys/socket.h>     // send ()
 
+#include <errno.h>
 #include <pthread.h>        // pthread_equal ()
 #include <signal.h>         // pthread_kill ()
 #include <stdlib.h>         // malloc ()
@@ -107,7 +108,9 @@ daemon_send (struct daemon *d, const char *msg) {
 
     dest_sock = d->socket;
     if (sem_wait (&d->socket_lock) < 0) {
-        log_failure (log_file, "Failed to sem_wait socket_lock");
+        log_failure (log_file,
+                    "failed to sem_wait socket_lock, error: %s",
+                    strerror (errno));
         return -1;
     }
 
@@ -123,14 +126,17 @@ daemon_send (struct daemon *d, const char *msg) {
                         0);
         if (nb_sent < 0) {
             log_failure (log_file,
-                        "Couldn't send to client socket");
+                        "couldn't send to daemon socket, error: %s",
+                        strerror (errno));
             return -1;
         }
         nb_sent_sum += nb_sent;
     }
 
     if (sem_post (&d->socket_lock) < 0) {
-        log_failure (log_file, "Failed to sem_post socket_lock");
+        log_failure (log_file,
+                    "failed to sem_post socket_lock, error: %s",
+                    strerror (errno));
     }
 
     return 0;
