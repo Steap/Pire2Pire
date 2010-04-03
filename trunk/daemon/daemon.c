@@ -30,7 +30,7 @@ daemon_new (int socket, char *addr, int port) {
     return d;
 }
 
-void 
+void
 daemon_free (struct daemon *d) {
     if (!d)
         return;
@@ -89,7 +89,7 @@ daemon_remove (struct daemon *l, pthread_t pt) {
         tmp->next->prev = NULL;
         return tmp->next;
     }
-    
+
     tmp->prev->next = tmp->next;
     return l;
 }
@@ -108,7 +108,7 @@ daemon_send (struct daemon *d, const char *msg) {
     dest_sock = d->socket;
     if (sem_wait (&d->socket_lock) < 0) {
         log_failure (log_file, "Failed to sem_wait socket_lock");
-        return -1; 
+        return -1;
     }
 
     // Now the socket is locked for us, let's send!

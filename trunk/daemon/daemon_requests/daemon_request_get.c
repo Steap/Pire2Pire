@@ -48,7 +48,7 @@ get_md5 (const char *path) {
     int           i;
     unsigned char digest[16];
     char          *hash;
-    
+
     hash = malloc (33);
     MDFile (&digest, path);
     if (!hash)
@@ -114,10 +114,12 @@ daemon_request_get (void *arg) {
      */
     /* FIXME: beginning, end, protocol and delay are unused */
     sprintf (answer,
-                "ready %s 0 %s %d tcp 0 0\n",
+                "ready %s 0 %s %d tcp %s %s\n",
                 key,
                 my_ip,
-                ntohs (listen_addr.sin_port));
+                ntohs (listen_addr.sin_port),
+                pcmd->argv[2],  /* BEGINNING */
+                pcmd->argv[3]); /* END */
     daemon_send (r->daemon, answer);
 
     /*
@@ -217,8 +219,9 @@ prepare_sending () {
     if (bind (listen_sock,
                 (struct sockaddr *)&listen_addr,
                 listen_addr_size) < 0) {
-        log_failure (log_file, "dr_get: bind () failed");
-        log_failure (log_file, "errno %d", errno);
+        log_failure (log_file,
+                    "dr_get: bind () failed - %s",
+                    strerror (errno));
         return -1;
     }
 
