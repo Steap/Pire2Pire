@@ -36,8 +36,8 @@ foo (void *a)
     struct request *tmp;
     char ans[100];
 
-    sprintf (ans, 
-             " < Number of requests : %d\n", 
+    sprintf (ans,
+             " < Number of requests : %d\n",
              client_request_count (r->client->requests));
     send (r->client->socket, ans, strlen (ans), 0);
     for (tmp = r->client->requests; tmp; tmp = tmp->next) {
@@ -45,7 +45,7 @@ foo (void *a)
         send (r->client->socket, ans, strlen (ans), 0);
     }
     sleep (1);
-    
+
     sem_wait (&r->client->req_lock);
     r->client->requests = client_request_remove (r->client->requests, r->thread_id);
     sem_post (&r->client->req_lock);
@@ -143,7 +143,7 @@ handle_requests (void *arg) {
 
     if (!(client = (struct client *) arg))
         goto out;
-    
+
     log_success (log_file, "New client : %s", client->addr);
 
     for (;;)  {
@@ -158,14 +158,14 @@ handle_requests (void *arg) {
 
         /* Only request we're allowed to treat no matter how many requests are
          * currently being treated */
-        if (strncmp (message, "quit", 4) == 0) 
+        if (strncmp (message, "quit", 4) == 0)
             goto out;
 
         if (client_request_count (client->requests) == MAX_REQUESTS_PER_CLIENT) {
             sprintf (answer, " < Too many requests, mister, plz calm down\n");
             send (client->socket, answer, strlen (answer), 0);
             continue;
-        } 
+        }
 
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
@@ -175,7 +175,7 @@ handle_requests (void *arg) {
         else if (strncmp (message, "get", 3) == 0)
             callback = &client_request_get;
 #endif
-        else if (strncmp (message, "help", 4) == 0) 
+        else if (strncmp (message, "help", 4) == 0)
             callback = &client_request_help;
         else if (strncmp (message, "info", 4) == 0)
             callback = &client_request_info;
@@ -196,7 +196,7 @@ handle_requests (void *arg) {
             send (client->socket, answer, strlen (answer), 0);
             continue;
         }
-        
+
         sem_wait (&client->req_lock);
         client->requests = client_request_add (client->requests, request);
         sem_post (&client->req_lock);
@@ -207,9 +207,9 @@ handle_requests (void *arg) {
                             NULL,
                             start_request_thread,
                             &wrapper);
- 
+
         if (r < 0) {
-            sprintf (answer, 
+            sprintf (answer,
                     " < Could not treat your request for an unexpected \
                       reason.");
             log_failure (log_file, "Could not start new thread");
@@ -252,7 +252,7 @@ out:
 #endif
 
     pthread_detach (pthread_self ());
-    
+
     return NULL;
 }
 
@@ -301,6 +301,6 @@ handle_client (int client_socket, struct sockaddr_in *client_addr) {
         sem_post (&clients_lock);
         return;
     }
-    
+
 }
 

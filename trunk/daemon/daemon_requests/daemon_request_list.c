@@ -23,7 +23,7 @@ get_md5 (const char *path) {
     int           i;
     unsigned char digest[16];
     char          *hash;
-    
+
     hash = malloc (33);
     MDFile (&digest, path);
     if (!hash)
@@ -100,6 +100,6 @@ daemon_request_list (void *arg) {
         return NULL;
     }
 
-    return NULL; 
+    return NULL;
 }
 

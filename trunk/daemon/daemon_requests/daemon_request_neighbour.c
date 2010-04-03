@@ -28,10 +28,10 @@ daemon_request_neighbour (void *arg) {
     int                     port;
     int                     new_daemon_socket;
 
-     
+
     r = (struct daemon_request *) arg;
     if (!r) {
-        log_failure (log_file, 
+        log_failure (log_file,
                      "The argument of daemon_request_neighbour seems to be corrupted");
         return NULL;
     }
@@ -50,10 +50,10 @@ daemon_request_neighbour (void *arg) {
 
     sem_wait (&daemons_lock);
     /* Checking whether the daemon is used */
-    for_each_daemon (tmp) 
+    for_each_daemon (tmp)
         if (strcmp (tmp->addr, addr) == 0)
             goto out;
-    
+
     /* Daemon is not already knwon : let's add it */
     new_daemon_socket = socket (AF_INET, SOCK_STREAM, 0);
     if (new_daemon_socket < 0) {

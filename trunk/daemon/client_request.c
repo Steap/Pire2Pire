@@ -11,7 +11,7 @@ client_request_new (char *cmd, struct client *client) {
     r = malloc (sizeof (struct client_request));
     if (!r)
         return NULL;
-    
+
 //    r->cmd         = strdup (cmd);
     r->cmd          = cmd;
     r->client       = client;
@@ -48,7 +48,7 @@ struct client_request *
 client_request_remove (struct client_request *l, pthread_t pt) {
     if (!l)
         return NULL;
-    
+
     struct client_request *tmp;
     for (tmp = l; pthread_equal (tmp->thread_id, pt) == 0; tmp = tmp->next);
     if (!tmp->prev) {

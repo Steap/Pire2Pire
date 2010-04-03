@@ -48,13 +48,13 @@ static void
 signal_handler (int sig) {
     (void) sig;
     if (log_file)
-    {    
+    {
         fprintf (log_file, "Received signal !\n");
         fflush (log_file);
     }
 }
 
-static void 
+static void
 server_stop (int sig) {
     struct client   *c;
     struct daemon   *d;
@@ -89,7 +89,7 @@ server_stop (int sig) {
         if (log_file)
             log_failure (log_file, "Could not destroy the lock file");
     if (log_file) {
-        log_success (log_file, "Stopping server, waiting for SIGKILL");    
+        log_success (log_file, "Stopping server, waiting for SIGKILL");
         fclose (log_file);
     }
     if (prefs)
@@ -103,7 +103,7 @@ void daemonize(void) {
     char str[10];
 
     switch (fork ()) {
-        case -1:    
+        case -1:
             exit (1);
         case 0:
             exit (0);
@@ -264,7 +264,7 @@ start_server (const char *conf_file) {
             /* This should never happen : neither client nor daemon!? */
             log_failure (log_file, "Unknown connection");
         }
-    } 
+    }
 }
 
 int
@@ -274,9 +274,9 @@ main (int argc, char *argv[])
     daemonize ();
     start_server (argv[1]);
     for (;;)
-        sleep (1);   
+        sleep (1);
     conf_free (prefs);
-    
+
     return EXIT_SUCCESS;
 }
 

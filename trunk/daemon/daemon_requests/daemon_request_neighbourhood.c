@@ -39,5 +39,5 @@ daemon_request_neighbourhood (void *arg) {
 
     sem_post (&daemons_lock);
 
-    return NULL;  
+    return NULL;
 }

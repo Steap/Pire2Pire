@@ -100,7 +100,7 @@ cmd_get_next_option (int argc, char *argv[], struct option *options)
             else
             {
                 optind++;
-                return argv[optind-1][1]; 
+                return argv[optind-1][1];
             }
         }
     }
@@ -128,8 +128,8 @@ cmd_to_argc_argv (const char *s, int *argc)
                 buffer[j] = s[beginning+j];
             }
             buffer[j] = '\0';
-   
-            (*argc)++; 
+
+            (*argc)++;
             argv = realloc (argv, (1+*argc) * sizeof (char *));
             if (!argv)
                 return NULL;

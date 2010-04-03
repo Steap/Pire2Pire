@@ -6,14 +6,14 @@
 
 /*
  * Default values for the daemon's prefs.
- */ 
+ */
 #define DEFAULT_CLIENT_PORT      1337
 #define DEFAULT_DAEMON_PORT      7331
 #define DEFAULT_SHARED_FOLDER   "/tmp"
 #define DEFAULT_INTERFACE       "eth0"
- 
+
  /*
- * Valid values for our ports. 
+ * Valid values for our ports.
  * See http://www.iana.org/assignments/port-numbers
  */
 #define MIN_PORT                  1024
@@ -30,7 +30,7 @@ conf_retrieve (const char *path) {
     if (!prefs)
         return NULL;
 
-    prefs->client_port   = DEFAULT_CLIENT_PORT; 
+    prefs->client_port   = DEFAULT_CLIENT_PORT;
     prefs->daemon_port   = DEFAULT_DAEMON_PORT;
     prefs->shared_folder = DEFAULT_SHARED_FOLDER;
     prefs->interface     = DEFAULT_INTERFACE;
@@ -58,7 +58,7 @@ conf_retrieve (const char *path) {
             prefs->interface = strdup (value);
         }
     }
-    
+
     fclose (conf_file);
     return prefs;
 }
@@ -67,7 +67,7 @@ void
 conf_free (struct prefs *p) {
     if (!p)
         return;
-    
+
     if (p->shared_folder)
         free (p->shared_folder);
     if (p->interface)

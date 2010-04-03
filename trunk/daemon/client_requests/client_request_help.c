@@ -27,6 +27,6 @@ client_request_help (void *arg) {
 
     client_send (r->client, HELP_TEXT);
 
-    return NULL; 
+    return NULL;
 }
 

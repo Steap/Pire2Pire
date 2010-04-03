@@ -1,6 +1,6 @@
 /*
  * A daemon might answer that an error occurred (the file it was asked for does
- * not exist, for instance). 
+ * not exist, for instance).
  *
  * Upon receiving an error message, the daemon should warn the client that their
  * request cannot be performed.
@@ -33,5 +33,5 @@ daemon_request_error (void *arg) {
                  r->daemon->addr,
                  r->daemon->port);
 
-    return NULL; 
+    return NULL;
 }

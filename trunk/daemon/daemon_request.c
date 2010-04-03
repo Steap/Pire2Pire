@@ -18,7 +18,7 @@ daemon_request_new (char *cmd, struct daemon *daemon) {
     r = malloc (sizeof (struct daemon_request));
     if (!r)
         return NULL;
-    
+
 //    r->cmd         = strdup (cmd);
     r->cmd          = cmd;
     r->daemon       = daemon;
@@ -59,7 +59,7 @@ struct daemon_request*
 daemon_request_remove (struct daemon_request *l, pthread_t pt) {
     if (!l)
         return NULL;
-    
+
     struct daemon_request *tmp;
     for (tmp = l; pthread_equal (tmp->thread_id, pt) == 0; tmp = tmp->next);
     if (!tmp->prev) {

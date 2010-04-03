@@ -1,6 +1,6 @@
 #include <sys/stat.h>           // entry_stat
 
-#include <arpa/inet.h>          // inet_pton () 
+#include <arpa/inet.h>          // inet_pton ()
 
 #include <dirent.h>             // DIR
 #include <stdio.h>              // NULL
@@ -57,7 +57,7 @@ client_request_list (void *arg) {
 
     free_socket_table ();
 
-    return NULL; 
+    return NULL;
 }
 
 static void

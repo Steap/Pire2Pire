@@ -33,7 +33,7 @@ socket_init (struct sockaddr_in *sa) {
         "socket_init (): Could not assign a local address using bind : %d");
         return -1;
     }
-     
+
     if (listen (sd, NB_QUEUE) < 0) {
         log_failure (log_file,
         "socket_init (): The socket could not be marked as a passive one.");

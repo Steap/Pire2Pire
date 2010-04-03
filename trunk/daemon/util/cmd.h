@@ -17,7 +17,7 @@ extern int optind;
  */
 extern char *optarg;
 
-struct option 
+struct option
 {
     char *short_name;
     char *long_name;

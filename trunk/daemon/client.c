@@ -28,7 +28,7 @@ client_new (int socket, char *addr) {
     return c;
 }
 
-void 
+void
 client_free (struct client *c) {
 //    log_failure (log_file, "Freeing client %s", c->addr);
     if (!c)
@@ -85,7 +85,7 @@ client_remove (struct client *l, pthread_t pt) {
         tmp->next->prev = NULL;
         return tmp->next;
     }
-    
+
     tmp->prev->next = tmp->next;
     return l;
 }
@@ -100,7 +100,7 @@ client_send (struct client *c, const char *msg) {
     dest_sock = c->socket;
     if (sem_wait (&c->socket_lock) < 0) {
         log_failure (log_file, "Failed to sem_wait socket_lock");
-        return -1; 
+        return -1;
     }
 
     // Now the socket is locked for us, let's send!

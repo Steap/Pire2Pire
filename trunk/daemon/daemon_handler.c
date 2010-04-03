@@ -98,7 +98,7 @@ handle_requests (void *arg) {
 
     if (!(daemon = (struct daemon *) arg))
         goto out;
-    
+
     log_success (log_file, "New daemon : %s", daemon->addr);
 
     for (;;)  {
@@ -113,18 +113,18 @@ handle_requests (void *arg) {
 
         /* Only request we're allowed to treat no matter how many requests are
          * currently being treated */
-        if (strncmp (message, "quit", 4) == 0) 
+        if (strncmp (message, "quit", 4) == 0)
             goto out;
 
         if (daemon_request_count (daemon->requests) == MAX_REQUESTS_PER_DAEMON) {
             sprintf (answer, " < Too many requests, mister, plz calm down\n");
             send (daemon->socket, answer, strlen (answer), 0);
             continue;
-        }        
+        }
 
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
-        if (strncmp (message, "list", 4) == 0) 
+        if (strncmp (message, "list", 4) == 0)
             callback = &daemon_request_list;
         else if (strncmp (message, "get", 3) == 0)
             callback = &daemon_request_get;
@@ -157,9 +157,9 @@ handle_requests (void *arg) {
                             NULL,
                             start_request_thread,
                             &wrapper);
-        
+
         if (r < 0) {
-            sprintf (answer, 
+            sprintf (answer,
                     " < Could not treat your request for an unexpected \
                       reason.");
             log_failure (log_file, "Could not start new thread");
@@ -194,7 +194,7 @@ out:
 #endif
 
     pthread_detach (pthread_self ());
-    
+
     return NULL;
 }
 

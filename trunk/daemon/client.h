@@ -10,7 +10,7 @@ struct client {
     sem_t                   socket_lock;
     char                    *addr; /* IPv4, IPv6, whatever... */
     pthread_t               thread_id;
-    /* 
+    /*
      * Many different requests will try and modify "requests", using request_add
      * () or request_remove (). That's why we need a semaphore.
      */

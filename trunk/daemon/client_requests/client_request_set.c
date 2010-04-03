@@ -7,12 +7,12 @@
 
 extern FILE* log_file;
 
-/* 
+/*
  * According to the protocol, there are no options available for the "set"
  * command.
  */
 static struct option options[] = {
-    {NULL, NULL, 0}    
+    {NULL, NULL, 0}
 };
 #include <unistd.h>
 void*
@@ -32,7 +32,7 @@ client_request_set (void *arg) {
     cba = (struct callback_argument *) arg;
     argv = cmd_to_argc_argv (cba->cmd, &argc);
 */
-    r = (struct client_request *) arg;    
+    r = (struct client_request *) arg;
     argv = cmd_to_argc_argv (r->cmd, &argc);
     while ((c = cmd_get_next_option (argc, argv, options)) > 0);
     if (c == CMD_NOT_ALLOWED_OPTION) {
@@ -45,11 +45,11 @@ client_request_set (void *arg) {
         cmd_print_error_message ();
         return NULL;
     }
-   
+
     nb_arguments = argc - optind;
     switch (nb_arguments) {
         case 0:
-            sprintf (answer, 
+            sprintf (answer,
                      " < No arguments, should display all available options\n");
             break;
         case 1:
@@ -59,7 +59,7 @@ client_request_set (void *arg) {
         default:
             sprintf (answer, " < You shall only set one option at a time...\n");
             break;
-    } 
+    }
 #if 0
     if (send (cba->client_socket, answer, strlen (answer), 0) < 0) {
         /* We might be willing to switch errno here, blah blah */
@@ -69,8 +69,8 @@ client_request_set (void *arg) {
     if (client_send (r->client, answer) < 0) {
         log_failure (log_file, "do_set () : failed to send data to the client");
     }
-    
-    
+
+
     cmd_free (argv);
 #if 0
     if (cba)
