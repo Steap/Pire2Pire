@@ -32,10 +32,14 @@ char my_ip[INET_ADDRSTRLEN];
 struct prefs *prefs;
 
 /* The lists lock that must be init on startup */
-extern sem_t    clients_lock;
+extern sem_t            clients_lock;
 extern struct client    *clients;
-extern sem_t    daemons_lock;
+extern sem_t            daemons_lock;
 extern struct daemon    *daemons;
+
+/* Only one client can do list at a time */
+struct client       *list_client;
+sem_t               list_lock;
 
 // Handler of known files and its semaphor
 struct file_cache   *file_cache;
@@ -64,6 +68,7 @@ server_stop (int sig) {
     sem_destroy (&clients_lock);
     sem_destroy (&daemons_lock);
     sem_destroy (&file_cache_lock);
+    sem_destroy (&list_lock);
 
     if (clients) {
         while (clients) {
@@ -184,6 +189,13 @@ start_server (const char *conf_file) {
         log_failure (log_file, "Unable to create shared directory");
         exit (EXIT_FAILURE);
     }
+
+    /* Initialize the list_lock semaphore */
+    if (sem_init (&list_lock, 0, 1) < 0) {
+        log_failure (log_file, "Unable to sem_init list_lock");
+        exit (EXIT_FAILURE);
+    }
+    list_client = NULL;
 
     /* Initialize the file_cache handler */
     if (sem_init (&file_cache_lock, 0, 1) < 0) {

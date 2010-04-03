@@ -25,7 +25,7 @@ struct daemon {
     struct daemon           *prev;
 };
 
-struct daemon *daemon_new     (int socket, char *addr, int port);
+struct daemon *daemon_new     (int socket, const char *addr, int port);
 void           daemon_free    (struct daemon *d);
 struct daemon *daemon_add     (struct daemon *l, struct daemon *d);
 int            daemon_numbers (struct daemon *l);

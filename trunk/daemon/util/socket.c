@@ -1,5 +1,6 @@
 #include <netinet/in.h>         // struct sockaddr_in
 
+#include <errno.h>              // errno
 #include <stdio.h>              // FILE
 #include <string.h>             // strcpy ()
 
@@ -30,7 +31,8 @@ socket_init (struct sockaddr_in *sa) {
 
     if (bind (sd, (struct sockaddr *)sa, sizeof (*sa)) < 0) {
         log_failure (log_file,
-        "socket_init (): Could not assign a local address using bind : %d");
+                    "socket_init: bind () failed, error: %s",
+                    strerror (errno));
         return -1;
     }
 
@@ -90,6 +92,37 @@ socket_getline_with_trailer (int src_sock) {
     }
 
     return message;
+}
+
+char *
+socket_try_getline (int src_sock, int timeout) {
+    return string_remove_trailer (socket_try_getline_with_trailer (src_sock,
+                                                                    timeout));
+}
+
+char *
+socket_try_getline_with_trailer (int src_sock, int timeout_sec) {
+    fd_set          socket_read_set;
+    struct timeval  timeout;
+    int             select_value;
+
+    timeout.tv_sec = timeout_sec;
+    timeout.tv_usec = 0;
+    FD_ZERO (&socket_read_set);
+    FD_SET (src_sock, &socket_read_set);
+    select_value = select (src_sock + 1,
+                            &socket_read_set,
+                            NULL,
+                            NULL,
+                            &timeout);
+    if (select_value < 0) {
+        log_failure (log_file, "socket_try_getline: select () failed");
+        return NULL;
+    }
+    else if (!select_value) /* Timeout */
+        return NULL;
+    else
+        return socket_getline_with_trailer (src_sock);
 }
 
 void

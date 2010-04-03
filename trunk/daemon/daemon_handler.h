@@ -8,4 +8,6 @@
  */
 void handle_daemon (int daemon_socket, struct sockaddr_in *);
 
+void *handle_requests (void *arg);
+
 #endif//DAEMON_HANDLER

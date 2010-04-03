@@ -4,8 +4,6 @@
 #include "../util/logger.h" // log_recv ()
 #include "daemon_request.h" // struct daemon_request
 
-struct daemon;
-
 extern FILE*    log_file;
 
 struct daemon_request *
@@ -19,7 +17,6 @@ daemon_request_new (char *cmd, struct daemon *daemon) {
     if (!r)
         return NULL;
 
-//    r->cmd         = strdup (cmd);
     r->cmd          = cmd;
     r->daemon       = daemon;
     r->prev         = NULL;
@@ -27,8 +24,6 @@ daemon_request_new (char *cmd, struct daemon *daemon) {
 
     return r;
 }
-
-
 
 void
 daemon_request_free (struct daemon_request *r) {
@@ -41,8 +36,6 @@ daemon_request_free (struct daemon_request *r) {
     free (r);
 }
 
-
-
 struct daemon_request *
 daemon_request_add (struct daemon_request *l, struct daemon_request *r) {
     if (!l)
@@ -52,16 +45,19 @@ daemon_request_add (struct daemon_request *l, struct daemon_request *r) {
     r->prev = NULL;
     r->next = l;
     l->prev = r;
+
     return r;
 }
 
 struct daemon_request*
 daemon_request_remove (struct daemon_request *l, pthread_t pt) {
+    struct daemon_request *tmp;
+
     if (!l)
         return NULL;
 
-    struct daemon_request *tmp;
     for (tmp = l; pthread_equal (tmp->thread_id, pt) == 0; tmp = tmp->next);
+
     if (!tmp->prev) {
         if (tmp->next)
             tmp->next->prev = NULL;

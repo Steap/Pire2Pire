@@ -1,20 +1,25 @@
-#include <arpa/inet.h>                              // inet_ntop ()
-#include <netinet/in.h>                             // struct sockaddr_in
+#include <arpa/inet.h>          // inet_ntop ()
+#include <netinet/in.h>         // struct sockaddr_in
 
-#include <pthread.h>                                // pthread_detach ()
-#include <semaphore.h>                              // sem_t
-#include <signal.h>                                 // struct sigaction
-#include <stdlib.h>                                 // NULL
-#include <string.h>                                 // strncmp ()
+#include <pthread.h>            // pthread_detach ()
+#include <semaphore.h>          // sem_t
+#include <signal.h>             // struct sigaction
+#include <stdlib.h>             // NULL
+#include <string.h>             // strncmp ()
+#include <unistd.h>             // close ()
 
-#include "../util/logger.h"                         // log_failure ()
-#include "daemon.h"                                 // daemon_send ()
-#include "daemon_request.h"                         // struct daemon_request
-#include "daemon_requests.h"                    // daemon_request_unknown ()
-#include "util/socket.h"                            // socket_getline ()
+#include "../util/logger.h"     // log_failure ()
+#include "daemon.h"             // daemon_send ()
+#include "daemon_request.h"     // struct daemon_request
+#include "daemon_requests.h"    // daemon_request_unknown ()
+#include "util/socket.h"        // socket_getline ()
+#include "util/cmd_parser.h"
 
 #define MAX_DAEMONS                     10
 #define MAX_REQUESTS_PER_DAEMON         10
+/* A daemon who connects has this number of  seconds to send a "neighbour"
+ * message identifying itself */
+#define IDENTIFICATION_TIMEOUT          10
 
 extern FILE *log_file;
 
@@ -52,6 +57,7 @@ static void *
 start_request_thread (void *arg) {
     struct request_thread_wrapper   *wrapper;
     struct daemon_request           *r;
+    void *                          (*callback) (void *);
     struct sigaction                on_sigterm;
 
     /*
@@ -64,19 +70,32 @@ start_request_thread (void *arg) {
     sigemptyset (&on_sigterm.sa_mask);
     sigaction (SIGTERM, &on_sigterm, NULL);
 
+    /*
+     * Unwrap what we need
+     */
     wrapper = (struct request_thread_wrapper *)arg;
     if (!wrapper)
         return NULL;
     r = wrapper->request;
+    callback = wrapper->callback;
+    free (wrapper);
+
+    if (!pthread_equal (r->thread_id, pthread_self ()))
+        log_failure (log_file, "!!! DIFFERENT THREAD_ID !!!");
+
+    sem_wait (&r->daemon->req_lock);
+    r->daemon->requests = daemon_request_add (r->daemon->requests, r);
+    sem_post (&r->daemon->req_lock);
 
     // Now we call the request handler
-    wrapper->callback (wrapper->request);
+    callback (r);
 
     // And we remove the request properly
     sem_wait (&r->daemon->req_lock);
     r->daemon->requests = daemon_request_remove (r->daemon->requests,
                                                  r->thread_id);
     sem_post (&r->daemon->req_lock);
+
     daemon_request_free (r);
     pthread_detach (pthread_self ());
 
@@ -85,7 +104,7 @@ start_request_thread (void *arg) {
 
 
 
-static void*
+void *
 handle_requests (void *arg) {
     struct daemon                   *daemon;
     int                             r;
@@ -93,7 +112,7 @@ handle_requests (void *arg) {
     char                            *message;
     void*                           (*callback) (void *);
     struct daemon_request           *request;
-    struct request_thread_wrapper   wrapper;
+    struct request_thread_wrapper   *wrapper;
     char                            answer[128];
 
     if (!(daemon = (struct daemon *) arg))
@@ -102,6 +121,7 @@ handle_requests (void *arg) {
     log_success (log_file, "New daemon : %s", daemon->addr);
 
     for (;;)  {
+        wrapper = NULL;
         message  = NULL;
         callback = NULL;
         request  = NULL;
@@ -140,25 +160,25 @@ handle_requests (void *arg) {
             callback = &daemon_request_unknown;
 
         request = daemon_request_new (message, daemon);
-
         if (!request) {
             sprintf (answer, " < Failed to create a new request\n");
             send (daemon->socket, answer, strlen (answer), 0);
             continue;
         }
 
-        sem_wait (&daemon->req_lock);
-        daemon->requests = daemon_request_add (daemon->requests, request);
-        sem_post (&daemon->req_lock);
+        wrapper = (struct request_thread_wrapper *)
+                    malloc (sizeof (struct request_thread_wrapper));
+        wrapper->callback = callback;
+        wrapper->request = request;
 
-        wrapper.callback = callback;
-        wrapper.request = request;
+        sem_wait (&daemon->req_lock);
         r = pthread_create (&request->thread_id,
                             NULL,
                             start_request_thread,
-                            &wrapper);
+                            wrapper);
+        sem_post (&daemon->req_lock);
 
-        if (r < 0) {
+        if (r) {
             sprintf (answer,
                     " < Could not treat your request for an unexpected \
                       reason.");
@@ -174,24 +194,16 @@ out:
     daemons = daemon_remove (daemons, pthread_self ());
     sem_post (&daemons_lock);
 
-#if 1
-    // Free : 1
     if (message) {
         free (message);
-//        log_failure (log_file, "hr : Freed message");
     }
-#endif
     if (request) {
-        log_failure (log_file, "hr : request_free ()");
         daemon_request_free (request);
     }
-#if 1
-    // Free : 2
     if (daemon) {
-//        log_failure (log_file, "hr : daemon_free ()");
+        close (daemon->socket);
         daemon_free (daemon);
     }
-#endif
 
     pthread_detach (pthread_self ());
 
@@ -204,6 +216,7 @@ handle_daemon (int daemon_socket, struct sockaddr_in *daemon_addr) {
     int             r;
     struct daemon   *d;
     char            addr[INET_ADDRSTRLEN];
+    char            *ident_msg;
 
     d    = NULL;
 
@@ -215,32 +228,80 @@ handle_daemon (int daemon_socket, struct sockaddr_in *daemon_addr) {
         return;
     }
 
-    if (inet_ntop (AF_INET,
+    if (!inet_ntop (AF_INET,
                     &daemon_addr->sin_addr,
                     addr,
                     INET_ADDRSTRLEN)) {
-        d = daemon_new (daemon_socket, addr, ntohs (daemon_addr->sin_port));
+        return;
     }
 
+    /*
+     * The daemon who connected must identify itself or we won't add it
+     */
+    struct parsed_cmd   *pcmd;
+    int                 port;
+    char                *colon;
+    char                answer[256];
+
+    ident_msg = socket_try_getline (daemon_socket, IDENTIFICATION_TIMEOUT);
+    if (!ident_msg) {
+        sprintf (answer, "error: identification timed out\n");
+        goto abort;
+    }
+    sprintf (answer, "error: identify with neighbour IP:PORT\n");
+    if (cmd_parse_failed ((pcmd = cmd_parse (ident_msg, NULL)))) {
+        pcmd = NULL;
+        goto abort;
+    }
+    if (pcmd->argc < 2)
+        goto abort;
+    if (strcmp (pcmd->argv[0], "neighbour") != 0)
+        goto abort;
+    if (!(colon = strchr (pcmd->argv[1], ':')))
+        goto abort;
+    *colon = '\0';
+    if (strcmp (pcmd->argv[1], addr) != 0) {
+        sprintf (answer,
+                "error: for me, you are (%s), not (%s)\n",
+                addr,
+                pcmd->argv[1]);
+        goto abort;
+    }
+    port = atoi (colon + 1);
+
+    free (ident_msg);
+    cmd_parse_free (pcmd);
+
+    d = daemon_new (daemon_socket, addr, port);
     if (!d)
         log_failure (log_file, "=/ :-( :'(");
 
     sem_wait (&daemons_lock);
+    // FIXME: shouldn't we daemon_add after pthread_create?
     daemons = daemon_add (daemons, d);
-    sem_post (&daemons_lock);
-
     if (!daemons) {
         daemon_free (d);
         return;
     }
+    sem_post (&daemons_lock);
 
     r = pthread_create (&d->thread_id, NULL, handle_requests, d);
     if (r < 0) {
         log_failure (log_file, "==> Could not create thread");
         sem_wait (&daemons_lock);
+        // FIXME: is thread_id initialized here?
         daemons = daemon_remove (daemons, d->thread_id);
         sem_post (&daemons_lock);
         return;
     }
+
+    return;
+
+abort:
+    socket_sendline (daemon_socket, answer);
+    close (daemon_socket);
+    if (ident_msg)
+        free (ident_msg);
+    return;
 }
 

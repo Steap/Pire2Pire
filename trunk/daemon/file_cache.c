@@ -118,11 +118,16 @@ file_cache_add (struct file_cache *tree,
                                             size,
                                             ip, port);
         }
-        // If a node with the same key exist, let's assume it's the same file_cache
+        /* If a node with the same key already exists */
         else {
-            // Search if the seeder is already registered
-            // TODO
-            // If the seeder isn't registered, we must add him
+            /* Search if the seeder is already registered, if he is, leave */
+            sem_wait (&tree->seeders_lock);
+            for (s = tree->seeders; s; s = s->next)
+                if (strcmp (s->ip, ip) == 0 && s->port == port)
+                    return tree;
+            sem_post (&tree->seeders_lock);
+
+            /* If the seeder isn't registered, we must add him */
             s = (struct seeder *)malloc (sizeof (struct seeder));
             if (!s) {
                 log_failure (log_file,

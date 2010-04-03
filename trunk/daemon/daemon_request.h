@@ -6,11 +6,11 @@
 struct daemon;
 
 struct daemon_request {
+    pthread_t               thread_id;
     char                    *cmd;
     struct daemon           *daemon;
     struct daemon_request   *prev;
     struct daemon_request   *next;
-    pthread_t               thread_id;
 };
 
 struct daemon_request

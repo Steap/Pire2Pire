@@ -18,6 +18,9 @@
 #include "../util/cmd_parser.h" // cmd_parse ()
 #include "../util/socket.h"     // socket_sendline ()
 
+/* How long should a client be redirected file messages */
+#define LIST_TIMEOUT    1
+
 extern struct prefs *prefs;
 #define SHARED_FOLDER prefs->shared_folder
 
@@ -26,7 +29,10 @@ extern struct file_cache    *file_cache;
 extern sem_t                file_cache_lock;
 extern struct daemon        *daemons;
 extern sem_t                daemons_lock;
+extern struct client        *list_client;
+extern sem_t                list_lock;
 
+/*
 static int                      nb_daemons;
 static int                      *sockets;
 static int                      nfds;
@@ -36,19 +42,40 @@ static void create_socket_table ();
 static void send_list_to_each_socket ();
 static void forward_responses ();
 static void free_socket_table ();
+*/
 
 void*
 client_request_list (void *arg) {
+    struct client_request   *r;
+    struct daemon           *d;
+
     r = (struct client_request *)arg;
     if (!r)
         return NULL;
+
+    /* Lock list */
+    sem_wait (&list_lock);
+    list_client = r->client;
+
+    sem_wait (&daemons_lock);
+    for_each_daemon (d) {
+        daemon_send (d, "list\n");
+    }
+    sem_post (&daemons_lock);
+
+    /* For 1 second, I shall be forwarded the responses by dr_file */
+    sleep (LIST_TIMEOUT);
+
+    /* Release list */
+    list_client = NULL;
+    sem_post (&list_lock);
 
     /*
      * Here, we will create a socket for each daemon, in order to broadcast a
      * "list" message, and forward all "file" responses to the client who asked
      * for the list.
      */
-
+/*
     create_socket_table ();
 
     send_list_to_each_socket ();
@@ -56,10 +83,12 @@ client_request_list (void *arg) {
     forward_responses ();
 
     free_socket_table ();
+*/
 
     return NULL;
 }
 
+#if 0
 static void
 create_socket_table () {
     struct daemon           *d;
@@ -221,3 +250,4 @@ free_socket_table () {
                                                         argv[4]);
                         cmd_free (argv);
 */
+#endif

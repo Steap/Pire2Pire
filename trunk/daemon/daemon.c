@@ -12,7 +12,7 @@
 extern FILE *log_file;
 
 struct daemon *
-daemon_new (int socket, char *addr, int port) {
+daemon_new (int socket, const char *addr, int port) {
     struct daemon *d;
     d = malloc (sizeof (struct daemon));
     if (d == NULL)

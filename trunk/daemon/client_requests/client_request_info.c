@@ -7,8 +7,11 @@
 #include "../client_request.h"  // struct client_request
 #include "../daemon.h"          // daemon_numbers ()
 
-extern struct client *clients;
-extern struct daemon *daemons;
+#define DEBUG   1
+
+extern struct client    *clients;
+extern struct daemon    *daemons;
+extern sem_t            daemons_lock;
 
 void*
 client_request_info (void *arg) {
@@ -17,8 +20,7 @@ client_request_info (void *arg) {
     char                    answer[256];
     int                     n;
     int                     count;
-
-    /* OKAY, let's say all options/args are silently ignored */
+    struct daemon           *d;
 
     r = (struct client_request *) arg;
     if (!r)
@@ -53,6 +55,19 @@ client_request_info (void *arg) {
         client_send (r->client, answer);
     }
     sem_post (&r->client->req_lock);
+
+#ifdef DEBUG
+    client_send (r->client, "Daemons:\n");
+    sem_wait (&daemons_lock);
+    for_each_daemon (d) {
+        sprintf (answer,
+                "%s:%d\n",
+                d->addr,
+                d->port);
+        client_send (r->client, answer);
+    }
+    sem_post (&daemons_lock);
+#endif
 
     return NULL;
 }

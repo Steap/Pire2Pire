@@ -1,5 +1,6 @@
 #include <arpa/inet.h>          // inet_pton ()
 
+#include <errno.h>              // errno
 #include <fcntl.h>              // open ()
 #include <stdio.h>              // FILE
 #include <string.h>             // strcpy ()
@@ -46,7 +47,7 @@ daemon_request_ready (void* arg) {
      * ready KEY DELAY IP PORT PROTOCOL BEGINNING END
      */
     argv = cmd_to_argc_argv (r->cmd, &argc);
-    if (argc != 8) {
+    if (argc < 8) {
         cmd_free (argv);
         return NULL;
     }
@@ -64,15 +65,19 @@ daemon_request_ready (void* arg) {
         return NULL;
     }
 
-    if (inet_pton (AF_INET, ip, &dl_addr) < 1) {
+    dl_addr.sin_family = AF_INET;
+    if (inet_pton (AF_INET, ip, &dl_addr.sin_addr) < 1) {
+        log_failure (log_file, "dr_ready: inet_pton () failed");
         return NULL;
     }
     // TODO: Verifications on port
     dl_addr.sin_port = htons (atoi (port));
 
     file = file_cache_get_by_key (file_cache, key);
-    if (!file)
+    if (!file) {
+        log_failure (log_file, "dr_ready: file_cache_get_by_key () failed");
         return NULL;
+    }
 
     // TODO: Check if we actually asked for that file
 
@@ -84,25 +89,31 @@ daemon_request_ready (void* arg) {
                                 + 2) * sizeof (char));
     sprintf (full_path, "%s/%s", prefs->shared_folder, file->filename);
     // FIXME: We should not truncate the file when downloading it by blocks
-    local_file = open (file->filename, O_WRONLY | O_TRUNC);
+    local_file = open (full_path,
+                        O_WRONLY | O_TRUNC | O_CREAT,
+                        (mode_t)0644);
     free (full_path);
     if (local_file < 0) {
-        log_failure (log_file, "daemon_request_ready (): Unable to open file");
+        log_failure (log_file,
+                    "dr_ready: open () failed, error: %s",
+                    strerror (errno));
         return NULL;
     }
 
     if (connect (dl_sock, (struct sockaddr *)&dl_addr, sizeof (dl_addr)) < 0) {
+        log_failure (log_file,
+                    "dr_ready: connect () failed, error: %s",
+                    strerror (errno));
         return NULL;
     }
 
     nb_received_sum = 0;
     // FIXME: nb_received_sum should be compared to end - begin
     while (nb_received_sum < file->size) {
-log_success (log_file, "Receiving file...");
         nb_received = recv (dl_sock, buffer, BUFFSIZE, 0);
         if (nb_received < 0) {
             log_failure (log_file,
-                        "daemon_request_ready (): recv failed");
+                        "dr_ready: recv () failed");
             return NULL;
         }
         nb_received_sum += nb_received;
@@ -110,13 +121,14 @@ log_success (log_file, "Receiving file...");
             nb_written = write (local_file, buffer, nb_received);
             if (nb_written < 0) {
                 log_failure (log_file,
-                            "daemon_request_ready (): write failed");
+                            "dr_ready: write () failed");
                 return NULL;
             }
             nb_received -= nb_written;
         }
     }
-log_success (log_file, "File completely received");
+
+    log_success (log_file, "dr_ready: Received block completely");
 
     close (dl_sock);
     close (local_file);
