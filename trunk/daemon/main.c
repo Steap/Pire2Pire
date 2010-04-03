@@ -76,6 +76,7 @@ server_stop (int sig) {
     if (daemons) {
         while (daemons) {
             d = daemons->next;
+            daemon_send (daemons, "quit\n");
             daemon_free (daemons);
             daemons = d;
         }
