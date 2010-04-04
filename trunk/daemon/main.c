@@ -187,31 +187,31 @@ start_server (const char *conf_file) {
     /* Create the shared directory if it does not exist already */
     if (create_dir (prefs->shared_folder, (mode_t)0755) < 0) {
         log_failure (log_file, "Unable to create shared directory");
-        exit (EXIT_FAILURE);
+        goto abort;
     }
 
     /* Initialize the list_lock semaphore */
     if (sem_init (&list_lock, 0, 1) < 0) {
         log_failure (log_file, "Unable to sem_init list_lock");
-        exit (EXIT_FAILURE);
+        goto abort;
     }
     list_client = NULL;
 
     /* Initialize the file_cache handler */
     if (sem_init (&file_cache_lock, 0, 1) < 0) {
         log_failure (log_file, "Unable to sem_init file_cache_lock");
-        exit (EXIT_FAILURE);
+        goto abort;
     }
     file_cache = NULL;
 
     /* Initializing the global semaphores */
     if (sem_init (&clients_lock, 0, 1) < 0) {
         log_failure (log_file, "Unable to sem_init clients_lock");
-        exit (EXIT_FAILURE);
+        goto abort;
     }
     if (sem_init (&daemons_lock, 0, 1) < 0) {
         log_failure (log_file, "Unable to sem_init daemons_lock");
-        exit (EXIT_FAILURE);
+        goto abort;
     }
 
     client_sa.sin_family        = AF_INET;
@@ -219,7 +219,7 @@ start_server (const char *conf_file) {
     client_sa.sin_port          = htons (prefs->client_port);
     client_sd = socket_init (&client_sa);
     if (client_sd < 0) {
-        exit (EXIT_FAILURE);
+        goto abort;
     }
 
     daemon_sa.sin_family        = AF_INET;
@@ -227,7 +227,7 @@ start_server (const char *conf_file) {
     daemon_sa.sin_port          = htons (prefs->daemon_port);
     daemon_sd = socket_init (&daemon_sa);
     if (daemon_sd < 0) {
-        exit (EXIT_FAILURE);
+        goto abort;
     }
 
 #if 1
@@ -236,7 +236,7 @@ start_server (const char *conf_file) {
     if (ioctl (daemon_sd, SIOCGIFADDR, &if_info) == -1) {
         log_failure (log_file, "Can't get my ip from interface");
         log_failure (log_file, "LOL ERRNO : %s\n", strerror (errno));
-        exit (EXIT_FAILURE);
+        goto abort;
     }
     if_addr = (struct sockaddr_in *)&if_info.ifr_addr;
     inet_ntop (AF_INET, &if_addr->sin_addr, my_ip, INET_ADDRSTRLEN);
@@ -278,6 +278,10 @@ start_server (const char *conf_file) {
             log_failure (log_file, "Unknown connection");
         }
     }
+
+abort:
+    conf_free (prefs);
+    exit (EXIT_FAILURE);
 }
 
 int

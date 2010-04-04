@@ -47,7 +47,7 @@ daemon_request_list (void *arg) {
 
     /* OKAY, let's say all options/args are silently ignored */
 
-    r = (struct daemon_request *) arg;
+    r = (struct daemon_request *)arg;
     if (!r)
         return NULL;
 

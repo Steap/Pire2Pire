@@ -80,9 +80,6 @@ start_request_thread (void *arg) {
     callback = wrapper->callback;
     free (wrapper);
 
-    if (!pthread_equal (r->thread_id, pthread_self ()))
-        log_failure (log_file, "!!! DIFFERENT THREAD_ID !!!");
-
     sem_wait (&r->daemon->req_lock);
     r->daemon->requests = daemon_request_add (r->daemon->requests, r);
     sem_post (&r->daemon->req_lock);
@@ -137,6 +134,7 @@ handle_requests (void *arg) {
             goto out;
 
         if (daemon_request_count (daemon->requests) == MAX_REQUESTS_PER_DAEMON) {
+            /* FIXME: this is copy-paste from client, should be different */
             sprintf (answer, " < Too many requests, mister, plz calm down\n");
             send (daemon->socket, answer, strlen (answer), 0);
             continue;

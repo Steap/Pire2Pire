@@ -9,6 +9,7 @@
 #include <semaphore.h>
 #include <stdio.h>              // FILE
 #include <string.h>             // strlen ()
+#include <unistd.h>
 
 #include "../../util/logger.h"  // log_failure ()
 #include "../client.h"          // client_send ()
@@ -34,27 +35,12 @@ static char                         answer[256];
 static const struct file_cache      *file_to_dl;
 /* Daemon who should send us the file */
 static struct daemon                *d;
-/* File descriptor of the file being downloaded */
-static int                          local_file;
-/* The socket we will actually use for download */
-static int                          dl_sock;
-/* The ready command parsed */
-struct parsed_cmd                   *parsed_ready;
 
 static int find_file ();
 static int find_daemon ();
-static int prepare_file ();
-static int connect_to_daemon ();
-static int download_file ();
 
-#include <unistd.h>
 void*
 client_request_get (void *arg) {
-    char *readycmd;
-
-    dl_sock = -1;
-    local_file = -1;
-
     r = (struct client_request *) arg;
     if (!r)
         return NULL;
@@ -62,13 +48,13 @@ client_request_get (void *arg) {
 
     /* First we find the file in the cache */
     if (find_file () < 0)
-        goto out;
+        return NULL;
     /* file_to_dl should now be the good one */
 
 
     /* Find the daemon owning the file by checking its IP */
     if (find_daemon () < 0)
-        goto out;
+        return NULL;
     /* d should now point to the good daemon */
 
 
@@ -78,58 +64,12 @@ client_request_get (void *arg) {
              file_to_dl->key,
              0,
              file_to_dl->size);
-log_success (log_file, "Sending to d @%s (sd:%d)", d->addr, d->socket);
     if (daemon_send (d, answer) < 0) {
         log_failure (log_file, "cr_get: could not send the get command");
-        goto out;
+        return NULL;
     }
 
 
-    /*
-     * Reading the answer ("ready")
-     * TODO : what if it never comes ? What if it is not "ready" ?
-     * Cmd is supposedly :
-     * ready KEY DELAY IP PORT PROTOCOL BEGINNING END
-     *   0    1    2   3   4       5        6      7
-     */
-    readycmd = socket_getline_with_trailer (d->socket);
-    if (!readycmd)
-        goto out;
-    if (cmd_parse_failed ((parsed_ready = cmd_parse (readycmd, NULL)))) {
-        free (readycmd);
-        goto out;
-    }
-    free (readycmd);
-    if (parsed_ready->argc < 8) {
-        goto out;
-    }
-
-
-    /* Prepare the file for download */
-    if (prepare_file () < 0)
-        goto out;
-
-
-    /* Connect to the peer */
-    if (connect_to_daemon () < 0)
-        goto out;
-
-
-    if (download_file () < 0)
-        goto out;
-
-
-    return NULL;
-
-
-
-out:
-    if (local_file >= 0)
-        close (local_file);
-    if (dl_sock >= 0)
-        close (dl_sock);
-    if (parsed_ready)
-        cmd_parse_free (parsed_ready);
     return NULL;
 }
 
@@ -167,7 +107,7 @@ static int find_file () {
                 goto error;
             }
             sprintf (answer,
-                    "< get : seeder is %s:%d",
+                    "< get : seeder is %s:%d\n",
                     file_to_dl->seeders->ip,
                     file_to_dl->seeders->port);
             if (client_send (r->client, answer) < 0) {
@@ -213,107 +153,3 @@ find_daemon () {
     return 0;
 }
 
-static int
-prepare_file () {
-    char *full_path;
-
-    /* TODO : Check if we actually asked for that file */
-    /* TODO : Check if file already exists */
-    /* + 2 for '/' and '\0' */
-    full_path = (char *)malloc ((strlen (prefs->shared_folder)
-                                + strlen (file_to_dl->filename)
-                                + 2) * sizeof (char));
-
-    sprintf (full_path, "%s/%s", prefs->shared_folder, file_to_dl->filename);
-
-    /* FIXME: We should not truncate the file when downloading it by blocks */
-    local_file = open (full_path, O_CREAT | O_WRONLY | O_TRUNC, (mode_t)0644);
-    if (local_file < 0) {
-        log_failure (log_file,
-                    "cr_get: Unable to open %s, error : %s",
-                    full_path,
-                    strerror (errno));
-        free (full_path);
-        return -1;
-    }
-    free (full_path);
-
-    /*
-     * TODO: We should mmap the file, then close the file descriptor and use
-     * the map, then munmap it at the end
-     */
-
-    return 0;
-}
-
-static int
-connect_to_daemon () {
-    struct sockaddr_in      dl_addr;
-
-    /* TODO: Use the protocol specified */
-    if ((dl_sock = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-        log_failure (log_file, "cr_get (): socket () failed");
-        return -1;
-    }
-
-    dl_addr.sin_family = AF_INET;
-    dl_addr.sin_port = htons (atoi (parsed_ready->argv[4]));
-    // TODO: Verifications on port
-    if (inet_pton (AF_INET, parsed_ready->argv[3], &dl_addr.sin_addr) < 1) {
-        return -1;
-    }
-
-    if (connect (dl_sock, (struct sockaddr *)&dl_addr, sizeof (dl_addr)) < 0) {
-        log_failure (log_file,
-                    "cr_get: connect failed, error : %s",
-                    strerror (errno));
-        return -1;
-    }
-
-    return 0;
-}
-
-static int
-download_file () {
-
-    unsigned int    nb_received_sum;
-    int             nb_received;
-    int             nb_written;
-    char            buffer[RECV_BUFFSIZE];
-
-    /* TODO: We should use a mmapped region instead of write () */
-
-    nb_received_sum = 0;
-    /* FIXME: nb_received_sum should be compared to end - begin */
-    while (nb_received_sum < file_to_dl->size) {
-        nb_received = recv (dl_sock, buffer, RECV_BUFFSIZE, 0);
-        if (nb_received < 0) {
-            log_failure (log_file, "cr_get: recv () failed");
-            return -1;
-        }
-        nb_received_sum += nb_received;
-        while (nb_received) {
-            nb_written = write (local_file, buffer, nb_received);
-            if (nb_written < 0) {
-                log_failure (log_file, "cr_get: write () failed");
-                return -1;
-            }
-            nb_received -= nb_written;
-        }
-    }
-
-    if (close (dl_sock) < 0) {
-        log_failure (log_file, "cr_get: close () failed");
-        return -1;
-    }
-    dl_sock = -1;
-
-    /* TODO: With mmap, local_file should already be closed */
-    if (close (local_file) < 0) {
-        log_failure (log_file, "cr_get: close () failed");
-        return -1;
-    }
-    local_file = -1;
-
-    return 0;
-}
