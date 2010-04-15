@@ -40,6 +40,7 @@ daemon_request_ready (void* arg) {
     char                    buffer[BUFFSIZE];
     int                     nb_written;
     char                    *full_path;
+    char                    error_buffer[BUFFSIZE];
 
     r = (struct daemon_request *) arg;
     if (!r)
@@ -52,6 +53,10 @@ daemon_request_ready (void* arg) {
     argv = cmd_to_argc_argv (r->cmd, &argc);
     if (argc < 8) {
         cmd_free (argv);
+        sprintf (error_buffer, 
+                 "error %s: Invalid number of arguments",
+                 __FUNCTION__);
+        daemon_send (r->daemon, error_buffer);
         return NULL;
     }
     key = argv[1];

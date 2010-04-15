@@ -8,6 +8,8 @@
 #include "../file_cache.h"      // struct file_cache
 #include "../util/cmd_parser.h" // cmd_parse ()
 
+#define BUFFSIZE 128
+
 extern FILE                     *log_file;
 extern struct file_cache        *file_cache;
 extern sem_t                    file_cache_lock;
@@ -18,6 +20,7 @@ daemon_request_file (void* arg) {
     struct daemon_request   *r;
     struct parsed_cmd       *pcmd;
     struct client           *lister;
+    char                    error_buffer[BUFFSIZE];
 
     r = (struct daemon_request *) arg;
     if (!r)
@@ -36,10 +39,18 @@ daemon_request_file (void* arg) {
      *  0    1    2   3      4
      */
     if (cmd_parse_failed ((pcmd = cmd_parse (r->cmd, NULL)))) {
+        sprintf (error_buffer,
+                 "error %s: Command parse failed",
+                 __FUNCTION__);
+        daemon_send (r->daemon, error_buffer);
         return NULL;
     }
     if (pcmd->argc < 5) {
         cmd_parse_free (pcmd);
+        sprintf (error_buffer,
+                 "error %s: Invalid number of arguments",
+                 __FUNCTION__);
+        daemon_send (r->daemon, error_buffer);
         return NULL;
     }
 

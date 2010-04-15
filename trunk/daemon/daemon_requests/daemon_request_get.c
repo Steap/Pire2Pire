@@ -66,6 +66,7 @@ daemon_request_get (void *arg) {
     struct option_template options [] = {
         {0, NULL, NO_ARG}
     };
+    char                    error_buffer[BUFFSIZE];
 
     listen_sock = -1;
     data_sock = -1;
@@ -80,12 +81,18 @@ daemon_request_get (void *arg) {
      * get KEY BEGINNING END
      */
     if (cmd_parse_failed (pcmd = cmd_parse (r->cmd, options))) {
-        daemon_send (r->daemon, "error Command parse failed");
+        sprintf (error_buffer,
+                 "error %s: Command parse failed",
+                 __FUNCTION__);
+        daemon_send (r->daemon, error_buffer);
         return NULL;
     }
     if (pcmd->argc != 4) {
         cmd_parse_free (pcmd);
-        daemon_send (r->daemon, "error Invalid number of arguments");
+        sprintf (error_buffer,
+                 "error %s: Invalid number of arguments",
+                 __FUNCTION__);
+        daemon_send (r->daemon, error_buffer);
         return NULL;
     }
 
