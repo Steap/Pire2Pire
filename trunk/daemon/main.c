@@ -116,7 +116,7 @@ server_stop (int sig) {
     if (prefs) {
         conf_free (prefs);
         log_success (log_file, 
-                     "%s : Preferences have been freed."
+                     "%s : Preferences have been freed.",
                      __func__);
     }
 
