@@ -141,6 +141,11 @@ daemon_request_ready (void* arg) {
     // FIXME: nb_received_sum should be compared to end - begin
     sleep (2);
     while (nb_received_sum < file->size) {
+        log_failure (log_file,
+                     "DBG %d %d",
+                     nb_received_sum,
+                     file->size);
+                     
         nb_received = recv (dl_sock, buffer, BUFFSIZE, 0);
         if (nb_received < 0) {
             log_failure (log_file,

@@ -186,7 +186,7 @@ handle_requests (void *arg) {
     }
 
 out:
-    log_success (log_file, "End of %s", daemon->addr);
+    //log_success (log_file, "End of %s", daemon->addr);
 
     sem_wait (&daemons_lock);
     daemons = daemon_remove (daemons, pthread_self ());

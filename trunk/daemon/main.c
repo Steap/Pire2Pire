@@ -73,6 +73,8 @@ server_stop (int sig) {
     sem_destroy (&daemons_lock);
     sem_destroy (&file_cache_lock);
     sem_destroy (&list_lock);
+    sem_destroy (&downloads_lock);
+
 
     if (clients) {
         while (clients) {
@@ -80,6 +82,9 @@ server_stop (int sig) {
             free (clients);
             clients = c;
         }
+        log_success (log_file, 
+                     "%s : all clients have been freed",
+                     __func__);
     }
 
     if (daemons) {
@@ -89,10 +94,16 @@ server_stop (int sig) {
             daemon_free (daemons);
             daemons = d;
         }
+        log_success (log_file,
+                     "%s : all daemons have been freed",
+                     __func__);
     }
 
     if (file_cache) {
         file_cache_free (file_cache);
+        log_success (log_file,
+                     "%s : file cache has been freed",
+                     __func__);
     }
 
     if (unlink (LOCK_FILE) < 0)
@@ -102,10 +113,14 @@ server_stop (int sig) {
         log_success (log_file, "Stopping server, waiting for SIGKILL");
         fclose (log_file);
     }
-    if (prefs)
+    if (prefs) {
         conf_free (prefs);
+        log_success (log_file, 
+                     "%s : Preferences have been freed."
+                     __func__);
+    }
 
-    exit (0);
+    exit (EXIT_SUCCESS);
 }
 
 void daemonize(void) {
