@@ -171,6 +171,8 @@ handle_requests (void *arg) {
         /* FIXME : use the IS_CMD macro */
         if (strncmp (message, "connect", 7) == 0)
             callback = &client_request_connect;
+        else if (strncmp (message, "download", 8) == 0)
+            callback = &client_request_download;
 #if 1
         else if (strncmp (message, "get", 3) == 0)
             callback = &client_request_get;

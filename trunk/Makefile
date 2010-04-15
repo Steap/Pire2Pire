@@ -21,6 +21,7 @@ DAEMON_SOURCES=\
 	daemon/client.c					                \
 	daemon/client_handler.c				                \
 	daemon/client_requests/client_request_connect.c	                \
+	daemon/client_requests/client_request_download.c                \
         daemon/client_requests/client_request_get.c                     \
 	daemon/client_requests/client_request_help.c	                \
 	daemon/client_requests/client_request_info.c	                \
@@ -34,17 +35,18 @@ DAEMON_SOURCES=\
 	daemon/daemon_handler.c				                \
 	daemon/daemon_requests/daemon_request_error.c	                \
 	daemon/daemon_requests/daemon_request_file.c	                \
-        daemon/daemon_requests/daemon_request_get.c     \
+        daemon/daemon_requests/daemon_request_get.c                     \
 	daemon/daemon_requests/daemon_request_list.c	                \
         daemon/daemon_requests/daemon_request_neighbour.c               \
         daemon/daemon_requests/daemon_request_neighbourhood.c           \
-        daemon/daemon_requests/daemon_request_ready.c       \
+        daemon/daemon_requests/daemon_request_ready.c                   \
 	daemon/daemon_requests/daemon_request_unknown.c	                \
 	daemon/daemon_request.c				                \
+	daemon/dl_file.c                                                \
 	daemon/main.c					                \
 	daemon/file_cache.c				                \
 	daemon/util/cmd.c				                \
-    daemon/util/cmd_parser.c                        \
+        daemon/util/cmd_parser.c                                        \
 	daemon/util/socket.c
 
 UTIL_SOURCES=\

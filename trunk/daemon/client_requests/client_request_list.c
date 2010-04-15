@@ -19,7 +19,7 @@
 #include "../util/socket.h"     // socket_sendline ()
 
 /* How long should a client be redirected file messages */
-#define LIST_TIMEOUT    1
+#define LIST_TIMEOUT    25
 
 extern struct prefs *prefs;
 #define SHARED_FOLDER prefs->shared_folder
@@ -70,6 +70,7 @@ client_request_list (void *arg) {
     list_client = NULL;
     sem_post (&list_lock);
 
+    log_failure (log_file, "******** End of list ********");
     /*
      * Here, we will create a socket for each daemon, in order to broadcast a
      * "list" message, and forward all "file" responses to the client who asked

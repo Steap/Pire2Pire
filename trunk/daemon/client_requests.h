@@ -2,6 +2,7 @@
 #define CLIENT_REQUESTS_H
 
 #include "client_requests/client_request_connect.h"
+#include "client_requests/client_request_download.h"
 #include "client_requests/client_request_get.h"
 #include "client_requests/client_request_help.h"
 #include "client_requests/client_request_info.h"

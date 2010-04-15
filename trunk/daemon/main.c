@@ -17,6 +17,7 @@
 #include "client_handler.h" // handle_daemon ()
 #include "conf.h"           // struct prefs
 #include "daemon_handler.h" // handle_client ()
+#include "dl_file.h"
 #include "file_cache.h"     // struct file_cache
 #include "util/socket.h"    // socket_init ()
 
@@ -36,6 +37,9 @@ extern sem_t            clients_lock;
 extern struct client    *clients;
 extern sem_t            daemons_lock;
 extern struct daemon    *daemons;
+
+sem_t                   downloads_lock;
+struct dl_file          *downloads;
 
 /* Only one client can do list at a time */
 struct client       *list_client;
@@ -214,6 +218,11 @@ start_server (const char *conf_file) {
         goto abort;
     }
 
+    downloads = NULL;
+    if (sem_init (&downloads_lock, 0, 1) < 0) {
+        log_failure (log_file, "Unable to sem_init download_queue_lock");
+        goto abort;
+    }
     client_sa.sin_family        = AF_INET;
     client_sa.sin_addr.s_addr   = INADDR_ANY;
     client_sa.sin_port          = htons (prefs->client_port);

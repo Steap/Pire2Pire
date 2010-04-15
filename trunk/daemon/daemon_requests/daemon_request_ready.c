@@ -10,6 +10,7 @@
 #include "../conf.h"            // struct prefs
 #include "../daemon.h"          // daemon_send ()
 #include "../daemon_request.h"  // struct daemon_request
+#include "../dl_file.h"
 #include "../file_cache.h"      // struct file_cache
 #include "../util/cmd.h"        // cmd_to_argc_argv ()
 
@@ -19,6 +20,8 @@ extern struct file_cache    *file_cache;
 extern sem_t                file_cache_lock;
 extern struct prefs         *prefs;
 extern FILE                 *log_file;
+extern sem_t                downloads_lock;
+extern struct dl_file       *downloads;
 
 void*
 daemon_request_ready (void* arg) {
@@ -92,7 +95,7 @@ daemon_request_ready (void* arg) {
     local_file = open (full_path,
                         O_WRONLY | O_TRUNC | O_CREAT,
                         (mode_t)0644);
-    free (full_path);
+    //free (full_path);
     if (local_file < 0) {
         log_failure (log_file,
                     "dr_ready: open () failed, error: %s",
@@ -107,8 +110,31 @@ daemon_request_ready (void* arg) {
         return NULL;
     }
 
+    /*
+     * Downloading the file
+     */
+
+    /* Let's upload the download queue */
+    struct dl_file *f;
+    
+    f = dl_file_new (full_path, file->size);
+    if (!f) {
+        log_failure (log_file, "struct dl_file is NULL :(");
+        goto out;
+    }
+
+    sem_wait (&downloads_lock);
+    downloads = dl_file_add (downloads, f);
+    if (!downloads) {
+        log_failure (log_file, 
+                    "Could not add the file to the download queue\n");
+        goto out;
+    }
+    sem_post (&downloads_lock);
+
     nb_received_sum = 0;
     // FIXME: nb_received_sum should be compared to end - begin
+    sleep (2);
     while (nb_received_sum < file->size) {
         nb_received = recv (dl_sock, buffer, BUFFSIZE, 0);
         if (nb_received < 0) {
@@ -128,12 +154,26 @@ daemon_request_ready (void* arg) {
         }
     }
 
-    log_success (log_file, "dr_ready: Received block completely");
+    /* 
+     * Releasing the file from the download queue 
+     */
+    sem_wait (&downloads_lock);
+    downloads = dl_file_remove (downloads, f);
+    dl_file_free (f);
+    sem_post (&downloads_lock);
+
+    log_success (log_file, 
+                "dr_ready: Received block completely %s",
+                full_path);
 
     close (dl_sock);
     close (local_file);
 
-    cmd_free (argv);
 
+out:
+    if (full_path)
+        free (full_path);
+    if (argv)
+        cmd_free (argv);
     return NULL;
 }
