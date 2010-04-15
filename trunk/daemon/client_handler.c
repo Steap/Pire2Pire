@@ -78,7 +78,7 @@ static void
 terminate_thread (int signum) {
     (void)signum;
     pthread_detach (pthread_self ());
-    pthread_exit (NULL);
+    //pthread_exit (NULL);
 }
 
 
@@ -254,6 +254,7 @@ out:
 #endif
 
     pthread_detach (pthread_self ());
+    log_failure (log_file, "End of %s (%s)", __func__, __FILE__);
 
     return NULL;
 }

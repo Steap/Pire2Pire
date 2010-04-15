@@ -15,6 +15,8 @@
 
 #include "../util/logger.h" // log_failure ()
 #include "client_handler.h" // handle_daemon ()
+#include "client_request.h"
+#include "daemon_request.h"
 #include "conf.h"           // struct prefs
 #include "daemon_handler.h" // handle_client ()
 #include "dl_file.h"
@@ -68,6 +70,8 @@ server_stop (int sig) {
     struct daemon   *d;
 
     (void) sig;
+    log_failure (log_file, "Ok, received a signal");
+    sleep (2);
 
     sem_destroy (&clients_lock);
     sem_destroy (&daemons_lock);
@@ -75,11 +79,14 @@ server_stop (int sig) {
     sem_destroy (&list_lock);
     sem_destroy (&downloads_lock);
 
-
+    struct client_request *tmp_cr;
     if (clients) {
         while (clients) {
             c = clients->next;
-            free (clients);
+            for (tmp_cr = clients->requests; tmp_cr; tmp_cr = tmp_cr->next) {
+                pthread_kill (tmp_cr->thread_id, SIGTERM);
+            }
+            client_free (clients);
             clients = c;
         }
         log_success (log_file, 
@@ -90,6 +97,9 @@ server_stop (int sig) {
     if (daemons) {
         while (daemons) {
             d = daemons->next;
+            //pthread_kill (daemons->thread_id, SIGTERM);
+            if (pthread_detach (daemons->thread_id) != 0)
+                log_failure (log_file, "detach failed");
             daemon_send (daemons, "quit\n");
             daemon_free (daemons);
             daemons = d;
@@ -109,15 +119,16 @@ server_stop (int sig) {
     if (unlink (LOCK_FILE) < 0)
         if (log_file)
             log_failure (log_file, "Could not destroy the lock file");
-    if (log_file) {
-        log_success (log_file, "Stopping server, waiting for SIGKILL");
-        fclose (log_file);
-    }
     if (prefs) {
         conf_free (prefs);
         log_success (log_file, 
                      "%s : Preferences have been freed.",
                      __func__);
+    }
+
+    if (log_file) {
+        log_success (log_file, "Stopping server, waiting for SIGKILL");
+        fclose (log_file);
     }
 
     exit (EXIT_SUCCESS);

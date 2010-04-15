@@ -39,7 +39,7 @@ static void
 terminate_thread (int signum) {
     (void)signum;
     pthread_detach (pthread_self ());
-    pthread_exit (NULL);
+    //pthread_exit (NULL);
 }
 
 
@@ -103,6 +103,7 @@ start_request_thread (void *arg) {
 
 void *
 handle_requests (void *arg) {
+    log_failure (log_file, "Bonjour, je suisun démon");
     struct daemon                   *daemon;
     int                             r;
     /* The message typed by the user */
@@ -186,7 +187,8 @@ handle_requests (void *arg) {
     }
 
 out:
-    //log_success (log_file, "End of %s", daemon->addr);
+    if (daemon)
+        log_success (log_file, "End of %s", daemon->addr);
 
     sem_wait (&daemons_lock);
     daemons = daemon_remove (daemons, pthread_self ());
@@ -202,8 +204,10 @@ out:
         close (daemon->socket);
         daemon_free (daemon);
     }
-
+    log_failure (log_file, "END OF HR");
     pthread_detach (pthread_self ());
+    log_failure (log_file, "%s %s freed thread", __FILE__, __func__);
+    pthread_exit (NULL);
 
     return NULL;
 }
