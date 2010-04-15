@@ -80,12 +80,12 @@ daemon_request_get (void *arg) {
      * get KEY BEGINNING END
      */
     if (cmd_parse_failed (pcmd = cmd_parse (r->cmd, options))) {
-        /* TODO: send an error message */
+        daemon_send (r->daemon, "error Command parse failed");
         return NULL;
     }
     if (pcmd->argc != 4) {
         cmd_parse_free (pcmd);
-        /* TODO: send an error message */
+        daemon_send (r->daemon, "error Invalid number of arguments");
         return NULL;
     }
 
@@ -187,7 +187,6 @@ find_file () {
         }
     }
     if (!entry) {
-        /* TODO: send an error message */
         log_failure (log_file,
                         "dr_get (): Unable to locate file with key %s",
                         pcmd->argv[1]);
