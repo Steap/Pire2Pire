@@ -112,6 +112,7 @@ worker_thread (void *arg) {
 */
 static int
 create_threads (struct pool *pool) {
+    int i;
     sigset_t    old_set;
     sigset_t    all_signals;
 
@@ -121,7 +122,7 @@ create_threads (struct pool *pool) {
 
     /* Create all threads with all signals masked */
     PTHREAD_CHECK (pthread_sigmask (SIG_SETMASK, &all_signals, &old_set))
-    for (int i = 0; i < pool->nb_threads; i++) {
+    for (i = 0; i < pool->nb_threads; i++) {
         PTHREAD_CHECK (pthread_create (pool->threads + i,
                                         NULL, worker_thread, pool))
     }
@@ -192,6 +193,7 @@ pool_queue (struct pool *pool, void * (*func) (void *), void *arg) {
 */
 void
 pool_destroy (struct pool *pool) {
+    int i;
     struct job  *job;
 
     pthread_mutex_lock (&pool->mutex);
@@ -199,7 +201,7 @@ pool_destroy (struct pool *pool) {
     /* Awakes everyone, having them checking destroy and exiting */
     pthread_cond_broadcast (&pool->jobq_empty);
     /* Now we cancel everyone */
-    for (int i = 0; i < pool->nb_threads; i++)
+    for (i = 0; i < pool->nb_threads; i++)
         pthread_cancel (pool->threads[i]);
     /*
         And wait for them to finish cancellation. The last one will set the
@@ -212,7 +214,7 @@ pool_destroy (struct pool *pool) {
     /*
         In order to avoid a memory leak, we must do this...
     */
-    for (int i = 0; i < pool->nb_threads; i++)
+    for (i = 0; i < pool->nb_threads; i++)
         pthread_join (pool->threads[i], NULL);
 
     /*
