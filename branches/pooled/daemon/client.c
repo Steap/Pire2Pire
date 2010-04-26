@@ -15,7 +15,6 @@ client_new (int socket, char *addr) {
     if (c == NULL)
         return NULL;
 
-   // c->id     = id;
     c->socket = socket;
     c->addr   = strdup (addr);
     c->next= NULL;

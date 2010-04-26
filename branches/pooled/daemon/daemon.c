@@ -18,13 +18,13 @@ daemon_new (int socket, const char *addr, int port) {
     if (d == NULL)
         return NULL;
 
-    d->socket   = socket;
-    d->addr     = strdup (addr);
-    d->port     = port;
-    d->next     = NULL;
-    d->prev     = NULL;
-    d->requests = NULL;
-    memset (&d->thread_id, 0, sizeof (d->thread_id));
+    d->socket       = socket;
+    d->addr         = strdup (addr);
+    d->port         = port;
+    d->next         = NULL;
+    d->prev         = NULL;
+    d->requests     = NULL;
+    d->nb_requests  = 0;
     sem_init (&d->req_lock, 0, 1);
     sem_init (&d->socket_lock, 0, 1);
 
@@ -33,13 +33,9 @@ daemon_new (int socket, const char *addr, int port) {
 
 void
 daemon_free (struct daemon *d) {
+//    log_failure (log_file, "Freeing daemon %s", d->addr);
     if (!d)
         return;
-
-    /*
-     * TODO: Shouldn't we pthread_kill the remaining requests threads ?
-     */
-
     if (d->addr) {
         free (d->addr);
         d->addr = NULL;
@@ -63,22 +59,13 @@ daemon_add (struct daemon *l, struct daemon *d) {
     return d;
 }
 
-int
-daemon_numbers (struct daemon *l) {
-    if (!l)
-        return 0;
-    struct daemon *tmp;
-    int sum;
-    for (tmp = l, sum = 0; tmp; tmp = tmp->next, sum++);
-    return sum;
-}
-
 struct daemon *
-daemon_remove (struct daemon *l, pthread_t pt) {
+daemon_remove (struct daemon *l, struct daemon *d) {
+    struct daemon   *tmp;
+
     if (!l)
         return NULL;
-    struct daemon *tmp;
-    for (tmp = l; pthread_equal (tmp->thread_id, pt) == 0; tmp = tmp->next);
+    for (tmp = l; tmp != d; tmp = tmp->next);
 
     /* This was the last element */
     if (tmp->prev == NULL && tmp->next == NULL) {
@@ -101,9 +88,8 @@ daemon_send (struct daemon *d, const char *msg) {
     int     nb_sent;
     int     nb_sent_sum;
     int     send_size;
-//    char    ending_char;
 
-    // Log this (see ../util/logger.c to disactivate this)
+    /* Log this (see ../util/logger.c to disactivate this) */
     log_send (log_file, msg);
 
     dest_sock = d->socket;

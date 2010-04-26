@@ -17,15 +17,14 @@
 #include "thread_pool.h"
 #include "util/socket.h"                            // socket_getline ()
 
-extern FILE *log_file;
+extern FILE         *log_file;
 extern struct prefs *prefs;
 
 extern struct pool  *slow_pool;
 extern struct pool  *fast_pool;
 
-extern struct client *clients;
-extern sem_t          clients_lock;
-
+extern struct client            *clients;
+extern sem_t                    clients_lock;
 extern struct shared_counter    nb_clients;
 
 static void*
@@ -40,34 +39,6 @@ bar (void *a) {
 
     return NULL;
 }
-
-#if 0
-static void *
-start_request_thread (void *arg) {
-    struct request_thread_wrapper   *wrapper;
-    struct client_request           *r;
-    void *                          (*callback) (void *);
-
-    /* Unwrap what we need */
-    wrapper = (struct request_thread_wrapper *)arg;
-    if (!wrapper)
-        return NULL;
-    r = wrapper->request;
-    callback = wrapper->callback;
-    free (wrapper);
-
-    // Now we call the request handler
-    callback (r);
-
-    // And we remove the request properly
-    sem_wait (&r->client->req_lock);
-    r->client->requests = client_request_remove (r->client->requests, r);
-    sem_post (&r->client->req_lock);
-    client_request_free (r);
-
-    return NULL;
-}
-#endif
 
 static void*
 handle_requests (struct client *client) {
@@ -87,19 +58,23 @@ handle_requests (struct client *client) {
         if (strncmp (message, "quit", 4) == 0)
             break;
 
-        sem_wait (&clients->req_lock);
+        sem_wait (&client->req_lock);
         if (client->nb_requests == prefs->max_requests_per_client) {
             sem_post (&client->req_lock);
-            client_send (client, " < Too many requests, mister, plz calm down\n");
+            client_send (client,
+                        " < Too many requests, mister, plz calm down\n");
             continue;
         }
-        sem_post (&clients->req_lock);
+        sem_post (&client->req_lock);
 
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
         pool = fast_pool;
-        if (strncmp (message, "connect", 7) == 0)
+        if (strncmp (message, "connect", 7) == 0) {
+            /* If the daemon does not exist, it takes time to timeout */
+            pool = slow_pool;
             handler = client_request_connect;
+        }
         else if (strncmp (message, "download", 8) == 0)
             handler = client_request_download;
         else if (strncmp (message, "get", 3) == 0)
@@ -126,6 +101,7 @@ handle_requests (struct client *client) {
             client_send (client, " < Failed to create a new request\n");
             continue;
         }
+
         sem_wait (&client->req_lock);
         client->requests = client_request_add (client->requests, r);
         if (!client->requests) {

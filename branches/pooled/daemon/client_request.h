@@ -2,6 +2,7 @@
 #define CLIENT_REQUEST_H
 
 #include "client.h"
+#include "thread_pool.h"
 
 struct client_request {
     char                    *cmd;

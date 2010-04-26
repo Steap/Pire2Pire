@@ -12,24 +12,37 @@ struct daemon {
     int                     socket;
     /* We need to lock the socket to send atomic messages */
     sem_t                   socket_lock;
-    char                    *addr; /* IPv4, IPv6, whatever... */
-    int                     port;   // Host short, use htons () if needed
-    pthread_t               thread_id;
+    char                    *addr;  /* IPv4, IPv6, whatever... */
+    int                     port;   /* Host short, use htons () if needed */
     /*
      * Many different requests will try and modify "requests", using request_add
      * () or request_remove (). That's why we need a semaphore.
      */
     struct daemon_request   *requests;
+    int                     nb_requests;
     sem_t                   req_lock;
     struct daemon           *next;
     struct daemon           *prev;
 };
 
-struct daemon *daemon_new     (int socket, const char *addr, int port);
-void           daemon_free    (struct daemon *d);
-struct daemon *daemon_add     (struct daemon *l, struct daemon *d);
-int            daemon_numbers (struct daemon *l);
-struct daemon *daemon_remove  (struct daemon *l, pthread_t pt);
-int            daemon_send    (struct daemon *d, const char *msg);
+struct daemon *
+daemon_new  (int socket,
+            const char *addr,
+            int port);
 
-#endif//DAEMON_H
+void
+daemon_free (struct daemon *d);
+
+struct daemon *
+daemon_add  (struct daemon *l,
+            struct daemon *d);
+
+struct daemon *
+daemon_remove   (struct daemon *l,
+                struct daemon *c);
+
+int
+daemon_send (struct daemon *d,
+            const char *msg);
+
+#endif/*DAEMON_H*/

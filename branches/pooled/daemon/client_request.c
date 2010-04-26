@@ -1,4 +1,3 @@
-#include <pthread.h>        // pthread_equal ()
 #include <semaphore.h>
 #include <stdlib.h>         // malloc ()
 

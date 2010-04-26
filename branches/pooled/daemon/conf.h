@@ -10,6 +10,7 @@ struct prefs {
     int         max_clients;
     int         max_requests_per_client;
     int         max_daemons;
+    int         max_requests_per_daemon;
 };
 
 struct prefs *conf_retrieve (const char*);

@@ -14,14 +14,18 @@
 #include "../client_request.h"  // struct client_request
 #include "../daemon.h"          // daemon_new ()
 #include "../daemon_handler.h"  // handle_requests ()
+#include "../thread_pool.h"
+#include "../shared_counter.h"
 #include "../util/cmd_parser.h" // cmd_parse ()
 #include "../util/socket.h"     // socket_sendline ()
 
-extern FILE*            log_file;
-extern struct daemon    *daemons;
-extern sem_t            daemons_lock;
-extern char             my_ip[INET_ADDRSTRLEN];
-extern struct prefs     *prefs;
+extern FILE*                    log_file;
+extern struct daemon            *daemons;
+extern sem_t                    daemons_lock;
+extern char                     my_ip[INET_ADDRSTRLEN];
+extern struct prefs             *prefs;
+extern struct shared_counter    nb_daemons;
+extern struct pool              *daemons_pool;
 
 #define NOT_A_COUPLE           0
 #define NO_PORT_SPECIFIED     -1
@@ -146,6 +150,10 @@ client_request_connect (void *arg) {
         goto send_msg;
     }
 
+    sem_wait (&nb_daemons.lock);
+    ++nb_daemons.count;
+    sem_post (&nb_daemons.lock);
+
     /*
      * Now we must identify so that the daemon at the other side won't close
      * the connection
@@ -160,40 +168,22 @@ client_request_connect (void *arg) {
     daemon = daemon_new (daemon_socket, ip, port);
     if (!daemon) {
         sprintf (answer, " < connect: could not create a new daemon object");
-        goto send_msg;
+        goto decrement_daemons;
     }
 
-    sem_wait (&daemons_lock);
-    // FIXME: shouldn't we daemon_add after pthread_create?
-    daemons = daemon_add (daemons, daemon);
-    if (!daemons) {
-        daemon_free (daemon);
-        sprintf (answer, " < connect: could not add daemon to daemons");
-        goto send_msg;
-    }
-    sem_post (&daemons_lock);
+    log_success (log_file, "CONNECT     daemon %s", daemon->addr);
 
-
-
-
-    /*
-     * Now this thread becomes the thread that handles the daemon requests
-     */
-log_success (log_file, "Now handling the daemon");
-    int thread;
-    thread = pthread_create (&daemon->thread_id, NULL, handle_requests, daemon);
-    if (thread < 0) {
-        log_failure (log_file, "cr_connect: pthread_create () failed");
-        sem_wait (&daemons_lock);
-        daemons = daemon_remove (daemons, daemon->thread_id);
-        sem_post (&daemons_lock);
-        sprintf (answer, " < connect: could not create thread");
-        goto send_msg;
-    }
+    pool_queue (daemons_pool, handle_daemon, daemon);
 
     sprintf (answer,
             " < connect: connected to %s successfully\n",
             ip);
+    goto send_msg;
+
+decrement_daemons:
+    sem_wait (&nb_daemons.lock);
+    --nb_daemons.count;
+    sem_post (&nb_daemons.lock);
 
 send_msg:
     if (client_send (r->client, answer) < 0) {

@@ -23,6 +23,7 @@
 #include "file_cache.h"     // struct file_cache
 #include "shared_counter.h"
 #include "thread_pool.h"
+#include "util/cmd_parser.h"
 #include "util/socket.h"    // socket_init ()
 
 #define LOG_FILE        "/tmp/g"
@@ -34,6 +35,8 @@
     log_failure (log_file, log_msg);        \
     goto abort;                             \
 }
+
+#define IDENTIFICATION_TIMEOUT          10
 
 FILE *log_file;
 char my_ip[INET_ADDRSTRLEN];
@@ -113,9 +116,7 @@ server_stop (int sig) {
     if (daemons) {
         while (daemons) {
             d = daemons->next;
-            //pthread_kill (daemons->thread_id, SIGTERM);
-            if (pthread_detach (daemons->thread_id) != 0)
-                log_failure (log_file, "detach failed");
+            // TODO: Can we kill the requests?
             daemon_send (daemons, "quit\n");
             daemon_free (daemons);
             daemons = d;
@@ -229,7 +230,11 @@ start_server (const char *conf_file) {
     struct sockaddr_in  *if_addr;
     char                addr[INET_ADDRSTRLEN];
     struct client       *c;
-    //struct daemon       *d;
+    struct daemon       *d;
+    struct parsed_cmd   *pcmd = NULL;
+    char                *ident_msg;
+    int                 port;
+    char                *colon;
 
     /* Retrieve the configuration file */
     prefs = conf_retrieve (conf_file);
@@ -346,14 +351,14 @@ start_server (const char *conf_file) {
             else {
                 sem_post (&nb_clients.lock);
                 socket_sendline (connected_sd, " < Too many clients\n");
-                goto failed_handling;
+                goto close_socket;
             }
 
             /* Then, let's handle him */
             if (!inet_ntop (AF_INET, &connected_sa.sin_addr,
                             addr, INET_ADDRSTRLEN)) {
                 socket_sendline (connected_sd, " < Oops\n");
-                goto failed_handling;
+                goto failed_handling_client;
             }
             if (!(c = client_new (connected_sd, addr))) {
                 socket_sendline (connected_sd, " < Sorry pal :(\n");
@@ -368,7 +373,53 @@ start_server (const char *conf_file) {
                 log_failure (log_file, "Failed to accept incoming connection.");
                 break;
             }
-            handle_daemon (connected_sd, &connected_sa);
+
+            /* Can we handle this daemon? */
+            sem_wait (&nb_daemons.lock);
+            if (nb_daemons.count < prefs->max_daemons) {
+                /* Remember client_request_connect is also creating daemons, so
+                    we increment the counter even if we have to decrement it
+                    on a possible following failure */
+                nb_daemons.count++;
+                sem_post (&nb_daemons.lock);
+            }
+            else {
+                sem_post (&nb_daemons.lock);
+                socket_sendline (connected_sd, " < Too many daemons\n");
+                goto close_socket;
+            }
+
+            /* Let's identify him first */
+            ident_msg = socket_try_getline (connected_sd,
+                                            IDENTIFICATION_TIMEOUT);
+            if (!ident_msg) {
+                socket_sendline (connected_sd,
+                                "error: identification timed out\n");
+                goto failed_handling_daemon;
+            }
+            if (cmd_parse_failed ((pcmd = cmd_parse (ident_msg, NULL)))) {
+                pcmd = NULL;
+                goto failed_handling_daemon;
+            }
+            if (pcmd->argc < 2)
+                goto failed_handling_daemon;
+            if (strcmp (pcmd->argv[0], "neighbour") != 0)
+                goto failed_handling_daemon;
+            if (!(colon = strchr (pcmd->argv[1], ':')))
+                goto failed_handling_daemon;
+            port = atoi (colon + 1);
+
+            free (ident_msg);
+            cmd_parse_free (pcmd);
+            pcmd = NULL;
+
+            /* Now we've got his port, let him go in */
+            if (!(d = daemon_new (connected_sd, addr, port))) {
+                socket_sendline (connected_sd, " < Sorry pal :(\n");
+                goto failed_handling_daemon;
+            }
+
+            pool_queue (daemons_pool, handle_daemon, d);
         }
         else {
             /* This should never happen : neither client nor daemon!? */
@@ -377,7 +428,24 @@ start_server (const char *conf_file) {
 
         continue;
 
-failed_handling:
+failed_handling_client:
+        sem_wait (&nb_clients.lock);
+        --nb_clients.count;
+        sem_post (&nb_clients.lock);
+        goto close_socket;
+
+/* We jump here if we reserved a slot for a daemon, but failed to create it */
+failed_handling_daemon:
+        sem_wait (&nb_daemons.lock);
+        --nb_daemons.count;
+        sem_post (&nb_daemons.lock);
+        /* goto close_socket; */
+
+close_socket:
+        if (pcmd) {
+            cmd_parse_free (pcmd);
+            pcmd = NULL;
+        }
         close (connected_sd);
     }
 

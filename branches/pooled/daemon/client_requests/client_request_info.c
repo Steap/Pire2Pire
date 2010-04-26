@@ -12,6 +12,7 @@
 
 extern struct client            *clients;
 extern struct shared_counter    nb_clients;
+extern struct shared_counter    nb_daemons;
 extern struct daemon            *daemons;
 extern sem_t                    daemons_lock;
 
@@ -22,6 +23,8 @@ client_request_info (void *arg) {
     char                    answer[256];
     int                     n;
     int                     count;
+    int                     clients_count;
+    int                     daemons_count;
     struct daemon           *d;
 
     r = (struct client_request *) arg;
@@ -29,23 +32,26 @@ client_request_info (void *arg) {
         return NULL;
 
     sem_wait (&nb_clients.lock);
-    count = nb_clients.count;
+    clients_count = nb_clients.count;
     sem_post (&nb_clients.lock);
+    sem_wait (&nb_clients.lock);
+    daemons_count = nb_daemons.count;
+    sem_post (&nb_clients.lock);
+
 
     sem_wait (&r->client->req_lock);
     sprintf (answer,
              " < INFO : there %s %d client%s connected.\n",
-             (count > 1)?"are":"is",
-             count,
-             (count > 1)?"s":"");
+             (clients_count > 1)?"are":"is",
+             clients_count,
+             (clients_count > 1)?"s":"");
     client_send (r->client, answer);
 
-    count = daemon_numbers (daemons);
     sprintf (answer,
              " < INFO : there %s %d daemon%s connected.\n",
-             (count > 1)?"are":"is",
-             count,
-             (count > 1)?"s":"");
+             (daemons_count > 1)?"are":"is",
+             daemons_count,
+             (daemons_count > 1)?"s":"");
     client_send (r->client, answer);
 
     count = client_request_count (r->client->requests);

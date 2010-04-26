@@ -1,4 +1,3 @@
-#include <pthread.h>        // pthread_equal ()
 #include <stdlib.h>         // malloc ()
 
 #include "../util/logger.h" // log_recv ()
@@ -7,7 +6,10 @@
 extern FILE*    log_file;
 
 struct daemon_request *
-daemon_request_new (char *cmd, struct daemon *daemon) {
+daemon_request_new (char *cmd,
+                    struct daemon *daemon,
+                    struct pool *pool,
+                    void * (*func) (void *)) {
     struct daemon_request *r;
 
     // Log the request (see ../util/logger.c to disactivate this)
@@ -19,6 +21,8 @@ daemon_request_new (char *cmd, struct daemon *daemon) {
 
     r->cmd          = cmd;
     r->daemon       = daemon;
+    r->pool         = pool;
+    r->handler      = func;
     r->prev         = NULL;
     r->next         = NULL;
 
@@ -50,13 +54,13 @@ daemon_request_add (struct daemon_request *l, struct daemon_request *r) {
 }
 
 struct daemon_request*
-daemon_request_remove (struct daemon_request *l, pthread_t pt) {
+daemon_request_remove (struct daemon_request *l, struct daemon_request *r) {
     struct daemon_request *tmp;
 
     if (!l)
         return NULL;
 
-    for (tmp = l; pthread_equal (tmp->thread_id, pt) == 0; tmp = tmp->next);
+    for (tmp = l; tmp == r; tmp = tmp->next);
 
     if (!tmp->prev) {
         if (tmp->next)
@@ -77,4 +81,26 @@ daemon_request_count (struct daemon_request *r) {
     int sum;
     for (tmp = r, sum = 0; tmp; tmp = tmp->next, sum++);
     return sum;
+}
+
+void *daemon_request_handler (void *arg) {
+    struct daemon_request *r;
+    /* TODO: cleanup_push ? */
+    r = (struct daemon_request *)arg;
+
+    sem_wait (&r->daemon->req_lock);
+    ++r->daemon->nb_requests;
+    sem_post (&r->daemon->req_lock);
+
+    r->handler (r);
+
+    sem_wait (&r->daemon->req_lock);
+    r->daemon->requests = daemon_request_remove (r->daemon->requests, r);
+    --r->daemon->nb_requests;
+    sem_post (&r->daemon->req_lock);
+    daemon_request_free (r);
+    /* TODO: cleanup_pop ? */
+
+    return NULL;
+
 }
