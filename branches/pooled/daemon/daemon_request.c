@@ -93,8 +93,6 @@ void *daemon_request_handler (void *arg) {
     /* TODO: cleanup_push ? */
     r = (struct daemon_request *)arg;
 
-
-
     sem_wait (&r->daemon->req_lock);
     ++r->daemon->nb_requests;
     r->tid = pthread_self ();

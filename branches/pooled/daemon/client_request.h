@@ -1,6 +1,8 @@
 #ifndef CLIENT_REQUEST_H
 #define CLIENT_REQUEST_H
 
+#include <pthread.h>
+
 #include "client.h"
 #include "thread_pool.h"
 
@@ -9,6 +11,8 @@ struct client_request {
     struct client           *client;
     void *                  (*handler) (void *);
     struct pool             *pool;
+    pthread_t               tid;
+    int                     assigned;
     struct client_request   *prev;
     struct client_request   *next;
 };

@@ -128,8 +128,12 @@ handle_daemon (void *arg) {
     /* Let's clean all remaining requests for this daemon */
     sem_wait (&d->req_lock);
     for (tmp = d->requests; tmp; tmp = tmp->next) {
+        /* Either it's been assigned to a thread in the pool */
         if (tmp->assigned)
             pool_kill (tmp->pool, tmp->tid);
+        /* Or it's still in the queue */
+        else
+            pool_flush_by_arg (tmp->pool, tmp);
         daemon_request_free (tmp);
     }
     sem_post (&d->req_lock);

@@ -188,18 +188,53 @@ pool_queue (struct pool *pool, void * (*func) (void *), void *arg) {
 }
 
 void
-pool_kill (struct pool *pool, pthread_t tid) {
-    int i;
+pool_flush_by_arg (struct pool *pool, void *arg) {
+    struct job  *removed;
+    struct job  **pjob;
 
     pthread_mutex_lock (&pool->mutex);
-    for (i = 0; pool->threads[i] != tid; i++) {
-        /* Can't find it */
-        if (i >= pool->nb_threads) {
-            pthread_mutex_unlock (&pool->mutex);
-            return;
+    /* Use the pointer of pointer trick to avoid storing previous */
+    pjob = &pool->jobq_head;
+    /* Test pjob first in case it is NULL */
+    while (pjob && *pjob) {
+        /* Test *pjob against the matching condition */
+        if ((*pjob)->arg == arg) {
+            /* Store the reference to delete it */
+            removed = *pjob;
+            /* Change the pointer value to its next */
+            *pjob = (*pjob)->next;
+            /* Delete the previously stored reference */
+            free (removed);
+            /* Propagate the tail forward */
+            if (*pjob)
+                pool->jobq_tail = *pjob;
+            /* No need to increment since we moved the next in place! */
+        }
+        else {
+            /* Propagate the tail forward */
+            if (*pjob)
+                pool->jobq_tail = *pjob;
+            /* Increment */
+            pjob = &((*pjob)->next);
         }
     }
     pthread_mutex_unlock (&pool->mutex);
+}
+
+void
+pool_kill (struct pool *pool, pthread_t tid) {
+    int i;
+
+    if (!pool)
+        return;
+    pthread_mutex_lock (&pool->mutex);
+    /* Try to find it */
+    for (i = 0; i < pool->nb_threads && pool->threads[i] != tid; i++);
+    pthread_mutex_unlock (&pool->mutex);
+    /* Didn't find it */
+    if (i >= pool->nb_threads)
+        return;
+    /* Found */
     PTHREAD_CHECK (pthread_cancel (pool->threads[i]))
     PTHREAD_CHECK (pthread_join (pool->threads[i], NULL))
     pthread_mutex_lock (&pool->mutex);

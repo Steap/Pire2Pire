@@ -22,6 +22,11 @@ pool_queue (struct pool *pool,          /* said pool */
             void * (*func) (void *),    /* job function */
             void *arg);                 /* argument passed to func */
 
+/* Flush the pool queue from jobs whose arg is arg */
+void
+pool_flush_by_arg (struct pool *pool,   /* pool considered */
+                    void *arg);         /* arg to seek */
+
 /* Find a thread by its id in a pool and stop it */
 void
 pool_kill (struct pool *pool,   /* said pool */

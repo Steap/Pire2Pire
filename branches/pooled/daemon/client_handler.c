@@ -122,7 +122,9 @@ handle_requests (struct client *client) {
 
 void *
 handle_client (void *arg) {
-    struct client   *c;
+    struct client           *c;
+    struct client_request   *tmp;
+    struct client_request   *next;
 
     c = (struct client *)arg;
     if (!c)
@@ -143,6 +145,21 @@ handle_client (void *arg) {
     sem_wait (&clients_lock);
     clients = client_remove (clients, c);
     sem_post (&clients_lock);
+
+    /* Let's clean all remaining requests for this client */
+    sem_wait (&c->req_lock);
+    for (tmp = c->requests; tmp; tmp = next) {
+        /* Either it's been assigned to a thread in the pool */
+        if (tmp->assigned)
+            pool_kill (tmp->pool, tmp->tid);
+        /* Or it's still in the queue */
+        else
+            pool_flush_by_arg (tmp->pool, tmp);
+        next = tmp->next;
+        client_request_free (tmp);
+    }
+    sem_post (&c->req_lock);
+
     client_free (c);
 
 out:

@@ -21,6 +21,11 @@ client_request_new (char *cmd,
     r->client       = client;
     r->pool         = pool;
     r->handler      = func;
+    /* There is no portable way of initializing this field, so let's put a
+        dummy pthread_t value in it for now, and an "assigned" boolean to know
+        if the job is already assigned */
+    r->tid          = pthread_self ();
+    r->assigned     = 0;
     r->prev         = NULL;
     r->next         = NULL;
 
@@ -87,6 +92,8 @@ void * client_request_handler (void *arg) {
 
     sem_wait (&r->client->req_lock);
     ++r->client->nb_requests;
+    r->tid = pthread_self ();
+    r->assigned = 1;
     sem_post (&r->client->req_lock);
 
     r->handler (r);
