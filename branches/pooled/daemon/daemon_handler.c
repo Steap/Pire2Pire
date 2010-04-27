@@ -36,8 +36,6 @@ handle_requests (struct daemon *daemon) {
     struct pool                     *pool;
     void*                           (*handler) (void *);
 
-    log_success (log_file, "New daemon : %s", daemon->addr);
-
     for (;;)  {
         message = socket_getline (daemon->socket);
         if (!message)
@@ -104,7 +102,8 @@ handle_requests (struct daemon *daemon) {
 
 void *
 handle_daemon (void *arg) {
-    struct daemon   *d;
+    struct daemon           *d;
+    struct daemon_request   *tmp;
 
     d    = (struct daemon *)arg;
     if (!d)
@@ -125,6 +124,16 @@ handle_daemon (void *arg) {
     sem_wait (&daemons_lock);
     daemons = daemon_remove (daemons, d);
     sem_post (&daemons_lock);
+
+    /* Let's clean all remaining requests for this daemon */
+    sem_wait (&d->req_lock);
+    for (tmp = d->requests; tmp; tmp = tmp->next) {
+        if (tmp->assigned)
+            pool_kill (tmp->pool, tmp->tid);
+        daemon_request_free (tmp);
+    }
+    sem_post (&d->req_lock);
+
     daemon_free (d);
 
 out:

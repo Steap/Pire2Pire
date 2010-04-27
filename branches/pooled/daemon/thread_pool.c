@@ -188,6 +188,27 @@ pool_queue (struct pool *pool, void * (*func) (void *), void *arg) {
 }
 
 void
+pool_kill (struct pool *pool, pthread_t tid) {
+    int i;
+
+    pthread_mutex_lock (&pool->mutex);
+    for (i = 0; pool->threads[i] != tid; i++) {
+        /* Can't find it */
+        if (i >= pool->nb_threads) {
+            pthread_mutex_unlock (&pool->mutex);
+            return;
+        }
+    }
+    pthread_mutex_unlock (&pool->mutex);
+    PTHREAD_CHECK (pthread_cancel (pool->threads[i]))
+    PTHREAD_CHECK (pthread_join (pool->threads[i], NULL))
+    pthread_mutex_lock (&pool->mutex);
+    PTHREAD_CHECK (pthread_create (pool->threads + i,
+                                    NULL, worker_thread, pool))
+    pthread_mutex_unlock (&pool->mutex);
+}
+
+void
 pool_destroy (struct pool *pool) {
     int i;
     struct job  *job;

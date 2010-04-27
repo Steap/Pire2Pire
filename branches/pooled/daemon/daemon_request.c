@@ -23,6 +23,11 @@ daemon_request_new (char *cmd,
     r->daemon       = daemon;
     r->pool         = pool;
     r->handler      = func;
+    /* There is no portable way of initializing this field, so let's put a
+        dummy pthread_t value in it for now, and an "assigned" boolean to know
+        if the job is already assigned */
+    r->tid          = pthread_self ();
+    r->assigned     = 0;
     r->prev         = NULL;
     r->next         = NULL;
 
@@ -88,8 +93,12 @@ void *daemon_request_handler (void *arg) {
     /* TODO: cleanup_push ? */
     r = (struct daemon_request *)arg;
 
+
+
     sem_wait (&r->daemon->req_lock);
     ++r->daemon->nb_requests;
+    r->tid = pthread_self ();
+    r->assigned = 1;
     sem_post (&r->daemon->req_lock);
 
     r->handler (r);

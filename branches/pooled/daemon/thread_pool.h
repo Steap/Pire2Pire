@@ -22,6 +22,11 @@ pool_queue (struct pool *pool,          /* said pool */
             void * (*func) (void *),    /* job function */
             void *arg);                 /* argument passed to func */
 
+/* Find a thread by its id in a pool and stop it */
+void
+pool_kill (struct pool *pool,   /* said pool */
+            pthread_t tid);     /* thread to kill */
+
 /* Destroy a pool, cancelling its threads and flushing remaining jobs */
 void
 pool_destroy (struct pool *pool);       /* pool to be destroyed */

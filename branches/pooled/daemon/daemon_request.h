@@ -1,6 +1,8 @@
 #ifndef DAEMON_REQUEST_H
 #define DAEMON_REQUEST_H
 
+#include <pthread.h>
+
 #include "daemon.h"
 #include "thread_pool.h"
 
@@ -11,6 +13,8 @@ struct daemon_request {
     struct daemon           *daemon;
     struct pool             *pool;
     void *                  (*handler) (void *);
+    pthread_t               tid;
+    int                     assigned;
     struct daemon_request   *prev;
     struct daemon_request   *next;
 };

@@ -104,7 +104,6 @@ server_stop (int sig) {
     if (clients) {
         while (clients) {
             c = clients->next;
-            // TODO: Can we kill the requests?
             client_free (clients);
             clients = c;
         }
@@ -116,7 +115,6 @@ server_stop (int sig) {
     if (daemons) {
         while (daemons) {
             d = daemons->next;
-            // TODO: Can we kill the requests?
             daemon_send (daemons, "quit\n");
             daemon_free (daemons);
             daemons = d;
@@ -412,6 +410,12 @@ start_server (const char *conf_file) {
             free (ident_msg);
             cmd_parse_free (pcmd);
             pcmd = NULL;
+
+            if (!inet_ntop (AF_INET, &connected_sa.sin_addr,
+                            addr, INET_ADDRSTRLEN)) {
+                socket_sendline (connected_sd, " < Oops\n");
+                goto failed_handling_daemon;
+            }
 
             /* Now we've got his port, let him go in */
             if (!(d = daemon_new (connected_sd, addr, port))) {
