@@ -65,7 +65,7 @@ daemon_request_remove (struct daemon_request *l, struct daemon_request *r) {
     if (!l)
         return NULL;
 
-    for (tmp = l; tmp == r; tmp = tmp->next);
+    for (tmp = l; tmp != r; tmp = tmp->next);
 
     if (!tmp->prev) {
         if (tmp->next)
