@@ -11,6 +11,8 @@ struct prefs {
     int         max_requests_per_client;
     int         max_daemons;
     int         max_requests_per_daemon;
+    char        *log_file;
+    char        *lock_file;
 };
 
 struct prefs *conf_retrieve (const char*);

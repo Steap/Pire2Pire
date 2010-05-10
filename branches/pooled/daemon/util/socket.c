@@ -28,11 +28,21 @@ socket_init (struct sockaddr_in *sa) {
     if (setsockopt (sd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof (int)) < 0) {
         log_failure (log_file, "socket_init (): setsockopt () failed.");
     }
-
+#include <errno.h>
+bind:
     if (bind (sd, (struct sockaddr *)sa, sizeof (*sa)) < 0) {
+        if (errno == EADDRINUSE) {
         log_failure (log_file,
-                    "socket_init: bind () failed, error: %s",
-                    strerror (errno));
+                    "socket_init: bind () failed, error: %s %d",
+                    strerror (errno),
+                    ntohs (sa->sin_port));
+        sa->sin_port = htons (1 + ntohs (sa->sin_port));
+        log_failure (log_file,
+                    "socket_init: bind () : trying again with %d...\n",
+                     ntohs (sa->sin_port));
+        goto bind;
+                    
+        }
         return -1;
     }
 

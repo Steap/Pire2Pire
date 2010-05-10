@@ -26,8 +26,6 @@
 #include "util/cmd_parser.h"
 #include "util/socket.h"    // socket_init ()
 
-#define LOG_FILE        "/tmp/g"
-#define LOCK_FILE       "/tmp/k"
 // nfds must be the maximum sd + 1
 #define NFDS(a,b)   (((a)>(b))?(a+1):(b+1))
 
@@ -81,6 +79,16 @@ signal_handler (int sig) {
         fflush (log_file);
     }
 }
+static void
+start_logger (void) {
+    log_file = fopen (prefs->log_file, "w");
+    
+    if (!log_file) {
+        fprintf (stderr, 
+"Could not open the log file. There will be no logs.");
+    }
+    
+}
 
 static void
 server_stop (int sig) {
@@ -131,7 +139,7 @@ server_stop (int sig) {
                      __func__);
     }
 
-    if (unlink (LOCK_FILE) < 0)
+    if (unlink (prefs->lock_file) < 0)
         if (log_file)
             log_failure (log_file, "Could not destroy the lock file");
     if (prefs) {
@@ -149,7 +157,7 @@ server_stop (int sig) {
     exit (EXIT_SUCCESS);
 }
 
-void daemonize(void) {
+void daemonize (void) {
     int lock;
     char str[10];
 
@@ -162,7 +170,6 @@ void daemonize(void) {
         default:
             break;
     }
-    log_file = fopen (LOG_FILE, "w");
 
     setsid ();
     log_success (log_file, "setsid ok");
@@ -175,22 +182,28 @@ void daemonize(void) {
     umask (027);
     log_success (log_file, "Set file permissions to 750.");
 
-    lock = open (LOCK_FILE, O_RDWR | O_CREAT, 0640);
-    if (lock < 0)
-        log_failure (log_file, "Failed to open lock file (%s).", LOCK_FILE);
+    lock = open (prefs->lock_file, O_RDWR | O_CREAT, 0640);
+    if (lock < 0) {
+        log_failure (log_file, 
+                     "Failed to open lock file (%s).", 
+                     prefs->lock_file);
+    }
     else
-        log_success (log_file, "Opened lock file (%s).", LOCK_FILE);
+        log_success (log_file, "Opened lock file (%s).", prefs->lock_file);
 
     if (lockf (lock, F_TLOCK, 0) < 0) {
-        log_failure (log_file, "Could not lock %s", LOCK_FILE);
+        log_failure (log_file, "Could not lock %s", prefs->lock_file);
     }
 
     sprintf (str, "%d\n", getpid ());
     write (lock, str, strlen (str));
-    if (close (lock) < 0)
-        log_failure (log_file, "Failed to close LOCK_FILE (%s).", LOCK_FILE);
+    if (close (lock) < 0) {
+        log_failure (log_file, 
+                     "Failed to close LOCK_FILE (%s).", 
+                    prefs->lock_file);
+    }
     else
-        log_success (log_file, "Created lock file (%s)", LOCK_FILE);
+        log_success (log_file, "Created lock file (%s)", prefs->lock_file);
 
     sigset_t mask;
     sigemptyset (&mask);
@@ -214,7 +227,7 @@ void daemonize(void) {
 }
 
 static void
-start_server (const char *conf_file) {
+start_server (void) {
     int                 client_sd;
     int                 daemon_sd;
     int                 connected_sd;
@@ -234,8 +247,6 @@ start_server (const char *conf_file) {
     int                 port;
     char                *colon;
 
-    /* Retrieve the configuration file */
-    prefs = conf_retrieve (conf_file);
 
     /* Prepare all the threads */
     slow_pool = NULL;
@@ -466,18 +477,6 @@ abort:
     exit (EXIT_FAILURE);
 }
 
-int
-main (int argc, char *argv[])
-{
-    (void )argc;
-    daemonize ();
-    start_server (argv[1]);
-    for (;;)
-        pause ();
-
-    return EXIT_SUCCESS;
-}
-
 /*
  * Create a full path of directories
  */
@@ -515,5 +514,25 @@ static int create_dir (const char *path, mode_t mode) {
 out:
     free (sub_path);
     return -1;
+}
+
+int
+main (int argc, char *argv[])
+{
+    (void) argc;
+
+    prefs = conf_retrieve (argv[1]);
+    if (!prefs) {
+        fprintf (stderr,
+"Unable to retrieve preferences. Default preferences cannot be used. Aborting.\n");
+    }
+    
+    start_logger ();
+    daemonize ();
+    start_server ();
+    for (;;)
+        pause ();
+
+    return EXIT_SUCCESS;
 }
 

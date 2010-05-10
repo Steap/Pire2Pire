@@ -16,6 +16,8 @@
 #define DEFAULT_MAX_RQ_PER_CLIENT   10
 #define DEFAULT_MAX_DAEMONS         10
 #define DEFAULT_MAX_RQ_PER_DAEMON   10
+#define DEFAULT_LOG_FILE            "/tmp/default_log_file"
+#define DEFAULT_LOCK_FILE           "/tmp/default_lock_file"
 
  /*
  * Valid values for our ports.
@@ -35,15 +37,18 @@ conf_retrieve (const char *path) {
     if (!prefs)
         return NULL;
 
-    prefs->client_port      = DEFAULT_CLIENT_PORT;
-    prefs->daemon_port      = DEFAULT_DAEMON_PORT;
-    prefs->shared_folder    = DEFAULT_SHARED_FOLDER;
-    prefs->interface        = DEFAULT_INTERFACE;
-    prefs->nb_proc          = DEFAULT_NB_PROC;
-    prefs->max_clients      = DEFAULT_MAX_CLIENTS;
-    prefs->max_daemons      = DEFAULT_MAX_DAEMONS;
+    prefs->client_port             = DEFAULT_CLIENT_PORT;
+    prefs->daemon_port             = DEFAULT_DAEMON_PORT;
+    prefs->shared_folder           = DEFAULT_SHARED_FOLDER;
+    prefs->interface               = DEFAULT_INTERFACE;
+    prefs->nb_proc                 = DEFAULT_NB_PROC;
+    prefs->max_clients             = DEFAULT_MAX_CLIENTS;
+    prefs->max_daemons             = DEFAULT_MAX_DAEMONS;
     prefs->max_requests_per_client = DEFAULT_MAX_RQ_PER_CLIENT;
     prefs->max_requests_per_daemon = DEFAULT_MAX_RQ_PER_DAEMON;
+    prefs->log_file                = DEFAULT_LOG_FILE;
+    prefs->lock_file               = DEFAULT_LOCK_FILE;   
+    /* TODO */
 
     if ((conf_file = fopen (path, "r")) == NULL) {
         fprintf (stderr, "Cant open conf\n");
@@ -92,6 +97,12 @@ conf_retrieve (const char *path) {
             if (num_val > 1)
                 prefs->max_requests_per_daemon = atoi (value);
         }
+        else if (strcmp (key, "log_file") == 0) {
+            prefs->log_file = strdup (value);
+        }
+        else if (strcmp (key, "lock_file") == 0) {
+            prefs->lock_file = strdup (value);
+        }
     }
 
     fclose (conf_file);
@@ -107,6 +118,10 @@ conf_free (struct prefs *p) {
         free (p->shared_folder);
     if (p->interface)
         free (p->interface);
+    if (p->log_file)
+        free (p->log_file);
+    if (p->lock_file)
+        free (p->lock_file);
 
     free (p);
 }
