@@ -530,8 +530,6 @@ main (int argc, char *argv[])
     start_logger ();
     daemonize ();
     start_server ();
-    for (;;)
-        pause ();
 
     return EXIT_SUCCESS;
 }
