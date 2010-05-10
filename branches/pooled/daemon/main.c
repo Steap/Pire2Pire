@@ -165,6 +165,8 @@ void daemonize (void) {
         case -1:
             exit (1);
         case 0:
+            fclose (log_file);
+            conf_free (prefs);
             exit (0);
             break;
         default:
@@ -177,6 +179,7 @@ void daemonize (void) {
     close (STDIN_FILENO);
     close (STDOUT_FILENO);
     close (STDERR_FILENO);
+
     log_success (log_file, "Closed stdin, stdout, stderr.");
 
     umask (027);
