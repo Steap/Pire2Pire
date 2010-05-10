@@ -29,6 +29,7 @@ socket_init (struct sockaddr_in *sa) {
         log_failure (log_file, "socket_init (): setsockopt () failed.");
     }
 #include <errno.h>
+#if 0
 bind:
     if (bind (sd, (struct sockaddr *)sa, sizeof (*sa)) < 0) {
         if (errno == EADDRINUSE) {
@@ -45,6 +46,25 @@ bind:
         }
         return -1;
     }
+#endif
+    errno = 0;
+    do {
+        if (errno == EADDRINUSE) {
+            log_failure (log_file,
+                         "%s : bind () failed, error %s (%d). Trying with %d",
+                         __func__,
+                         strerror (errno),
+                         ntohs (sa->sin_port),
+                         ntohs (sa->sin_port)+1);
+            sa->sin_port = htons (1 + ntohs (sa->sin_port));
+        }
+        else if (errno != 0) { /* Unhandled errors */
+            log_failure (log_file, 
+                         "%s : bind () failed, error %s",
+                         __func__,
+                         strerror (errno));
+        }
+    } while (bind (sd, (struct sockaddr *) sa, sizeof (*sa)) < 0);
 
     if (listen (sd, NB_QUEUE) < 0) {
         log_failure (log_file,
