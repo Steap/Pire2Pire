@@ -9,6 +9,7 @@
 #include <unistd.h> //FIXME: remove when sleep () is removed
 
 #include "../util/logger.h"                         // log_failure ()
+#include "is_cmd.h"
 #include "client.h"                                 // client_send ()
 #include "client_request.h"                         // struct client_request
 #include "client_requests.h"                    // client_request_connect ()
@@ -66,10 +67,10 @@ handle_requests (struct client *client) {
             continue;
         }
         sem_post (&client->req_lock);
-
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
         pool = fast_pool;
+#if 0
         if (strncmp (message, "connect", 7) == 0) {
             /* If the daemon does not exist, it takes time to timeout */
             pool = slow_pool;
@@ -79,7 +80,8 @@ handle_requests (struct client *client) {
             handler = client_request_download;
         else if (strncmp (message, "get", 3) == 0)
             handler = client_request_get;
-        else if (strncmp (message, "help", 4) == 0)
+//        else if (strncmp (message, "help", 4) == 0)
+        if (IS_CMD (message, "help"))
             handler = client_request_help;
         else if (strncmp (message, "info", 4) == 0)
             handler = client_request_info;
@@ -93,8 +95,27 @@ handle_requests (struct client *client) {
             pool = slow_pool;
             handler = bar;
         }
+#endif
+        if (IS_CMD (message, "connect")) {
+            pool = slow_pool;
+            handler = client_request_connect;
+        }
+        else if (IS_CMD (message, "download"))
+            handler = &client_request_download;
+        else if (IS_CMD (message, "get"))
+            handler = &client_request_get;
+        else if (IS_CMD (message, "help"))
+            handler = &client_request_help;
+        else if (IS_CMD (message, "info"))
+            handler = &client_request_info;
+        else if (IS_CMD (message, "list"))
+            handler = &client_request_list;
+        else if (IS_CMD (message, "raw"))
+            handler = &client_request_raw;
+        else if (IS_CMD (message, "set"))
+            handler = &client_request_set;
         else
-            handler = client_request_unknown;
+            handler = &client_request_unknown;
 
         r = client_request_new (message, client, pool, handler);
         if (!r) {
