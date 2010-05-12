@@ -64,10 +64,10 @@ client_request_list (void *arg) {
     sem_post (&daemons_lock);
 
     /* For 1 second, I shall be forwarded the responses by dr_file */
-    sleep (LIST_TIMEOUT);
+//    sleep (LIST_TIMEOUT);
 
     /* Release list */
-    list_client = NULL;
+//    list_client = NULL;
     sem_post (&list_lock);
 
     log_failure (log_file, "******** End of list ********");
