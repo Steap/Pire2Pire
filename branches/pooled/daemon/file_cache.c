@@ -4,6 +4,7 @@
 
 #include "../util/logger.h"
 #include "file_cache.h"
+#include "block_hole_map.h"
 
 extern FILE *log_file;
 
@@ -37,15 +38,19 @@ file_cache_new (const char *filename,
     strncpy (file_cache->key, key, FILE_KEY_SIZE + 1);
 
     file_cache->size = size;
-
+    
+	file_cache->map = block_hole_map_new(0, size - 1);
+    
     file_cache->seeders = (struct seeder *)malloc (sizeof (struct seeder));
     strncpy (file_cache->seeders->ip, ip, FILE_IP_SIZE + 1);
     file_cache->seeders->port = port;
     file_cache->seeders->next = NULL;
 
-    if (sem_init (&file_cache->seeders_lock, 0, 1) < 0) {
+    if ((sem_init (&file_cache->seeders_lock, 0, 1) < 0)
+	||	(sem_init (&file_cache->map_lock, 0, 1) < 0)) {
         log_failure (log_file, "file_cache_new (): Unable to sem_init");
         free (file_cache->seeders);
+        block_hole_map_free (file_cache->map);
         free (file_cache);
         return NULL;
     }
@@ -62,20 +67,26 @@ file_cache_new (const char *filename,
  */
 static void
 __file_cache_free (struct file_cache *file_cache) {
-    struct seeder   *to_be_freed;
-    struct seeder   *next_to_be_freed;
+    struct seeder   		*to_be_freed;
+    struct seeder   		*next_to_be_freed;
 
     if (!file_cache)
         return;
 
     sem_wait (&file_cache->seeders_lock);
     to_be_freed = file_cache->seeders;
+
     while (to_be_freed) {
         next_to_be_freed = to_be_freed->next;
         free (to_be_freed);
         to_be_freed = next_to_be_freed;
     }
+
+	sem_wait (&file_cache->map_lock);
+	block_hole_map_free (file_cache->map);
+   
     sem_destroy (&file_cache->seeders_lock);
+    sem_destroy (&file_cache->map_lock);
 
     free (file_cache);
 }

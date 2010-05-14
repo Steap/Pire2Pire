@@ -35,7 +35,7 @@ struct parsed_cmd {
     // The number of arguments passed in the command line (+ 1 for command)
     int                     argc;
     // Similar to well-known argv, omitting all options and their value
-    char              **argv;
+    char              		**argv;
 };
 
 /*

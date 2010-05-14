@@ -62,7 +62,7 @@ client_request_get (void *arg) {
         return NULL;
     /* d should now point to the good daemon */
 
-
+	/* FIXME : Should be handling block by block download */
     /* Sending the "get key begin end" message */
     sprintf (answer,
              "get %s %d %ld\n",

@@ -21,13 +21,15 @@ struct seeder {
 };
 
 struct file_cache {
-    char                filename[FILE_NAME_SIZE + 1];
-    char                key[FILE_KEY_SIZE + 1];
-    file_size_t          size;
-    struct seeder       *seeders;
-    sem_t               seeders_lock;
-    struct file_cache   *left;
-    struct file_cache   *right;
+    char                	filename[FILE_NAME_SIZE + 1];
+    char                	key[FILE_KEY_SIZE + 1];
+    file_size_t         	size;
+    struct block_hole_map 	*map;
+    sem_t					map_lock;
+    struct seeder       	*seeders;
+    sem_t               	seeders_lock;
+    struct file_cache   	*left;
+    struct file_cache   	*right;
 };
 
 struct file_cache *file_cache_add (struct file_cache *tree,
