@@ -33,8 +33,10 @@ daemon_request_neighbourhood (void *arg) {
     sem_wait (&daemons_lock);
 
     for_each_daemon (tmp) {
-        sprintf (answer, "neighbour %s\n", tmp->addr);
-        daemon_send (r->daemon, answer);
+        if (strcmp (r->daemon->addr, tmp->addr) != 0) {
+            sprintf (answer, "neighbour %s:%d\n", tmp->addr, tmp->port);
+            daemon_send (r->daemon, answer);
+        }
     }
 
     sem_post (&daemons_lock);
