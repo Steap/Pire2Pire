@@ -42,13 +42,24 @@ file_cache_new (const char *filename,
     strncpy (file_cache->seeders->ip, ip, FILE_IP_SIZE + 1);
     file_cache->seeders->port = port;
     file_cache->seeders->next = NULL;
-
-    if (sem_init (&file_cache->seeders_lock, 0, 1) < 0) {
+    
+	if (sem_init (&file_cache->seeders_lock, 0, 1) < 0) {
         log_failure (log_file, "file_cache_new (): Unable to sem_init");
         free (file_cache->seeders);
         free (file_cache);
         return NULL;
     }
+    
+	file_cache->hole_map = hole_map_new (0, size - 1);
+	
+	if (sem_init (&file_cache->hole_map_lock, 0, 1) < 0) {
+        log_failure (log_file, "file_cache_new (): Unable to sem_init");
+        free (file_cache->seeders);
+        hole_map_free(file_cache->hole_map);
+        free (file_cache);
+        return NULL;
+    }
+    
 
     file_cache->left = NULL;
     file_cache->right = NULL;
@@ -76,6 +87,10 @@ __file_cache_free (struct file_cache *file_cache) {
         to_be_freed = next_to_be_freed;
     }
     sem_destroy (&file_cache->seeders_lock);
+    
+    sem_wait (&file_cache->hole_map_lock);
+    hole_map_free (file_cache->hole_map);
+    sem_destroy (&file_cache->hole_map_lock);
 
     free (file_cache);
 }

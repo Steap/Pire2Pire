@@ -4,11 +4,10 @@
 #include "hole_map.h"
 #include "../util/logger.h"
 
-/* FIXME : to be included when compiled with the rest of the project
 extern FILE *log_file;
 #include <errno.h>
 #include "../util/logger.h"
-*/
+
 
 struct hole_map *
 hole_map_new (int s, int e){
@@ -27,16 +26,16 @@ hole_map_new (int s, int e){
 */
 struct hole_map *
 hole_map_fill_gap (struct hole_map *map, int s, int e){
-	if (map == NULL) {
-		
-		printf ("!!! error while inserting from %d to %d. \n", s, e);
-		printf ("=> no blocks are needed, file is complete !\n");
+	if (map == NULL) {	
+		log_failure (log_file,
+					"error inserting from %d to %d. \n=> file already complete !\n",
+					s, e);
 		return map;
 	}
 	if (s < map->start) {
-		//FIXME : avoid annoying printfs to report internal errors
-		printf ("!!! error while inserting from %d to %d. \n", s, e);
-		printf ("=> block collision X : between %d and %d !\n", s, map->start - 1);
+		log_failure (log_file,
+					"error inserting from %d to %d. \n=> collision between %d and %d !\n",
+					s, e, s, map->start - 1);
 		return map;
 	}	
 	if ((s > map->end) && (map->next != NULL)) {
@@ -48,15 +47,15 @@ hole_map_fill_gap (struct hole_map *map, int s, int e){
 			map->start = e + 1;
 		}
 		else if (e == map->end) {
-			//struct hole_map *obsolete_map;
-			//obsolete_map = map;
+			struct hole_map *obsolete_map;
+			obsolete_map = map;
 			map = map->next;
-			//free (obsolete_map);
+			free (obsolete_map);
 		}
 		else if (e > map->end) {
-			//FIXME : avoid annoying printfs to report internal errors
-			printf ("!!! error while inserting from %d to %d. \n", s, e);	
-			printf ("=> block collision Y : between %d and %d !\n", map->end + 1, e);
+			log_failure (log_file,
+						"error inserting from %d to %d. \n=> collision between %d and %d !\n", 
+						s, e, map->end + 1, e);
 		}
 		return map;
 	}
@@ -73,9 +72,9 @@ hole_map_fill_gap (struct hole_map *map, int s, int e){
 			return map;
 		}
 		else {
-			//FIXME : avoid annoying printfs to report internal errors
-			printf ("!!! error while inserting from %d to %d. \n", s, e);
-			printf ("=> block collision Z : between %d and %d !\n", map->end + 1, e);
+			log_failure (log_file,
+						"error inserting from %d to %d. \n=> collision between %d and %d !\n",
+						s, e, map->end + 1, e);
 			return map;
 		}
 	}

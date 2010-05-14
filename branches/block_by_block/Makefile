@@ -45,6 +45,7 @@ DAEMON_SOURCES=\
 	daemon/dl_file.c                                                \
 	daemon/main.c					                \
 	daemon/file_cache.c				                \
+		daemon/hole_map.c								\
     daemon/thread_pool.c                            \
 	daemon/util/cmd.c				                \
         daemon/util/cmd_parser.c                                        \

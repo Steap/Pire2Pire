@@ -3,6 +3,9 @@
 
 #include "hole_map.h"
 
+/* FIXME : won't compile because hole_map_fill_gap uses log_failure function.
+ * gotta use a "printf" logging for this test.
+*/
 int
 main (void) {
 

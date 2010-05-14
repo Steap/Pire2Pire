@@ -8,6 +8,8 @@
 #include "client.h"
 #include "daemon.h"
 
+#include "hole_map.h"
+
 #define FILE_NAME_SIZE      256
 #define FILE_KEY_SIZE       32
 #define FILE_IP_SIZE        INET_ADDRSTRLEN
@@ -26,6 +28,8 @@ struct file_cache {
     file_size_t          size;
     struct seeder       *seeders;
     sem_t               seeders_lock;
+    struct hole_map			*hole_map;
+    sem_t				hole_map_lock;
     struct file_cache   *left;
     struct file_cache   *right;
 };
