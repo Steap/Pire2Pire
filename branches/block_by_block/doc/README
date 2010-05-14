@@ -1,0 +1,46 @@
+1. General architecture
+-----------------------
+The program is made of both a client (whose sources can be found in client/) and
+a daemon (whose sources can be found in daemon/). Note that, though the client
+is provided and its source code might be worth looking at, the user can use
+telnet or whatever program they may want to use.
+
+2. The daemon
+-------------
+The program is being daemonized (see the daemonize () function in main.c,
+inspired by http://www.enderunix.org/docs/eng/daemon.php) when it is launched.
+Then it basically listens to two different ports and wait for clients and other
+daemons.
+
+Thread pools are used : basically, at most <max_clients> can be connected at the
+same time (and <max_daemons> daemons), which means we need two thread pools.
+Finally, we need threads able to treat incoming requests (both client requests
+and daemon requests). One would think we need one more thread pool : in fact, we
+need two of them. One used for requests that can be treated very quickly (a user
+typing "help") and another one for requests that may take a __long__ time
+(computing a checksum for example). Using only one pool thread would have been
+possible, but if all threads had been busy treating long requests, users would
+have had to wait a __very_long__ time to get an answer to a simple request.
+
+3. Treating requests
+--------------------
+We will talk about client requests, but daemon requests work in the exact same
+way. 
+
+First, the handle_requests () function will retrieve data about the request :
+its name, the pool it belongs to (slow or fast). Then it updates the client's
+requests field. Finally, it pushes the request on its queue : it will be treated
+ASAP by the threads dedicated to treating requests.
+
+
+4. Misc
+-------
+There is one thread per client (in fact, even more). That is not really an
+issue, since most of the time, they will be asleep : they are only active when
+the client is sending requests. 
+
+Many threads dedicated to treating requests are launched. Users should avoid
+asking for too many threads : setting the <nb_proc> variable in
+daemon/daemon.conf to the real number of cores their machine has should be the
+right thing to do. Using more threads will not be really efficient; using less
+threads will not take advantage of the machine's capabilities.

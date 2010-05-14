@@ -1,0 +1,66 @@
+                    =======================================
+                    =                                     =
+                    =             Thread pools            =
+                    =                                     =
+                    =======================================
+
+
+1. Overview
+-----------
+Basically, we need to execute tasks, and we want to use threads, because they
+are especially useful with our brand new multicore machines and because the cool
+kids are using them.
+
+Every time a new task has to be treated, it is added to a task queue. A few
+threads, created at the beginning of the program, will pick up the next task in
+the task queue, treat it, then pick up another task, etc. If there are no tasks
+any more, the threads will just go to sleep, not consuming any CPU time, only
+waking up if a new task comes.
+
+
+2. Understanding the code
+-------------------------
+You should not really care about the way we have implemented thread pools. The
+only thing you need is the API.
+
+(a) Thread pool API.
+Take a look at thread_pool.h !
+
+
+(b) The implementation
+We are using POSIX threads. Let's take a look at the pthread_* functions we use.
+Note that we are only giving a quick explanation, and that you should definitely
+read the manpages, especially if you are not familiar with the pthread library.
+
+* pthread_mutex_init ()
+Used to initialize a mutex. We are not using any attributes, cuz we are noobs.
+
+* pthread_mutex_lock
+Locks the given mutex. Note that if it is already locked, the thread will sleep
+until it is unlocked.
+
+* pthread_mutex_unlock
+Unlocks the given mutex. 
+
+* pthread_cond_init
+Initializes a condition variable.
+
+* pthread_cond_wait
+Unlocks the given mutex, and waits for the given condition. Will relock the
+mutex before returning. 
+
+* pthread_cond_broadcast
+Sends a signal to all the threads waiting for the given condition.
+
+* pthread_cleanup_push
+Adds a new function to the top of the cleanup function stack.
+
+* pthread_cleanup_pop
+Removes the cleanup function that is on top of the stack, with or without
+executing it, depending upon the argument it received.
+
+
+pthread_set_canceltype
+pthread_set_cancelstate
+pthread_sigmask
+pthread_create
