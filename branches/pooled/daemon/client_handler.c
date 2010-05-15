@@ -28,6 +28,10 @@ extern struct client            *clients;
 extern sem_t                    clients_lock;
 extern struct shared_counter    nb_clients;
 
+#if 0
+/*
+ * Useless function that is sometimes used to test stuff.
+ */ 
 static void*
 bar (void *a) {
     struct client_request   *r;
@@ -40,6 +44,7 @@ bar (void *a) {
 
     return NULL;
 }
+#endif
 
 static void*
 handle_requests (struct client *client) {

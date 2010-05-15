@@ -3,6 +3,8 @@
  * should try and add the given IP/port to his list of known daemons.
  */
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
 
 #include <errno.h>
 #include <stdio.h>

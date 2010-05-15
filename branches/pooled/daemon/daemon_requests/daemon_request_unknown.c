@@ -8,6 +8,7 @@ extern FILE *log_file;
 
 void*
 daemon_request_unknown (void* arg) {
+    (void) arg;
 /*
  * This currently does nothing, because of an annoying bug.
  *
