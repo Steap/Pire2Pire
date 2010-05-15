@@ -24,7 +24,7 @@ void*
 daemon_request_neighbourhood (void *arg) {
     struct daemon_request    *r;
     struct daemon            *tmp;
-    char                     answer[25]; // FIXME : LOLZ
+    char                     answer[256]; // FIXME : LOLZ
 
     r = (struct daemon_request *) arg;
     if (!r)
