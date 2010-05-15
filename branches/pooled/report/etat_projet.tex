@@ -1,0 +1,51 @@
+\section{Etat du projet}
+
+%%%%%
+\subsection{Commandes implémentées}
+
+\subsubsection{Commandes de protocole}
+\begin{description}
+    \item[list] récupère la liste des fichiers présents sur les machines
+connues.
+    \item[file fichier hash taille ip:port] uh ?
+    \item[get hash debut fin] 
+    \item[ready hash délai ip port protocole début fin]
+    \item[neighbourhood] demande une liste de voisins connus.
+    \item[neighbour ip:port] fournit l'adresse IP et le port TCP d'un des
+membres du réseau.
+    \item[error] euh, bonne syntaxe ?
+\end{description}
+
+
+
+\subsubsection{Commandes utilisateur}
+\begin{description}
+    \item[set] fournit la liste des options disponibles (modifie une option avec
+la syntaxe set a=b). Aucune option n'est disponible...
+    \item[help] fournit la liste des commandes existantes.
+    \item[list] liste les fichiers présents sur les machines auxquelles le
+client est connecté. Aucune option n'est implémentée pour cette commande, elle
+retournera toujours la totalité des fichiers.
+    \item[get hash] télécharge le fichier dont le hash est passé en paramètre. 
+    \item[info] donne des informations concernant le programme (nombre de
+machines connues, nombre de clients connectés).
+    \item[download] donne des informations sur les téléchargements en cours.
+    \item[upload] donne des informations sur les envois en cours.
+    \item[connect ip:port] se connecte à une autre machine.
+    \item[raw ip:port cmd] envoie la commande de protocole "cmd" à la machine
+dont l'ip/port sont passés en paramètre.
+\end{description}
+
+
+
+%%%%%
+\subsection{Commandes non implémentées}
+\begin{description}
+    \item[traffic]
+    \item[checksum hash taille-bloc début fin checksum] 
+    \item[redirect hash ip:port]
+
+\end{description}
+%%%%%
+\subsection{Bugs connus}
+Y en a :(
