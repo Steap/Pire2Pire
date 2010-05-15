@@ -27,15 +27,15 @@ hole_map_new (int s, int e){
 struct hole_map *
 hole_map_fill_gap (struct hole_map *map, int s, int e){
 	if (map == NULL) {	
-		log_failure (log_file,
+		/*log_failure (log_file,
 					"error inserting from %d to %d. \n=> file already complete !\n",
-					s, e);
+					s, e);*/
 		return map;
 	}
 	if (s < map->start) {
-		log_failure (log_file,
+		/*log_failure (log_file,
 					"error inserting from %d to %d. \n=> collision between %d and %d !\n",
-					s, e, s, map->start - 1);
+					s, e, s, map->start - 1);*/
 		return map;
 	}	
 	if ((s > map->end) && (map->next != NULL)) {
@@ -53,9 +53,9 @@ hole_map_fill_gap (struct hole_map *map, int s, int e){
 			free (obsolete_map);
 		}
 		else if (e > map->end) {
-			log_failure (log_file,
+			/*log_failure (log_file,
 						"error inserting from %d to %d. \n=> collision between %d and %d !\n", 
-						s, e, map->end + 1, e);
+						s, e, map->end + 1, e);*/
 		}
 		return map;
 	}
@@ -72,9 +72,9 @@ hole_map_fill_gap (struct hole_map *map, int s, int e){
 			return map;
 		}
 		else {
-			log_failure (log_file,
+			/*log_failure (log_file,
 						"error inserting from %d to %d. \n=> collision between %d and %d !\n",
-						s, e, map->end + 1, e);
+						s, e, map->end + 1, e);*/
 			return map;
 		}
 	}
