@@ -1,3 +1,6 @@
+#include <sys/select.h>
+#include <sys/socket.h>
+
 #include <netinet/in.h>         // struct sockaddr_in
 
 #include <errno.h>              // errno

@@ -1,3 +1,5 @@
+#include <sys/socket.h>
+
 #include <arpa/inet.h>          // inet_pton ()
 
 #include <errno.h>              // errno

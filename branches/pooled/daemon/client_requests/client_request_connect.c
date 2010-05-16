@@ -1,3 +1,5 @@
+#include <sys/socket.h>
+
 #include <arpa/inet.h>          // inet_aton ()
 #include <netinet/in.h>         // struct sockaddr_in
 

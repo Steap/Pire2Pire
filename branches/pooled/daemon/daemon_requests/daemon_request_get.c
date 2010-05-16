@@ -1,3 +1,4 @@
+#include <sys/socket.h>
 #include <sys/stat.h>           // entry_stat
 
 #include <arpa/inet.h>          // inet_pton ()
