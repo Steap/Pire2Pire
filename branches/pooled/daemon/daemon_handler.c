@@ -13,6 +13,7 @@
 #include "daemon.h"             // daemon_send ()
 #include "daemon_request.h"     // struct daemon_request
 #include "daemon_requests.h"    // daemon_request_unknown ()
+#include "is_cmd.h"
 #include "shared_counter.h"
 #include "thread_pool.h"
 #include "util/socket.h"        // socket_getline ()
@@ -59,6 +60,7 @@ handle_requests (struct daemon *daemon) {
         /* Treating all the common requests */
         /* FIXME : use the IS_CMD macro */
         pool = fast_pool;
+#if 0
         if (strncmp (message, "list", 4) == 0) {
             pool = slow_pool;
             handler = daemon_request_list;
@@ -73,6 +75,22 @@ handle_requests (struct daemon *daemon) {
             handler = daemon_request_neighbour;
         else if (strncmp (message, "ready", 5) == 0)
             handler = daemon_request_ready;
+#endif
+
+        if (IS_CMD (message, "list")) {
+            pool = slow_pool;
+            handler = &daemon_request_list;
+        }
+        else if (IS_CMD (message, "get")) 
+            handler = &daemon_request_get;
+        else if (IS_CMD (message, "file"))
+            handler = &daemon_request_file;
+        else if (IS_CMD (message, "neighbourhood"))
+            handler = &daemon_request_neighbourhood;
+        else if (IS_CMD (message, "neighbour"))
+            handler = &daemon_request_neighbour;
+        else if (IS_CMD (message, "ready"))
+            handler = &daemon_request_ready;
         else
             handler = daemon_request_unknown;
 
