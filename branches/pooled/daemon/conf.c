@@ -39,16 +39,19 @@ conf_retrieve (const char *path) {
 
     prefs->client_port             = DEFAULT_CLIENT_PORT;
     prefs->daemon_port             = DEFAULT_DAEMON_PORT;
-    prefs->shared_folder           = DEFAULT_SHARED_FOLDER;
-    prefs->interface               = DEFAULT_INTERFACE;
+    prefs->shared_folder           = strdup (DEFAULT_SHARED_FOLDER);
+    prefs->interface               = strdup (DEFAULT_INTERFACE);
     prefs->nb_proc                 = DEFAULT_NB_PROC;
     prefs->max_clients             = DEFAULT_MAX_CLIENTS;
     prefs->max_daemons             = DEFAULT_MAX_DAEMONS;
     prefs->max_requests_per_client = DEFAULT_MAX_RQ_PER_CLIENT;
     prefs->max_requests_per_daemon = DEFAULT_MAX_RQ_PER_DAEMON;
-    prefs->log_file                = DEFAULT_LOG_FILE;
-    prefs->lock_file               = DEFAULT_LOCK_FILE;   
+    prefs->log_file                = strdup (DEFAULT_LOG_FILE);
+    prefs->lock_file               = strdup (DEFAULT_LOCK_FILE);
     /* TODO */
+
+    if (!path)
+        return prefs;
 
     if ((conf_file = fopen (path, "r")) == NULL) {
         fprintf (stderr, "Cant open conf\n");

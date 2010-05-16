@@ -164,7 +164,8 @@ void daemonize (void) {
             exit (1);
         case 0:
             fclose (log_file);
-            conf_free (prefs);
+            if (prefs)
+                conf_free (prefs);
             exit (0);
             break;
         default:
@@ -485,17 +486,19 @@ int
 main (int argc, char *argv[])
 {
     (void) argc;
-
+    /*
+     * argv[1] might be NULL : this case is handled by conf_retrieve.
+     */
     prefs = conf_retrieve (argv[1]);
     if (!prefs) {
         fprintf (stderr,
 "Unable to retrieve preferences. Default preferences cannot be used. Aborting.\n");
     }
-
     start_logger ();
+#if 1
     daemonize ();
     start_server ();
-
+#endif
     return EXIT_SUCCESS;
 }
 

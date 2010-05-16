@@ -34,6 +34,6 @@ util/logger.c \
 util/string.c  \
 util/md5/md5.c \
 util/md5/md5_algorithm.c
-foobar_LDFLAGS = -pthread
+foobar_LDFLAGS = -lpthread
 SUBDIRS= client_requests daemon_requests util util/md5
 AUTOMAKE_OPTIONS = subdir-objects
