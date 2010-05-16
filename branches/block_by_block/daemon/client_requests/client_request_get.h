@@ -1,6 +1,17 @@
 #ifndef CLIENT_REQUEST_GET_H
 #define CLIENT_REQUEST_GET_H
 
-void *client_request_get (void *arg);
 
+/* used by client_request_get.c to store 
+ * seeder daemons when creating 1 job per daemon.
+ */
+struct daemon_list {
+	struct daemon 		*daemon;
+	int 				id;
+	struct seeder_list	*next;
+};
+
+
+void *client_request_get (void *arg);
+void *internal_request_get (void *arg);
 #endif//CLIENT_REQUEST_SET_H

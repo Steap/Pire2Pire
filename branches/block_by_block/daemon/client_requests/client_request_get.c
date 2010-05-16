@@ -38,29 +38,64 @@ static const struct client_request  *r;
 static char                         answer[256];
 /* Will point the file cache entry of the file we will download */
 static const struct file_cache      *file_to_dl;
+
 /* Daemon who should send us the file */
 static struct daemon                *d;
 
-static int find_file ();
-static int find_daemon ();
+static int                  find_file ();
+static int                  find_daemon ();
+static struct daemon_list * find_daemons ();
 
 void*
 client_request_get (void *arg) {
     r = (struct client_request *) arg;
+    struct daemon_list  *d_list;
+    struct daemon_list  *list_item_to_delete;
+    struct daemon       *next_d;
+    int                 seeder_count;
+    
     if (!r)
         return NULL;
 
 
     /* First we find the file in the cache */
+    
     if (find_file () < 0)
         return NULL;
     /* file_to_dl should now be the good one */
 
 
-    /* Find the daemon owning the file by checking its IP */
-    if (find_daemon () < 0)
+    /* Find the daemons owning the file by checking its IP */
+    if ((d_list = find_daemons ()) != NULL) {
+        if (client_send (r->client,
+            " < no seeder for the requested file. Former seeders must have been disconnected.\n") < 0)
+            log_failure (log_file, "cr_get: client_send () failed");
         return NULL;
-    /* d should now point to the good daemon */
+    }
+
+    
+    /* about handling multi-seeders and block-by-block download */
+    
+    // we know the number of seeders
+    seeder_count = d_list->id;
+    
+    /* FIXME : calculate smartly the blocks to consider,
+     * given :
+     * - number of seeders
+     * - size of file to dl
+     * - a max_size for a block ? Not implemented
+     */
+     
+    /* loop where we have to post a job for each seeder
+     */
+    next_d = d_list->daemon;
+    while (next_d != NULL) {
+        // FIXME : act !!!! do something !!!
+        list_item_to_delete = d_list;
+        d_list = d_list->next;
+        free (list_item_to_delete);
+    }
+
 
 
     /* Sending the "get key begin end" message */
@@ -73,6 +108,8 @@ client_request_get (void *arg) {
         log_failure (log_file, "cr_get: could not send the get command");
         return NULL;
     }
+    
+    
 /* FIXME */
 #if 0
     sem_wait (&downloads_lock);
@@ -103,6 +140,20 @@ client_request_get (void *arg) {
 #endif
 
     return NULL;
+}
+
+
+
+void*
+internal_request_get (void *arg) {
+    if(arg) {
+        // used parameter.
+    }
+    /* FIXME : meant to be called for partial download, 
+     * internally determined by client_request_get.
+     */
+     
+     
 }
 
 static int find_file () {
@@ -148,6 +199,7 @@ static int find_file () {
                 }
             }
         }
+        
         cmd_parse_free (parsed_get);
 
         if (client_send (r->client, answer) < 0) {
@@ -163,8 +215,8 @@ static int find_file () {
         return -1;
     }
 
-    static int
-    find_daemon () {
+static int
+find_daemon () {
         char                    *addr;
 
         addr = file_to_dl->seeders->ip;
@@ -184,4 +236,38 @@ static int find_file () {
 
         return 0;
     }
+    
+/*
+ * rather than finding one daemon only, we store every seeder daemons.
+ *
+ */
+static struct daemon_list *
+find_daemons () {
+        int                     seed_count;
+        struct seeder           *next_seeder;
+        struct daemon_list      *d_list;
+        struct daemon_list      *new_daemon;
+        
+        next_seeder = file_to_dl->seeders;
+        seed_count = 0;
+        d_list = NULL;
+        while (next_seeder != NULL) {
+            seed_count ++;
+            for_each_daemon(d) {
+                if (strcmp (d->addr, next_seeder->ip) == 0) {
+                    new_daemon = (struct daemon_list *)malloc(sizeof(struct daemon_list));
+                    new_daemon->daemon = d;
+                    new_daemon->id = seed_count;
+                    new_daemon->next = d_list;
+                    d_list = new_daemon;
+                    break;
+                }         
+            }
+            next_seeder = next_seeder->next;
+            
+        }
+
+        return d_list;
+}
+
 

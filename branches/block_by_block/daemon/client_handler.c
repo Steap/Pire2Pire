@@ -68,34 +68,8 @@ handle_requests (struct client *client) {
         }
         sem_post (&client->req_lock);
         /* Treating all the common requests */
-        /* FIXME : use the IS_CMD macro */
         pool = fast_pool;
-#if 0
-        if (strncmp (message, "connect", 7) == 0) {
-            /* If the daemon does not exist, it takes time to timeout */
-            pool = slow_pool;
-            handler = client_request_connect;
-        }
-        else if (strncmp (message, "download", 8) == 0)
-            handler = client_request_download;
-        else if (strncmp (message, "get", 3) == 0)
-            handler = client_request_get;
-//        else if (strncmp (message, "help", 4) == 0)
-        if (IS_CMD (message, "help"))
-            handler = client_request_help;
-        else if (strncmp (message, "info", 4) == 0)
-            handler = client_request_info;
-        else if (strncmp (message, "list", 4) == 0)
-            handler = client_request_list;
-        else if (strncmp (message, "raw", 3) == 0)
-            handler = client_request_raw;
-        else if (strncmp (message, "set", 3) == 0)
-            handler = client_request_set;
-        else if (strncmp (message, "bar", 3) == 0) {
-            pool = slow_pool;
-            handler = bar;
-        }
-#endif
+
         if (IS_CMD (message, "connect")) {
             pool = slow_pool;
             handler = client_request_connect;

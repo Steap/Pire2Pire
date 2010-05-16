@@ -19,6 +19,8 @@ typedef long unsigned int file_size_t;
 struct seeder {
     char            ip[FILE_IP_SIZE + 1];
     int             port;
+    
+    //struct daemon	*seed;
     struct seeder   *next;
 };
 
