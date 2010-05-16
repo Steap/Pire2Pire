@@ -14,6 +14,7 @@
 #include "../../util/logger.h"  // log_failure ()
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request
+#include "client_request_get.h"
 #include "../daemon.h"
 #include "../util/cmd_parser.h" // struct option_template
 #include "../util/socket.h"
@@ -91,6 +92,7 @@ client_request_get (void *arg) {
     next_d = d_list->daemon;
     while (next_d != NULL) {
         // FIXME : act !!!! do something !!!
+        
         list_item_to_delete = d_list;
         d_list = d_list->next;
         free (list_item_to_delete);
@@ -141,8 +143,6 @@ client_request_get (void *arg) {
 
     return NULL;
 }
-
-
 
 void*
 internal_request_get (void *arg) {

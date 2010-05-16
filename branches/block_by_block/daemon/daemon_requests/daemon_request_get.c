@@ -34,6 +34,9 @@ static struct dirent            *entry;         /* The file we will send */
 static struct stat              entry_stat;     /* Information about the file */
 /* File descriptor of the requested file */
 static int                      file;
+static int 						block_start;
+static int						block_end;
+
 static char                     *key;           /* MD5 hash of the file */
 static struct parsed_cmd        *pcmd;          /* Parsed command */
 /* The connected socket we will actually use to send the file */

@@ -8,10 +8,10 @@
 struct daemon_list {
 	struct daemon 		*daemon;
 	int 				id;
-	struct seeder_list	*next;
+	struct daemon_list	*next;
 };
 
 
 void *client_request_get (void *arg);
 void *internal_request_get (void *arg);
-#endif//CLIENT_REQUEST_SET_H
+#endif//CLIENT_REQUEST_GET_H

@@ -27,7 +27,8 @@ void*
 daemon_request_ready (void* arg) {
     struct daemon_request   *r;
     // Parse elements
-    char                    *key, *delay, *ip, *port, *proto, *begin, *end;
+    char                    *key, *delay, *ip, *port, *proto;
+    int						begin, end;
 /* cmd version: */
     int                     argc;
     char                    **argv;
@@ -35,8 +36,9 @@ daemon_request_ready (void* arg) {
     struct sockaddr_in      dl_addr;
     struct file_cache       *file;
     int                     local_file;
+    FILE					*local_file_too;
     int                     nb_received;
-    file_size_t             nb_received_sum;
+    int            			nb_received_sum;
     char                    buffer[BUFFSIZE];
     int                     nb_written;
     char                    *full_path;
@@ -64,8 +66,13 @@ daemon_request_ready (void* arg) {
     ip = argv[3];
     port = argv[4];
     proto = argv[5];
-    begin = argv[6];
-    end = argv[7];
+    begin = atoi(argv[6]);
+    end = atoi(argv[7]);
+    
+    if ((begin < 0) || (end < 0) || (begin > end)) {
+    	log_failure (log_file, "daemon_request_ready (): invalid data boundaries");
+        return NULL;
+    }
 
     /* TODO&FIXME: We should use all above arguments */
     if ((dl_sock = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -96,10 +103,13 @@ daemon_request_ready (void* arg) {
                                 + strlen (file->filename)
                                 + 2) * sizeof (char));
     sprintf (full_path, "%s/%s", prefs->shared_folder, file->filename);
+    
     // FIXME: We should not truncate the file when downloading it by blocks
     local_file = open (full_path,
-                        O_WRONLY | O_TRUNC | O_CREAT,
+                        O_WRONLY | O_CREAT,
                         (mode_t)0644);
+    local_file_too = fdopen(local_file, "w+"); 
+    
     //free (full_path);
     if (local_file < 0) {
         log_failure (log_file,
@@ -140,7 +150,8 @@ daemon_request_ready (void* arg) {
     nb_received_sum = 0;
     // FIXME: nb_received_sum should be compared to end - begin
     sleep (2);
-    while (nb_received_sum < file->size) {
+    
+    while (nb_received_sum < (end - (begin - 1))) {
         log_failure (log_file,
                      "DBG %d %d",
                      nb_received_sum,
@@ -152,18 +163,22 @@ daemon_request_ready (void* arg) {
                         "dr_ready: recv () failed");
             return NULL;
         }
-        nb_received_sum += nb_received;
-        while (nb_received) {
-            nb_written = write (local_file, buffer, nb_received);
-            if (nb_written < 0) {
-                log_failure (log_file,
-                            "dr_ready: write () failed");
-                return NULL;
-            }
-            nb_received -= nb_written;
+        
+        fseek (local_file_too, begin + nb_received_sum, SEEK_SET);
+        nb_written = fwrite (&(buffer[begin + nb_received_sum]), nb_received * sizeof(char), 1, local_file_too);
+        if (nb_written < 0) {
+            log_failure (log_file,
+                        "dr_ready: write () failed");
+            return NULL;
         }
+        nb_received_sum += nb_received;
     }
 
+	/* FIXME : must send another job to the queue if the file is still incomplete !
+	 *
+	 */
+	 
+	 
     /* 
      * Releasing the file from the download queue 
      */
