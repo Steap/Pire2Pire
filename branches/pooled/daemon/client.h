@@ -19,10 +19,26 @@ struct client {
     struct client           *prev;
 };
 
-struct client *client_new     (int socket, char *addr);
-void           client_free    (struct client *c);
-struct client *client_add     (struct client *l, struct client *c);
-struct client *client_remove  (struct client *l, struct client *c);
-int            client_send    (struct client *c, const char *msg);
+int
+client_count    ();
+
+struct client *
+client_new      (int socket,
+                char *addr);
+
+void
+client_free     (struct client *c);
+
+struct client *
+client_add      (struct client *l,
+                struct client *c);
+
+struct client *
+client_remove   (struct client *l,
+                struct client *c);
+
+int
+client_send     (struct client *c,
+                const char *msg);
 
 #endif/*CLIENT_H*/

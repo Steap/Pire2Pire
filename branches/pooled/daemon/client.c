@@ -1,12 +1,27 @@
 #include <sys/socket.h>     // send ()
 
+#include <pthread.h>
 #include <stdlib.h>         // malloc ()
 #include <string.h>         // strdup ()
 
+#include "shared_counter.h"
 #include "../util/logger.h" // log_failure ()
 #include "client.h"         // struct client
 
 extern FILE *log_file;
+
+static struct shared_counter nb_clients = {
+    0,
+    PTHREAD_MUTEX_INITIALIZER
+};
+int client_count () {
+    int nb;
+    pthread_mutex_lock (&nb_clients.lock);
+    nb = nb_clients.count;
+    pthread_mutex_unlock (&nb_clients.lock);
+    return nb;
+}
+
 
 struct client*
 client_new (int socket, char *addr) {

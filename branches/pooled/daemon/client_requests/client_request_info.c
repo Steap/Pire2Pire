@@ -11,8 +11,6 @@
 #define DEBUG   1
 
 extern struct client            *clients;
-extern struct shared_counter    nb_clients;
-extern struct shared_counter    nb_daemons;
 extern struct daemon            *daemons;
 extern sem_t                    daemons_lock;
 
@@ -31,13 +29,8 @@ client_request_info (void *arg) {
     if (!r)
         return NULL;
 
-    sem_wait (&nb_clients.lock);
-    clients_count = nb_clients.count;
-    sem_post (&nb_clients.lock);
-    sem_wait (&nb_clients.lock);
-    daemons_count = nb_daemons.count;
-    sem_post (&nb_clients.lock);
-
+    clients_count = client_count ();
+    daemons_count = daemon_count ();
 
     sem_wait (&r->client->req_lock);
     sprintf (answer,

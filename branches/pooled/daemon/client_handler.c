@@ -31,7 +31,7 @@ extern struct shared_counter    nb_clients;
 #if 0
 /*
  * Useless function that is sometimes used to test stuff.
- */ 
+ */
 static void*
 bar (void *a) {
     struct client_request   *r;
@@ -154,14 +154,14 @@ handle_client (void *arg) {
 
     c = (struct client *)arg;
     if (!c)
-        goto out;
+        return NULL;
 
     sem_wait (&clients_lock);
     clients = client_add (clients, c);
     sem_post (&clients_lock);
     if (!clients) {
         client_free (c);
-        goto out;
+        return NULL;
     }
 
     log_success (log_file, "BEGIN   client %s", c->addr);
@@ -187,11 +187,6 @@ handle_client (void *arg) {
     sem_post (&c->req_lock);
 
     client_free (c);
-
-out:
-    sem_wait (&nb_clients.lock);
-    --nb_clients.count;
-    sem_post (&nb_clients.lock);
 
     return NULL;
 }

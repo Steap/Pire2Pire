@@ -27,7 +27,6 @@ extern struct pool  *fast_pool;
 
 extern struct daemon            *daemons;
 extern sem_t                    daemons_lock;
-extern struct shared_counter    nb_daemons;
 
 static void *
 handle_requests (struct daemon *daemon) {
@@ -125,14 +124,16 @@ handle_daemon (void *arg) {
 
     d    = (struct daemon *)arg;
     if (!d)
-        goto out;
+        return NULL;
 
     sem_wait (&daemons_lock);
     daemons = daemon_add (daemons, d);
     sem_post (&daemons_lock);
     if (!daemons) {
         daemon_free (d);
-        goto out;
+        /* This is really bad, no need to daemon_remove since daemons is
+        fucked up already */
+        return NULL;
     }
 
     log_success (log_file, "BEGIN   daemon %s", d->addr);
@@ -157,11 +158,6 @@ handle_daemon (void *arg) {
     sem_post (&d->req_lock);
 
     daemon_free (d);
-
-out:
-    sem_wait (&nb_daemons.lock);
-    --nb_daemons.count;
-    sem_post (&nb_daemons.lock);
 
     return NULL;
 }

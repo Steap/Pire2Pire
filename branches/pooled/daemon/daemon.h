@@ -25,6 +25,9 @@ struct daemon {
     struct daemon           *prev;
 };
 
+int
+daemon_count ();
+
 struct daemon *
 daemon_new  (int socket,
             const char *addr,

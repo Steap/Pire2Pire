@@ -21,7 +21,6 @@
 #include "daemon_handler.h" // handle_client ()
 #include "dl_file.h"
 #include "file_cache.h"     // struct file_cache
-#include "shared_counter.h"
 #include "thread_pool.h"
 #include "util/cmd_parser.h"
 #include "util/socket.h"    // socket_init ()
@@ -46,9 +45,7 @@ struct prefs *prefs;
 struct pool             *slow_pool;
 struct pool             *fast_pool;
 struct pool             *clients_pool;
-struct shared_counter   nb_clients;
 struct pool             *daemons_pool;
-struct shared_counter   nb_daemons;
 
 /* Connected clients */
 sem_t            clients_lock;
@@ -82,12 +79,12 @@ signal_handler (int sig) {
 static void
 start_logger (void) {
     log_file = fopen (prefs->log_file, "w");
-    
+
     if (!log_file) {
-        fprintf (stderr, 
+        fprintf (stderr,
 "Could not open the log file. There will be no logs.");
     }
-    
+
 }
 
 static void
@@ -187,8 +184,8 @@ void daemonize (void) {
 
     lock = open (prefs->lock_file, O_RDWR | O_CREAT, 0640);
     if (lock < 0) {
-        log_failure (log_file, 
-                     "Failed to open lock file (%s).", 
+        log_failure (log_file,
+                     "Failed to open lock file (%s).",
                      prefs->lock_file);
     }
     else
@@ -201,8 +198,8 @@ void daemonize (void) {
     sprintf (str, "%d\n", getpid ());
     write (lock, str, strlen (str));
     if (close (lock) < 0) {
-        log_failure (log_file, 
-                     "Failed to close LOCK_FILE (%s).", 
+        log_failure (log_file,
+                     "Failed to close LOCK_FILE (%s).",
                     prefs->lock_file);
     }
     else
@@ -268,14 +265,6 @@ start_server (void) {
 
     ABORT_IF (!(daemons_pool = pool_create (prefs->max_daemons)),
         "Unable to create daemons_pool")
-
-    nb_clients.count = 0;
-    ABORT_IF (sem_init (&nb_clients.lock, 0, 1) < 0,
-        "Unable to create nb_clients lock")
-
-    nb_daemons.count = 0;
-    ABORT_IF (sem_init (&nb_daemons.lock, 0, 1) < 0,
-        "Unable to create nb_daemons lock")
 
     /* Create the shared directory if it does not exist already */
     ABORT_IF (create_dir (prefs->shared_folder, (mode_t)0755) < 0,
@@ -355,13 +344,7 @@ start_server (void) {
             }
 
             /* Can we handle this client? */
-            sem_wait (&nb_clients.lock);
-            if (nb_clients.count < prefs->max_clients) {
-                nb_clients.count++;
-                sem_post (&nb_clients.lock);
-            }
-            else {
-                sem_post (&nb_clients.lock);
+            if (client_count () > prefs->max_clients) {
                 socket_sendline (connected_sd, " < Too many clients\n");
                 goto close_socket;
             }
@@ -370,7 +353,7 @@ start_server (void) {
             if (!inet_ntop (AF_INET, &connected_sa.sin_addr,
                             addr, INET_ADDRSTRLEN)) {
                 socket_sendline (connected_sd, " < Oops\n");
-                goto failed_handling_client;
+                goto close_socket;
             }
             if (!(c = client_new (connected_sd, addr))) {
                 socket_sendline (connected_sd, " < Sorry pal :(\n");
@@ -387,16 +370,7 @@ start_server (void) {
             }
 
             /* Can we handle this daemon? */
-            sem_wait (&nb_daemons.lock);
-            if (nb_daemons.count < prefs->max_daemons) {
-                /* Remember client_request_connect is also creating daemons, so
-                    we increment the counter even if we have to decrement it
-                    on a possible following failure */
-                nb_daemons.count++;
-                sem_post (&nb_daemons.lock);
-            }
-            else {
-                sem_post (&nb_daemons.lock);
+            if (daemon_count () > prefs->max_daemons) {
                 socket_sendline (connected_sd, " < Too many daemons\n");
                 goto close_socket;
             }
@@ -407,18 +381,18 @@ start_server (void) {
             if (!ident_msg) {
                 socket_sendline (connected_sd,
                                 "error: identification timed out\n");
-                goto failed_handling_daemon;
+                goto close_socket;
             }
             if (cmd_parse_failed ((pcmd = cmd_parse (ident_msg, NULL)))) {
                 pcmd = NULL;
-                goto failed_handling_daemon;
+                goto close_socket;
             }
             if (pcmd->argc < 2)
-                goto failed_handling_daemon;
+                goto close_socket;
             if (strcmp (pcmd->argv[0], "neighbour") != 0)
-                goto failed_handling_daemon;
+                goto close_socket;
             if (!(colon = strchr (pcmd->argv[1], ':')))
-                goto failed_handling_daemon;
+                goto close_socket;
             port = atoi (colon + 1);
 
             free (ident_msg);
@@ -428,13 +402,13 @@ start_server (void) {
             if (!inet_ntop (AF_INET, &connected_sa.sin_addr,
                             addr, INET_ADDRSTRLEN)) {
                 socket_sendline (connected_sd, " < Oops\n");
-                goto failed_handling_daemon;
+                goto close_socket;
             }
 
             /* Now we've got his port, let him go in */
             if (!(d = daemon_new (connected_sd, addr, port))) {
                 socket_sendline (connected_sd, " < Sorry pal :(\n");
-                goto failed_handling_daemon;
+                goto close_socket;
             }
 
             pool_queue (daemons_pool, handle_daemon, d);
@@ -445,19 +419,6 @@ start_server (void) {
         }
 
         continue;
-
-failed_handling_client:
-        sem_wait (&nb_clients.lock);
-        --nb_clients.count;
-        sem_post (&nb_clients.lock);
-        goto close_socket;
-
-/* We jump here if we reserved a slot for a daemon, but failed to create it */
-failed_handling_daemon:
-        sem_wait (&nb_daemons.lock);
-        --nb_daemons.count;
-        sem_post (&nb_daemons.lock);
-        /* goto close_socket; */
 
 close_socket:
         if (pcmd) {
@@ -529,7 +490,7 @@ main (int argc, char *argv[])
         fprintf (stderr,
 "Unable to retrieve preferences. Default preferences cannot be used. Aborting.\n");
     }
-    
+
     start_logger ();
     daemonize ();
     start_server ();

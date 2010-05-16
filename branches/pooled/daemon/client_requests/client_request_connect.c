@@ -150,10 +150,6 @@ client_request_connect (void *arg) {
         goto send_msg;
     }
 
-    sem_wait (&nb_daemons.lock);
-    ++nb_daemons.count;
-    sem_post (&nb_daemons.lock);
-
     /*
      * Now we must identify so that the daemon at the other side won't close
      * the connection
@@ -168,7 +164,7 @@ client_request_connect (void *arg) {
     daemon = daemon_new (daemon_socket, ip, port);
     if (!daemon) {
         sprintf (answer, " < connect: could not create a new daemon object");
-        goto decrement_daemons;
+        goto send_msg;
     }
 
     log_success (log_file, "CONNECT     daemon %s", daemon->addr);
@@ -179,11 +175,6 @@ client_request_connect (void *arg) {
             " < connect: connected to %s successfully\n",
             ip);
     goto send_msg;
-
-decrement_daemons:
-    sem_wait (&nb_daemons.lock);
-    --nb_daemons.count;
-    sem_post (&nb_daemons.lock);
 
 send_msg:
     if (client_send (r->client, answer) < 0) {

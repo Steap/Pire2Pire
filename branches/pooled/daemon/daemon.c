@@ -1,15 +1,28 @@
 #include <sys/socket.h>     // send ()
 
 #include <errno.h>
-#include <pthread.h>        // pthread_equal ()
+#include <pthread.h>
 #include <signal.h>         // pthread_kill ()
 #include <stdlib.h>         // malloc ()
 #include <string.h>         // strdup ()
 
+#include "shared_counter.h"
 #include "../util/logger.h" // log_failure ()
 #include "daemon.h"         // struct daemon
 
 extern FILE *log_file;
+
+static struct shared_counter nb_daemons = {
+    0,
+    PTHREAD_MUTEX_INITIALIZER
+};
+int daemon_count () {
+    int nb;
+    pthread_mutex_lock (&nb_daemons.lock);
+    nb = nb_daemons.count;
+    pthread_mutex_unlock (&nb_daemons.lock);
+    return nb;
+}
 
 struct daemon *
 daemon_new (int socket, const char *addr, int port) {
@@ -47,6 +60,11 @@ daemon_free (struct daemon *d) {
 
 struct daemon *
 daemon_add (struct daemon *l, struct daemon *d) {
+    pthread_mutex_lock (&nb_daemons.lock);
+    log_success (log_file, "DAEMON++");
+    ++nb_daemons.count;
+    pthread_mutex_unlock (&nb_daemons.lock);
+
     if (!d) {
         return l;
     }
@@ -56,12 +74,21 @@ daemon_add (struct daemon *l, struct daemon *d) {
     d->prev = NULL;
     d->next = l;
     l->prev = d;
+
     return d;
 }
 
 struct daemon *
 daemon_remove (struct daemon *l, struct daemon *d) {
     struct daemon   *tmp;
+
+    /* FIXME: if we daemon_remove a non-existing daemon, I think we're
+    screwed */
+
+    pthread_mutex_lock (&nb_daemons.lock);
+    log_success (log_file, "DAEMON--");
+    --nb_daemons.count;
+    pthread_mutex_unlock (&nb_daemons.lock);
 
     if (!l)
         return NULL;
