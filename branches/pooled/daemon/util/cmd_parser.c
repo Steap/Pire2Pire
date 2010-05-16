@@ -113,13 +113,15 @@ free_arg_list (struct arg_list *arg_list) {
 /* see .h */
 void
 cmd_parse_free (struct parsed_cmd *pcmd) {
+    int i;
+
     /* If the parse ended bad, nothing to free */
     if (!pcmd
         || pcmd == PARSER_MISSING_ARGUMENT
         || pcmd == PARSER_UNKNOWN_OPTION)
         return;
     /* Else... */
-    for (int i = 0; i < pcmd->nb_template_options; i++) {
+    for (i = 0; i < pcmd->nb_template_options; i++) {
         if(pcmd->options[i].value)
             free (pcmd->options[i].value);
     }
@@ -127,7 +129,7 @@ cmd_parse_free (struct parsed_cmd *pcmd) {
         free (pcmd->options);
 
     if (pcmd->argv)
-        for (int i = 0; i < pcmd->argc; i++)
+        for (i = 0; i < pcmd->argc; i++)
             free (pcmd->argv[i]);
     free (pcmd->argv);
 
