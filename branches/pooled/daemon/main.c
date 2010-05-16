@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <sys/ioctl.h>      // ioctl ()
+#include <sys/socket.h>
 #include <sys/stat.h>       // umask ()
 
 #include <arpa/inet.h>      // inet_ntop ()
