@@ -10,7 +10,6 @@
 #include <string.h>             // strchr ()
 #include <unistd.h>             // close ()
 
-#include "../../util/logger.h"  // log_failure ()
 #include "../conf.h"            // struct prefs
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request
@@ -19,6 +18,7 @@
 #include "../thread_pool.h"
 #include "../shared_counter.h"
 #include "../util/cmd_parser.h" // cmd_parse ()
+#include "../util/logger.h"  // log_failure ()
 #include "../util/socket.h"     // socket_sendline ()
 
 extern FILE*                    log_file;

@@ -1,7 +1,7 @@
 #include <pthread.h>            // pthread_t
 #include <string.h>              // strncmp ()
 
-#include "../../util/logger.h"  // log_failure ()
+#include "../util/logger.h"  // log_failure ()
 #include "../util/cmd.h"        // struct option
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request

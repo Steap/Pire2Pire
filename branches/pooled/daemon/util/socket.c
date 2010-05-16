@@ -7,8 +7,8 @@
 #include <stdio.h>              // FILE
 #include <string.h>             // strcpy ()
 
-#include "../../util/logger.h"  // log_failure ()
-#include "../../util/string.h"  // string_remove_trailer ()
+#include "../util/logger.h"  // log_failure ()
+#include "../util/string.h"  // string_remove_trailer ()
 #include "socket.h"             // socket_getline_with_trailer ()
 
 #define NB_QUEUE            10

@@ -2,7 +2,7 @@
 #include <stdio.h>              // FILE
 #include <string.h>             // strcpy ()
 
-#include "../../util/logger.h"  // log_failure ()
+#include "../util/logger.h"  // log_failure ()
 #include "../daemon.h"          // daemon_send ()
 #include "../daemon_request.h"  // struct daemon_request
 #include "../file_cache.h"      // struct file_cache

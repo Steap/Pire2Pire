@@ -10,8 +10,7 @@ endif
 CLIENT_EXEC=bin/client
 DAEMON_EXEC=bin/daemon
 
-CLIENT_SOURCES=\
-	client/main.c		\
+CLIENT_SOURCES= client/main.c		\
 	client/recv_resp.c	\
 	client/send_cmd.c	\
 	client/util/prompt.c
@@ -44,40 +43,38 @@ DAEMON_SOURCES=\
 	daemon/dl_file.c                                                \
 	daemon/main.c					                \
 	daemon/file_cache.c				                \
-    daemon/thread_pool.c                            \
+    	daemon/thread_pool.c                            \
 	daemon/util/cmd.c				                \
         daemon/util/cmd_parser.c                                        \
-	daemon/util/socket.c
+	daemon/util/socket.c \
+	daemon/util/logger.c \
+	daemon/util/md5/md5.c \
+	daemon/util/md5/md5_algorithm.c \
+	daemon/util/string.c
 
-UTIL_SOURCES=\
-	util/logger.c           \
-	util/md5/md5.c          \
-	util/md5/md5_algorithm.c\
-	util/string.c
 
 CLIENT_OBJ  =   $(CLIENT_SOURCES:.c=.o)
 DAEMON_OBJ  =   $(DAEMON_SOURCES:.c=.o)
-UTIL_OBJ    =   $(UTIL_SOURCES:.c=.o)
 
 .PHONY: all clean clear
 
 all: clear client daemon
 
-client: $(CLIENT_SOURCES) $(UTIL_SOURCES) $(CLIENT_EXEC)
+client: $(CLIENT_SOURCES) $(CLIENT_EXEC)
 
-daemon: $(DAEMON_SOURCES) $(UTIL_SOURCES) $(DAEMON_EXEC)
+daemon: $(DAEMON_SOURCES) $(DAEMON_EXEC)
 
-$(CLIENT_EXEC):	$(CLIENT_OBJ) $(UTIL_OBJ)
+$(CLIENT_EXEC):	$(CLIENT_OBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
-$(DAEMON_EXEC):	$(DAEMON_OBJ) $(UTIL_OBJ)
+$(DAEMON_EXEC):	$(DAEMON_OBJ)
 	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f $(CLIENT_OBJ) $(DAEMON_OBJ) $(UTIL_OBJ)
+	rm -f $(CLIENT_OBJ) $(DAEMON_OBJ)
 
 clear:
 	clear

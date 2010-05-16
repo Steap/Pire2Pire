@@ -1,6 +1,6 @@
 #include <stdlib.h>         // malloc ()
 
-#include "../util/logger.h" // log_recv ()
+#include "util/logger.h" // log_recv ()
 #include "daemon_request.h" // struct daemon_request
 
 extern FILE*    log_file;

@@ -8,7 +8,7 @@
 #include <string.h>                                 // strncmp ()
 #include <unistd.h> //FIXME: remove when sleep () is removed
 
-#include "../util/logger.h"                         // log_failure ()
+#include "util/logger.h"                         // log_failure ()
 #include "is_cmd.h"
 #include "client.h"                                 // client_send ()
 #include "client_request.h"                         // struct client_request

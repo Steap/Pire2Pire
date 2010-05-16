@@ -6,8 +6,8 @@
 #include <stdlib.h>             // malloc ()
 #include <dirent.h>             // DIR
 
-#include "../../util/md5/md5.h" // MDFile ()
-#include "../../util/logger.h"  // log_failure ()
+#include "../util/md5/md5.h" // MDFile ()
+#include "../util/logger.h"  // log_failure ()
 #include "../daemon.h"          // daemon_send ()
 #include "../daemon_request.h"  // struct daemon_request
 

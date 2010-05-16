@@ -1,6 +1,6 @@
 #include <stdio.h>              // FILE
 
-#include "../../util/logger.h"  // log_failure ()
+#include "../util/logger.h"  // log_failure ()
 #include "../daemon.h"          // daemon_send ()
 #include "../daemon_request.h"  // struct daemon_request
 

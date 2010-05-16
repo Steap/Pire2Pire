@@ -8,7 +8,7 @@
 #include <string.h>             // strncmp ()
 #include <unistd.h>             // close ()
 
-#include "../util/logger.h"     // log_failure ()
+#include "util/logger.h"     // log_failure ()
 #include "conf.h"
 #include "daemon.h"             // daemon_send ()
 #include "daemon_request.h"     // struct daemon_request

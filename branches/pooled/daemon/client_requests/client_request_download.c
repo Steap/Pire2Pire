@@ -12,7 +12,7 @@
 #include "../client_request.h"
 #include "../dl_file.h"
 
-#include "../../util/logger.h"
+#include "../util/logger.h"
 
 extern FILE              *log_file;
 extern struct dl_file    *downloads;

@@ -7,7 +7,7 @@
 #include <string.h>         // strdup ()
 
 #include "shared_counter.h"
-#include "../util/logger.h" // log_failure ()
+#include "util/logger.h" // log_failure ()
 #include "daemon.h"         // struct daemon
 
 extern FILE *log_file;

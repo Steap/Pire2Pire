@@ -13,7 +13,6 @@
 #include <string.h>         // strlen ()
 #include <unistd.h>         // unlink ()
 
-#include "../util/logger.h" // log_failure ()
 #include "client_handler.h" // handle_daemon ()
 #include "client_request.h"
 #include "daemon_request.h"
@@ -23,6 +22,7 @@
 #include "file_cache.h"     // struct file_cache
 #include "thread_pool.h"
 #include "util/cmd_parser.h"
+#include "util/logger.h" // log_failure ()
 #include "util/socket.h"    // socket_init ()
 
 // nfds must be the maximum sd + 1

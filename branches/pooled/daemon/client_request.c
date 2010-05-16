@@ -1,7 +1,7 @@
 #include <semaphore.h>
 #include <stdlib.h>         // malloc ()
 
-#include "../util/logger.h"
+#include "util/logger.h"
 #include "client_request.h" // struct client_request
 
 extern FILE *log_file;

@@ -6,7 +6,7 @@
 
 extern FILE *log_file;
 #include <errno.h>
-#include "../util/logger.h"
+#include "util/logger.h"
 struct dl_file*
 dl_file_new (const char *path, const int size) {
     struct dl_file *file;

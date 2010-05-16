@@ -11,8 +11,8 @@
 #include <string.h>             // strcmp ()
 #include <unistd.h>             // close ()
 
-#include "../../util/md5/md5.h" // MDFile ()
-#include "../../util/logger.h"  // log_failure ()
+#include "../util/md5/md5.h" // MDFile ()
+#include "../util/logger.h"  // log_failure ()
 #include "../conf.h"            // struct prefs
 #include "../daemon.h"          // daemon_send ()
 #include "../daemon_request.h"  // struct daemon_request

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../util/logger.h"
+#include "util/logger.h"
 #include "file_cache.h"
 
 extern FILE *log_file;

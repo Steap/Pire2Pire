@@ -11,7 +11,7 @@
 #include <string.h>             // strlen ()
 #include <unistd.h>
 
-#include "../../util/logger.h"  // log_failure ()
+#include "../util/logger.h"  // log_failure ()
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request
 #include "../daemon.h"

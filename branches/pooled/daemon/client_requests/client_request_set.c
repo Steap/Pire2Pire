@@ -1,6 +1,6 @@
 #include <stdio.h>              // FILE
 
-#include "../../util/logger.h"  // log_failure ()
+#include "../util/logger.h"  // log_failure ()
 #include "../client.h"          // struct client
 #include "../client_request.h"  // struct client_request
 #include "../util/cmd.h"        // struct option

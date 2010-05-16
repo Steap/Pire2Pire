@@ -8,8 +8,8 @@
 #include <string.h>             // strchr ()
 #include <unistd.h>             // close ()
 
-#include "../../util/md5/md5.h" // MDFile ()
-#include "../../util/logger.h"  // log_failure ()
+#include "../util/md5/md5.h" // MDFile ()
+#include "../util/logger.h"  // log_failure ()
 #include "../client.h"          // client_send ()
 #include "../client_request.h"  // struct client_request
 #include "../file_cache.h"      // struct file_cache
