@@ -17,7 +17,6 @@ CLIENT_SOURCES=\
 	client/util/prompt.c
 
 DAEMON_SOURCES=\
-	daemon/callback_argument.c			                \
 	daemon/client.c					                \
 	daemon/client_handler.c				                \
 	daemon/client_requests/client_request_connect.c	                \
