@@ -47,6 +47,36 @@ ROELANDT Cyril
 
 \begin{frame}
     \section{Clients et démons}
+     \textbf{Le client}
+
+    \begin{itemize}
+        \item Interagir avec l'utilisateur humain
+        \item Fonctionnement : 
+            \begin{itemize}
+                \item Envoyer les commandes tapées au démon
+                \item Renvoyer les réponses à l'utilisateur
+            \end{itemize}
+    \end{itemize}
+\begin{center}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.8]{archi_client.eps}
+\end{figure}
+\end{center}
+
+
+\end{frame}
+
+\begin{frame}
+    \textbf{Le démon}
+    
+    \begin{itemize}
+        \item Exécution en arrière-plan
+        \item Gestion de toutes les requêtes (clients et démons)
+        \item 1 thread par client qui se connecte
+        \item Vision globale : liste de clients et démons connus
+        \item Chaque requête est placée dans un thread du pool
+    \end{itemize}
 \end{frame}
 
 \begin{frame}
