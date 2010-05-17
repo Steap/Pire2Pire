@@ -19,7 +19,7 @@ ROELANDT Cyril
 
 
 \begin{frame}
-\titlepage
+    \titlepage
 \end{frame}
 
 \begin{frame}
@@ -28,12 +28,30 @@ ROELANDT Cyril
         \item Compatible GNU/Linux (Debian/Ubuntu) et *BSD (FreeBSD)
         \item Probablement compilable avec n'importe quel compilateur
         \begin{itemize}
-            \item ... avec une libs sans extension GCC...
+            \item ... avec une libc sans extension GCC...
         \end{itemize}
         \item Démon Unix
         \item Application multi-threadée
         \item Presque sans memory leaks !
     \end{itemize}
 \end{frame}
+
+\begin{frame}
+    \section{Pool thread}
+    \begin{itemize}
+        \item N threads crées au démarrage du démon
+        \item Dorment en attendant des jobs
+        \item Jobs "rapides" et jobs "lents"
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \section{Clients et démons}
+\end{frame}
+
+\begin{frame}
+    \section{Requêtes}
+\end{frame}
+
 
 \end{document}
