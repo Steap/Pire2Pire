@@ -26,6 +26,8 @@
 #include "util/logger.h" // log_failure ()
 #include "util/socket.h"    // socket_init ()
 
+#include "config.h"
+
 // nfds must be the maximum sd + 1
 #define NFDS(a,b)   (((a)>(b))?(a+1):(b+1))
 
