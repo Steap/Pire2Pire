@@ -239,8 +239,10 @@ start_server (void) {
     socklen_t           size;
     fd_set              socket_set;
     int                 nfds;
+#if HAVE_SYS_IOCTL_H
     struct ifreq        if_info;
     struct sockaddr_in  *if_addr;
+#endif
     char                addr[INET_ADDRSTRLEN];
     struct client       *c;
     struct daemon       *d;
@@ -307,7 +309,7 @@ start_server (void) {
     ABORT_IF (daemon_sd < 0,
         "Unable to socket_init daemon_sd")
 
-#if 1
+#if HAVE_SYS_IOCTL_H
     /* We get our ip */
     memcpy (if_info.ifr_name, prefs->interface, strlen (prefs->interface) + 1);
     if (ioctl (daemon_sd, SIOCGIFADDR, &if_info) == -1) {
@@ -318,6 +320,9 @@ start_server (void) {
     if_addr = (struct sockaddr_in *)&if_info.ifr_addr;
     inet_ntop (AF_INET, &if_addr->sin_addr, my_ip, INET_ADDRSTRLEN);
     log_success (log_file, "Found my IP : %s", my_ip);
+#else
+    log_failure (log_file, "<sys/ioctl.h> was not found. Cant find my IP, aborting.");
+    goto abort;
 #endif
 
     /* socket_set contains both client_sd and daemon_sd */
