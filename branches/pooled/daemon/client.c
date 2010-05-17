@@ -77,6 +77,10 @@ struct client*
 client_remove (struct client *l, struct client *c) {
     struct client *tmp;
 
+    pthread_mutex_lock (&nb_clients.lock);
+    nb_clients.count--;
+    pthread_mutex_unlock (&nb_clients.lock);
+
     if (!l)
         return NULL;
 
