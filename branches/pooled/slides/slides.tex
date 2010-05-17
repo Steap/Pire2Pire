@@ -73,9 +73,12 @@ ROELANDT Cyril
     \begin{itemize}
         \item Exécution en arrière-plan
         \item Gestion de toutes les requêtes (clients et démons)
-        \item 1 thread par client qui se connecte
         \item Vision globale : liste de clients et démons connus
-        \item Chaque requête est placée dans un thread du pool
+        \item Utilisation des pool de threads :
+            \begin{itemize}
+        \item 2 pools pour les clients et les démons
+        \item 2 pools pour les requêtes rapides et lentes
+            \end{itemize}
     \end{itemize}
 \end{frame}
 
