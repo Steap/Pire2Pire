@@ -58,6 +58,9 @@ client_free (struct client *c) {
 
 struct client*
 client_add (struct client *l, struct client *c) {
+    pthread_mutex_lock (&nb_clients.lock);
+    nb_clients.count++;
+    pthread_mutex_unlock (&nb_clients.lock);
     if (!c) {
         return l;
     }
