@@ -78,9 +78,12 @@ lancé pour traiter cette requête, et appelle la fonction correspondante dans
 struct client_request {
     char                    *cmd;
     struct client           *client;
+    void *                  (*handler) (void *);
+    struct pool             *pool;
+    phtread_t               tid;
+    int                     assigned;
     struct client_request   *prev;
     struct client_request   *next;
-    pthread_t               thread_id;
 };
 \end{lstlisting}
 
