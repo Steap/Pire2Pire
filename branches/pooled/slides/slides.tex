@@ -108,6 +108,41 @@ ROELANDT Cyril
 
 \begin{frame}
     \section{Requêtes}
+
+    \textbf{Requêtes implémentées}
+    \begin{itemize}
+        \item Commandes de protocole :
+            \begin{itemize}
+                \item list
+                \item file fichier hash taille ip:port
+                \item get hash debut fin
+                \item ready hash délai ip port protocole début fin
+                \item neighbourhood
+                \item neighbour ip:port
+                \item error
+            \end{itemize}
+        \item Commandes utilisateur :
+            \begin{itemize}
+                \item set
+                \item help
+                \item list
+                \item get hash
+                \item info
+                \item download
+                \item upload
+                \item connect ip:port
+                \item raw ip:port cmd
+            \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \textbf{Requêtes non implémentées}
+    \begin{itemize}
+        \item traffic
+        \item checksum hash taille-bloc début fin checksum
+        \item redirect hash ip:port
+    \end{itemize}
 \end{frame}
 
 
