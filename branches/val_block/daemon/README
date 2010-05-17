@@ -1,0 +1,34 @@
+* Generating the Makefiles and all
+----------------------------------
+$ autoreconf && automake 
+
+Then, compiling with :
+
+./configure && make
+
+
+* Overview
+----------
+This daemon is sent different requests /via/ a socket, and handles them using
+threads. Many clients and requests may be handled at the same time.
+
+
+
+* How to use the daemon ?
+-------------------------
+It should be used with the bash script that can be found in bin/. It allows
+users to properly start/stop/restart the daemon.
+
+
+* How does it work ?
+--------------------
+When accepting an incoming connection, the daemon creates a new thread that will
+handle the client. Note that, right after this thread has been created, another
+client can try and reach the daemon. Indeed, there is no need to wait for the
+first client to disconnect from the daemon to allow another one to start
+working.
+
+A thread dedicated to a client keeps reading from the socket, until the "quit"
+message is sent by the client. It creates a new thread for every valid command
+received. Note that the user can send a request without waiting for the
+previous one to return : all requests are handled simultaneously.

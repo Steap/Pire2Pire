@@ -1,0 +1,12 @@
+Plan du rapport
+---------------
+
+1. Etat du projet
+    1.1 Commandes implémentées/non implémentées
+    1.2 Bugs connus
+
+2. Description des principaux points techniques
+    1. Architecture générale.
+    2. Gestion des threads (thread pool)
+
+
