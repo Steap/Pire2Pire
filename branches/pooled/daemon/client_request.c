@@ -58,7 +58,7 @@ client_request_add (struct client_request *l, struct client_request *r) {
 struct client_request *
 client_request_remove (struct client_request *l, struct client_request *r) {
     struct client_request *tmp;
-log_failure (log_file, "Removing request %s", r->cmd);
+
     if (!l)
         return NULL;
 
