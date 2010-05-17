@@ -1,5 +1,5 @@
 all:
-	latex report.tex 
+	latex report.tex
 
 clear:
 	rm -f *.aux *.log

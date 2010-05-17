@@ -1,42 +1,45 @@
-\section{Principaux points techniques}
+\chapter{Principaux points techniques}
 
 %%%%%
 
-\subsection{Architecture générale}
+\section{Architecture générale}
 
 \input{architecture}
 %%%%%
 
 
-\subsection{Gestion des threads}
+\section{Gestion des threads}
 Nos threads sont répartis en quatre "pools", plus un thread principal.
 
-\subsubsection{Thread principal}
+\subsection{Thread principal}
 Le thread principal a deux sockets d'écoute, l'un destiné aux clients et
 l'autre aux démons. Dès qu'il reçoit une requête de connexion sur l'un de
 ses sockets, il redirige les démons vers le pool qui gère les démons et
 les clients vers le pool qui gère les clients.
 
-\subsubsection{Pool de gestion des clients et des démons}
+\subsection{Pool de gestion des clients et des démons}
 Nous avons donc deux pools de gestion : un pour les clients et un pour
 les démons. Ils contiennent chacun un nombre de threads fixé par
 l'utilisateur dans le fichier de configuration, sous les termes 
 \verb$max_clients$ pour les clients et \verb$max_démons$ pour les démons.
-Chaque thread est en charge d'un démon/client. \\
+Chaque thread est en charge d'un démon/client.
+
 Ces deux pools sont des pools de threads dormants, qui ne se réveillent qu'à 
 réception d'une requête. Ils envoient ensuite ces requêtes sur les deux autres
 pools de threads et se rendorment.
 
-\subsubsection{Le pool rapide et le pool lent}
+\subsection{Le pool rapide et le pool lent}
 Les deux autres pools gèrent donc les requêtes selon le temps qu'elles 
 prennent : le premier pool gère les requêtes qui se font rapidement 
 (par exemple \verb$help$) et le deuxième les requêtes plus complexes, qui 
-prennent donc plus de temps comme \verb$list$ par exemple.\\
+prennent donc plus de temps comme \verb$list$ par exemple.
+
 Cette séparation en deux pools est nécessaire car si nous n'avions qu'un seul 
 pool de gestion des requêtes, il aurait vite été surchargé de requêtes lentes
 donc les requêtes plus rapides ne pourraient pas s'exécuter (nombre de requêtes
-simultanées maximal atteint).Dans notre configuration, les deux types de 
-requêtes sont séparées, ainsi les deux ont accès au processeur à leur tour.\\
+simultanées maximal atteint). Dans notre configuration, les deux types de 
+requêtes sont séparées, ainsi les deux ont accès au processeur à leur tour.
+
 Ces deux pools contiennent autant de threads qu'il y a de coeurs sur la
 machine. Ils peuvent s'envoyer des tâches à eux-mêmes ou à l'autre pool.
 
