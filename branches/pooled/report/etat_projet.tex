@@ -11,35 +11,57 @@
 
 \subsection{Commandes de protocole}
 \begin{description}
-    \item[list] récupère la liste des fichiers présents sur les machines
-connues.
-    \item[file fichier hash taille ip:port] uh ?
-    \item[get hash debut fin] 
-    \item[ready hash délai ip port protocole début fin]
-    \item[neighbourhood] demande une liste de voisins connus.
-    \item[neighbour ip:port] fournit l'adresse IP et le port TCP d'un des
-membres du réseau.
-    \item[error] euh, bonne syntaxe ?
+
+    \item[list] Récupère la liste des fichiers présents sur les machines
+    connues. Implémentée, sans options.
+
+    \item[file fichier hash taille ip:port] Réponse d'un démon à la requête
+    list. Implémentée seulement en TCP.
+
+    \item[get hash début fin] Demande un bloc d'un fichier à un démon.
+    Implémenté sans utiliser debut et fin.
+
+    \item[ready hash délai ip port protocole début fin] Réponse à une requête
+    get, en vue d'initier la connexion. Implémentée, mais ne se sert pas de
+    début et fin.
+
+    \item[neighbourhood] Demande une liste de voisins connus. Implémentée.
+
+    \item[neighbour ip:port] Fournit l'adresse IP et le port TCP d'un des
+    membres du réseau. Implémentée.
+
+    \item[error] Message d'erreur. Implémentée.
+
 \end{description}
-
-
 
 \subsection{Commandes utilisateur}
 \begin{description}
-    \item[set] fournit la liste des options disponibles (modifie une option avec
-la syntaxe set a=b). Aucune option n'est disponible...
-    \item[help] fournit la liste des commandes existantes.
-    \item[list] liste les fichiers présents sur les machines auxquelles le
-client est connecté. Aucune option n'est implémentée pour cette commande, elle
-retournera toujours la totalité des fichiers.
-    \item[get hash] télécharge le fichier dont le hash est passé en paramètre. 
-    \item[info] donne des informations concernant le programme (nombre de
-machines connues, nombre de clients connectés).
-    \item[download] donne des informations sur les téléchargements en cours.
-    \item[upload] donne des informations sur les envois en cours.
-    \item[connect ip:port] se connecte à une autre machine.
-    \item[raw ip:port cmd] envoie la commande de protocole "cmd" à la machine
-dont l'ip/port sont passés en paramètre.
+
+    \item[set] Fournit la liste des options disponibles. Aucune option n'est
+    disponible...
+
+    \item[help] Fournit la liste des commandes existantes. Implémentée.
+
+    \item[list] Liste les fichiers présents sur les machines auxquelles le
+    client est connecté. Aucune option n'est implémentée pour cette commande,
+    elle retournera toujours la totalité des fichiers.
+
+    \item[get hash] Télécharge le fichier dont le hash est passé en paramètre.
+    Implémentée.
+
+    \item[info] Donne des informations concernant le programme (nombre de
+    machines connues, nombre de clients connectés).
+
+    \item[download] Donne des informations sur les téléchargements en cours.
+
+    \item[upload] Donne des informations sur les envois en cours. Implémentée
+    en partie, ne calcule pas encore l'avancement.
+
+    \item[connect ip:port] Se connecte à une autre machine. Implémentée.
+
+    \item[raw ip:port cmd] Envoie la commande de protocole "cmd" à la machine
+    dont l'ip/port sont passés en paramètre. Implémentée.
+
 \end{description}
 
 
