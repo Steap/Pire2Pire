@@ -24,6 +24,8 @@ ROELANDT Cyril
 
 \begin{frame}
     \section{Caractéristiques}
+
+    \textbf{Caractéristiques}
     \begin{itemize}
         \item Compatible GNU/Linux (Debian/Ubuntu) et *BSD (FreeBSD)
         \item Probablement compilable avec n'importe quel compilateur
@@ -36,14 +38,6 @@ ROELANDT Cyril
     \end{itemize}
 \end{frame}
 
-\begin{frame}
-    \section{Pool thread}
-    \begin{itemize}
-        \item N threads crées au démarrage du démon
-        \item Dorment en attendant des jobs
-        \item Jobs "rapides" et jobs "lents"
-    \end{itemize}
-\end{frame}
 
 \begin{frame}
     \section{Clients et démons}
@@ -74,12 +68,42 @@ ROELANDT Cyril
         \item Exécution en arrière-plan
         \item Gestion de toutes les requêtes (clients et démons)
         \item Vision globale : liste de clients et démons connus
-        \item Utilisation des pool de threads :
+        \item Utilisation des pools de threads :
             \begin{itemize}
+                \item N threads créés au démarrage du démon
+                \item Dorment en attendant des tâches
+                \item Tâches "rapides" et tâches "lentes"
+            \end{itemize}
+     \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \section{Gestion des threads}
+
+    \textbf{Gestion des threads}
+
+    Structure : 1 thread principal et 4 pools.
+\begin{center}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.4]{pools_interacting.eps}
+\end{figure}
+\end{center}
+
+\end{frame}
+
+\begin{frame}
+    \begin{itemize}
         \item 2 pools pour les clients et les démons
         \item 2 pools pour les requêtes rapides et lentes
-            \end{itemize}
     \end{itemize}
+\begin{center}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=0.6]{thread_pool.eps}
+\end{figure}
+\end{center}
+
 \end{frame}
 
 \begin{frame}
