@@ -1,0 +1,26 @@
+\section{Principaux points techniques}
+
+%%%%%
+
+\subsection{Architecture générale}
+
+\input{architecture}
+%%%%%
+
+
+\subsection{Gestion des threads}
+Nos threads sont répartis en quatre "pools", plus un thread principal.
+
+\subsubsection{Thread principal}
+Le thread principal a deux sockets d'écoute, l'un destiné aux clients et
+l'autre aux daemons. Dès qu'il reçoit une requète de connexion sur l'un de
+ses sockets, il redirige les daemons vers le pool qui gère les daemons et
+les clients vers le pool qui gère les clients.
+
+\subsubsection{Pool de gestion des clients et des daemons}
+Nous avons donc deux pools de gestion : un pour les clients et un pour
+les daemons. Ils contiennent chacun un nombre de threads fixé par
+l'utilisateur dans le fichier de configuration, sous les termes 
+\verb$max_clients$ pour les clients et \verb$max_daemons$ pour les
+daemons.
+
