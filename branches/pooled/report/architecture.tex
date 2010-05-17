@@ -40,9 +40,19 @@ démon.
 \subsection{Le démon}
 
     Nous avons choisi de développer le serveur sous forme d'un démon.
-S'éxécutant en arrière-plan, il peut à tout moment être contacté par un client
+S'exécutant en arrière-plan, il peut à tout moment être contacté par un client
 ou par un autre serveur utilisant le même protocole de communication.
 
+ \begin{center}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=1]{archi_daemon.eps}
+    \caption{Architecture du démon}
+    \label{demon}
+\end{figure}
+\end{center}
+
+   La figure \ref{demon} illustre l'architecture de notre démon.
     Dès qu'un client se connecte au démon, un thread est lancé et le gère
 jusqu'à ce qu'il se déconnecte (cf. handle\_client () dans
 \url{daemon/client_handler.c}). Il est ajouté à une liste doublement chaînée de
@@ -87,14 +97,5 @@ struct client_request {
     struct client_request   *next;
 };
 \end{lstlisting}
-
-\begin{center}
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[scale=1]{archi_daemon.eps}
-    \caption{Architecture du démon}
-    \label{client}
-\end{figure}
-\end{center}
 
 
