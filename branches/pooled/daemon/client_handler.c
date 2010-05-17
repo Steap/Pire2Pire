@@ -107,6 +107,8 @@ handle_requests (struct client *client) {
         }
         else if (IS_CMD (message, "download"))
             handler = &client_request_download;
+        else if (IS_CMD (message, "upload"))
+            handler = &client_request_upload;
         else if (IS_CMD (message, "get"))
             handler = &client_request_get;
         else if (IS_CMD (message, "help"))

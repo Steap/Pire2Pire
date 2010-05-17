@@ -135,6 +135,7 @@ daemon_request_ready (void* arg) {
     if (!downloads) {
         log_failure (log_file, 
                     "Could not add the file to the download queue\n");
+        sem_post (&downloads_lock);
         goto out;
     }
     sem_post (&downloads_lock);

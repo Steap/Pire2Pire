@@ -63,6 +63,8 @@ struct client   *list_client;
 sem_t                   downloads_lock;
 struct dl_file          *downloads;
 
+sem_t                   uploads_lock;
+struct dl_file          *uploads;
 // Handler of known files and its semaphor
 struct file_cache   *file_cache;
 sem_t               file_cache_lock;
@@ -108,6 +110,7 @@ server_stop (int sig) {
     sem_destroy (&daemons_lock);
     sem_destroy (&file_cache_lock);
     sem_destroy (&downloads_lock);
+    sem_destroy (&uploads_lock);
 
     if (clients) {
         while (clients) {
@@ -296,6 +299,10 @@ start_server (void) {
     downloads = NULL;
     ABORT_IF (sem_init (&downloads_lock, 0, 1) < 0,
         "Unable to sem_init download_queue_lock")
+    
+    uploads = NULL;
+    ABORT_IF (sem_init (&uploads_lock, 0, 1) < 0,
+        "Unable to sem_init upload_queue_lock");
 
     client_sa.sin_family        = AF_INET;
     client_sa.sin_addr.s_addr   = INADDR_ANY;

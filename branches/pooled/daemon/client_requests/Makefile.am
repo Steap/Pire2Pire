@@ -1,5 +1,4 @@
-source = client_request_connect.c                      \
-         client_request_connect.c      \
+source = client_request_connect.c      \
 	 client_request_download.c     \
          client_request_get.c          \
          client_request_help.c         \
@@ -7,4 +6,5 @@ source = client_request_connect.c                      \
          client_request_list.c         \
          client_request_raw.c          \
          client_request_set.c          \
-         client_request_unknown.c      
+         client_request_unknown.c      \
+	 client_request_upload.c

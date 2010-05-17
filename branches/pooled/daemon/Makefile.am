@@ -19,6 +19,7 @@ client_requests/client_request_list.c \
 client_requests/client_request_raw.c \
 client_requests/client_request_set.c \
 client_requests/client_request_unknown.c \
+client_requests/client_request_upload.c \
 daemon_requests/daemon_request_error.c \
 daemon_requests/daemon_request_file.c \
 daemon_requests/daemon_request_get.c \

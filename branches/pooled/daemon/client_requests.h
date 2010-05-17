@@ -10,5 +10,6 @@
 #include "client_requests/client_request_raw.h"
 #include "client_requests/client_request_set.h"
 #include "client_requests/client_request_unknown.h"
+#include "client_requests/client_request_upload.h"
 
 #endif

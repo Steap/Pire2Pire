@@ -7,10 +7,12 @@
 #include <dirent.h>             // DIR
 #include <errno.h>
 #include <fcntl.h>              // open ()
+#include <semaphore.h>
 #include <stdlib.h>             // malloc ()
 #include <string.h>             // strcmp ()
 #include <unistd.h>             // close ()
 
+#include "../dl_file.h"
 #include "../util/md5/md5.h" // MDFile ()
 #include "../util/logger.h"  // log_failure ()
 #include "../conf.h"            // struct prefs
@@ -21,9 +23,11 @@
 
 #define BUFFSIZE    128
 
-extern struct prefs *prefs;
-extern FILE         *log_file;
-extern char         my_ip[INET_ADDRSTRLEN];
+extern struct prefs         *prefs;
+extern FILE                 *log_file;
+extern char                 my_ip[INET_ADDRSTRLEN];
+extern sem_t                uploads_lock;
+extern struct dl_file      *uploads;
 
 static struct daemon_request    *r;
 static struct sockaddr_in       listen_addr;
@@ -251,9 +255,23 @@ send_file () {
     int             nb_read;
     int             nb_sent;
     file_size_t     to_be_sent;
-    char            buffer[BUFFSIZE];
+    char            buffer[BUFFSIZE];   
+    struct dl_file *ul_file;
 
     to_be_sent = entry_stat.st_size;
+
+    ul_file = dl_file_new (full_path, (int) to_be_sent);
+    if (!ul_file)
+        return 0;
+
+    sem_wait (&uploads_lock);
+    uploads = dl_file_add (uploads, ul_file);
+    if (!uploads) {
+        sem_post(&uploads_lock);
+        return 0;
+    }
+    sem_post (&uploads_lock);
+
     while (to_be_sent) {
         nb_read = read (file, buffer, BUFFSIZE);
         if (nb_read < 0) {
