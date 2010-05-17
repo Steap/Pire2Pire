@@ -13,7 +13,7 @@ Nos threads sont répartis en quatre "pools", plus un thread principal.
 
 \subsubsection{Thread principal}
 Le thread principal a deux sockets d'écoute, l'un destiné aux clients et
-l'autre aux daemons. Dès qu'il reçoit une requète de connexion sur l'un de
+l'autre aux daemons. Dès qu'il reçoit une requête de connexion sur l'un de
 ses sockets, il redirige les daemons vers le pool qui gère les daemons et
 les clients vers le pool qui gère les clients.
 
@@ -21,6 +21,17 @@ les clients vers le pool qui gère les clients.
 Nous avons donc deux pools de gestion : un pour les clients et un pour
 les daemons. Ils contiennent chacun un nombre de threads fixé par
 l'utilisateur dans le fichier de configuration, sous les termes 
-\verb$max_clients$ pour les clients et \verb$max_daemons$ pour les
-daemons.
+\verb$max_clients$ pour les clients et \verb$max_daemons$ pour les daemons.
+Chaque thread est en charge d'un daemon/client. \\
+Ces deux pools sont des pools de threads dormants, qui ne se réveillent qu'à 
+réception d'une requête. Ils envoient ensuite ces requêtes sur les deux autres
+pools de threads et se rendorment.
+
+\subsubsection{Le pool rapide et le pool lent}
+Les deux autres pools gèrent donc les requêtes selon le temps qu'elles 
+prennent : le premier pool gère les requêtes qui se font rapidement 
+(par exemple \verb$help$) et le deuxième les requêtes plus complexes, qui 
+prennent donc plus de temps comme \verb$list$ par exemple.\\
+Ces deux pools contiennent autant de threads qu'il y a de processeur sur la
+machine. Ils peuvent s'envoyer des tâches à eux mêmes ou à l'autre pool.
 
