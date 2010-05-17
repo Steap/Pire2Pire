@@ -70,9 +70,11 @@ conf_retrieve (const char *path) {
                 prefs->daemon_port = num_val;
         }
         else if (strcmp (key, "shared_folder") == 0) {
+            free (prefs->shared_folder);
             prefs->shared_folder = strdup (value);
         }
         else if (strcmp (key, "interface") == 0) {
+            free (prefs->interface);
             prefs->interface = strdup (value);
         }
         else if (strcmp (key, "nb_proc") == 0) {
@@ -101,9 +103,11 @@ conf_retrieve (const char *path) {
                 prefs->max_requests_per_daemon = atoi (value);
         }
         else if (strcmp (key, "log_file") == 0) {
+            free (prefs->log_file);
             prefs->log_file = strdup (value);
         }
         else if (strcmp (key, "lock_file") == 0) {
+            free (prefs->log_file);
             prefs->lock_file = strdup (value);
         }
     }
