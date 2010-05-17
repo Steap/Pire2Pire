@@ -70,8 +70,10 @@ puisse être effectuée à la fois.
 
     Dès qu'un client envoie une commande au démon via sa socket, une nouvelle
 "struct client\_request" est créée. Elle est ajoutée à la liste doublement
-chaînée contenant toutes les requêtes actives pour le client. Un thread est
-lancé pour traiter cette requête, et appelle la fonction correspondante dans
+chaînée contenant toutes les requêtes actives pour le client. Une tâche ("job") 
+est alors créée et sera par la suite traitée par un thread de travail, par 
+l'appel de la fonction correspondante à la tâche (cf. section 
+\ref{threads_by_pools}).
 \url{daemon/client_requests/}.
 
 \begin{lstlisting}
