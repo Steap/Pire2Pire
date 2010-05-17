@@ -74,7 +74,6 @@ chaînée contenant toutes les requêtes actives pour le client. Une tâche ("jo
 est alors créée et sera par la suite traitée par un thread de travail, par 
 l'appel de la fonction correspondante à la tâche (cf. section 
 \ref{threads_by_pools}).
-\url{daemon/client_requests/}.
 
 \begin{lstlisting}
 struct client_request {
@@ -88,5 +87,14 @@ struct client_request {
     struct client_request   *next;
 };
 \end{lstlisting}
+
+\begin{center}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[scale=1]{archi_daemon.eps}
+    \caption{Architecture du démon}
+    \label{client}
+\end{figure}
+\end{center}
 
 
