@@ -103,11 +103,12 @@ conf_retrieve (const char *path) {
                 prefs->max_requests_per_daemon = atoi (value);
         }
         else if (strcmp (key, "log_file") == 0) {
-            free (prefs->log_file);
+            if (prefs->log_file)
+                free (prefs->log_file);
             prefs->log_file = strdup (value);
         }
         else if (strcmp (key, "lock_file") == 0) {
-            free (prefs->log_file);
+            free (prefs->lock_file);
             prefs->lock_file = strdup (value);
         }
     }
